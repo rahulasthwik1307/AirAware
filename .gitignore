@@ -1,0 +1,47 @@
+# Dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
+# Next.js Build Output
+/.next/
+/out/
+
+# Production Build
+/build
+/dist
+
+# Debug Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment Variables & Local Config
+.env*.local
+.env
+!.env.example
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+
+# TypeScript Build Info
+*.tsbuildinfo
+next-env.d.ts
+
+# Vercel
+.vercel
+
+# Taste skill temporary files / cache
+.taste-skill/
+
+# Agent configuration & skills
+.agents/
+
