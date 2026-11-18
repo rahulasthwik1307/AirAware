@@ -117,25 +117,28 @@ Requirements:
 - Distinguish station measurements from modelled estimates and forecasts.
 - Display source attribution and data timestamps.
 
-## 3.3 Personalization
+## 3.3 Personalization and family multi-member profile
 
-Use a short guided onboarding process.
+AirAware uses a short, guided onboarding process with local-first persistence.
 
-Collect only useful information, such as:
+Collect only useful, non-intrusive information to tailor winter smog guidance:
 
-- Primary location.
-- Household size.
-- Optional children or older adults in the household.
-- Typical working or school schedule.
-- Outdoor exercise habits.
-- Commute type.
-- Approximate commute distance.
-- Lifestyle preferences.
-- Optional self-reported sensitivities.
+- Primary location and optional secondary saved locations.
+- Household profile supporting multiple family members:
+  - Support up to 4 local household member profiles (e.g., Child/Student, Working Professional/Commuter, Senior/Vulnerable Adult, Outdoor Enthusiast).
+  - Specific daily schedule windows per member (e.g., school hours, commute timings, outdoor exercise hours, errand times).
+  - Entirely optional, minimized sensitivity categories per member (e.g., child, senior, or general respiratory/cardiovascular sensitivity).
+- Commute parameters per commuting member (transit mode, approximate distance).
+- Home environment characteristics (approximate room count, ventilation options, available filtration/AC).
 
-Detailed preferences should be editable later.
-
-Do not collect unnecessary medical history or sensitive personal information.
+Presentation and privacy governance rules:
+- Present member-specific schedules and alerts through one coordinated family planner view.
+- All profile data must persist strictly in local browser storage (`localStorage` under `airaware_household_v1`). Validate stored data with Zod schemas.
+- Family health and sensitivity information is strictly optional, minimized to high-level categories, and NEVER transmitted to the AI inference provider. Only generalized, non-personal parameters (such as activity time windows and broad vulnerability tiers) are used locally for rule evaluation.
+- No cloud accounts, no user logins, and no server-side user tracking.
+- Detailed preferences must remain fully editable at any time.
+- Users must be able to skip profile setup entirely and use general location-based guidance.
+- Do not collect unnecessary medical history, legal names, or sensitive personal data.
 
 ## 3.4 AI recommendation architecture
 
@@ -147,18 +150,27 @@ AI explains, contextualizes and personalizes those facts.
 
 AI must not independently invent AQI readings, pollution measurements, forecasts or environmental impact figures.
 
-## 3.5 Environmental impact
+## 3.5 Recommendation-to-impact connection and dual-impact integrity
 
-Show:
+AirAware must connect environmental conditions to practical user actions and transparent impact explanations. 
 
-- Estimated CO2e savings.
-- Daily, weekly and monthly comparisons where data supports them.
-- Calculation assumptions.
-- Emission factors.
-- Distance and transport assumptions.
-- Separate exposure-related guidance.
+Recommendations must lead directly to measurable personal actions, and those actions must be paired with clear, honest impact accounting.
 
-Never claim that an individual's estimated emissions savings directly reduce the measured AQI of their city.
+Strictly distinguish between two fundamentally different categories of impact:
+
+1. **Personal Exposure-Related Benefits (Health & Protection):**
+   - Quantified through defensible exposure indicators: avoided peak smog duration (hours), relative ambient concentration delta ($\Delta C$) between original and shifted activity windows, and indoor ventilation timing during cleaner atmospheric intervals.
+   - Examples: Avoiding peak morning winter inversion by shifting an outdoor run to early afternoon solar mixing or switching to indoor exercise; wearing an N95 respirator during necessary travel.
+   - Scientific Defensibility Rule: Do not mandate or display speculative individual percentage reductions in inhaled particulate dose without a documented, scientifically defensible methodology and measured physiological inputs (such as minute ventilation volume, breathing frequency, and airway deposition fractions). Use defensible exposure indicators rather than speculative medical or dosage claims.
+
+2. **Environmental Emissions Reductions (Climate & Collective Footprint):**
+   - Quantified through avoided greenhouse gases (estimated kg CO2e) and avoided tailpipe criteria exhaust (grams of NOx, VOC, or exhaust particulate matter) when choosing cleaner alternatives.
+   - Examples: Choosing electric rail or bus over solo petrol driving for a commute; combining local household errands; switching to active transport where safe.
+   - Must disclose all calculation assumptions: emission factors, distance, fuel baseline, and vehicle occupancy adjustments.
+
+**Mandatory Scientific Integrity Rule:**
+- The application must NEVER claim, calculate, or imply that an individual's personal transit choice or emissions reduction directly lowers or cleans the measured ambient AQI of their city.
+- Display these two metrics with distinct visual badges and indicators (e.g., Personal Protection Benefit vs. Environmental Emissions Avoided) so users clearly understand both dimensions without confusing personal defense with ambient cleanup.
 
 ## 3.6 Unavailable data
 
@@ -214,41 +226,38 @@ Every value must have an understandable origin.
 
 Do not silently substitute one pollutant or source for another.
 
-## 4.2 Personalized Daily Routine Planner
+## 4.2 Personalized Daily Routine Planner and Coordinated Family Schedules
 
-This is one of the most important challenge-aligned features.
+This is one of the most important challenge-aligned features of AirAware.
 
-The planner should understand:
+The planner bridges environmental forecasts with real-life family schedules to suggest low-emission routines and minimize toxic exposure.
 
-- User's daily schedule.
-- Work and school timings.
-- Outdoor exercise preferences.
-- Commute type and distance.
-- Household context.
-- Selected location.
-- Current and forecast environmental conditions.
+### 4.2.1 Multi-member household schedule integration
+The planner must understand the coordinated schedules of up to 4 local household members:
+- Children / Students: School drop-off/pickup timings, outdoor recess, school bus vs. walking commute.
+- Working Professionals / Commuters: Office transit hours, route distances, transit alternatives.
+- Seniors / High-Sensitivity Members: Morning/evening walk windows, respiratory sensitivity indicators.
+- General Household: Natural ventilation hours, errand timing, indoor chores (cooking, cleaning).
 
-It should recommend:
+Present these member schedules together through a unified, coordinated family planner view that highlights conflicting or high-risk exposure windows across the day.
 
-- Suitable outdoor activity windows.
-- When to avoid strenuous outdoor activity.
-- Alternative indoor exercise.
-- Cleaner commute choices.
-- Better times for errands.
-- Ventilation guidance.
-- Adjustments when conditions deteriorate.
+### 4.2.2 The Actionable Daily Routine Loop
+Recommendations must not remain passive suggestions. The planner must implement a complete interactive lifecycle with local persistence:
+- **Adopt:** A one-click action (`[ + Adopt to My Plan ]`) that adds a recommended schedule shift, commute alternative, or protective habit to the active daily plan (`airaware_active_plan` in localStorage).
+- **Edit:** The ability to adjust timings, transit modes, or activity parameters to match the user's practical constraints.
+- **Complete:** Marking an adopted action as completed, which records the habit to local progress and triggers transparent impact accounting.
+- **Remove / Dismiss:** Allowing users to remove adopted routines or dismiss unneeded suggestions cleanly.
 
-Recommendations should be editable.
-
-Each recommendation should contain:
-
-1. Current condition.
-2. Recommended action.
-3. Reason.
-4. Expected benefit.
-5. Data source.
-6. Timestamp or freshness.
-7. Confidence or uncertainty where appropriate.
+### 4.2.3 Recommendation structure and impact connection
+Every recommendation card must display:
+1. **Trigger Condition:** Current and forecast environmental metrics (e.g., peak PM2.5 forecast during morning inversion at 07:30 AM).
+2. **Recommended Practical Action:** Specific timing shift, route adjustment, or protective measure.
+3. **Reason:** Meteorological and physiological justification (e.g., thermal inversion traps ground-level particulates until midday solar mixing).
+4. **Dual Impact Attribution:**
+   - *Personal Exposure Defense:* Defensible exposure indicators such as avoided peak smog duration (hours) or ambient concentration difference ($\Delta C$) between scheduled and shifted activity windows.
+   - *Environmental Emission Savings:* Estimated avoided tailpipe emissions (kg CO2e, g NOx) if a cleaner transit alternative was chosen.
+5. **Data Source & Freshness:** Explicit attribution (e.g., Open-Meteo CAMS forecast run).
+6. **In-Situ Contextual AI Trigger:** A one-click action (`[ Why this recommendation? ▾ ]`) allowing users to request an on-demand, data-grounded AI explanation.
 
 Never promise that an activity is completely safe based on an AQI number.
 
@@ -311,6 +320,13 @@ Use simple language. Avoid unnecessarily technical explanations, alarmist messag
 
 The assistant must use actual application data and relevant user preferences, not fabricated context.
 
+### 4.4.1 Contextual AI Explanations ("Why this recommendation?")
+In addition to general environmental Q&A, the AI Air Copilot must provide in-situ contextual explanations directly within the Daily Routine Planner, Indoor Air Hacks, and Cleaner Choices cards:
+- **Trigger:** A dedicated button or link on recommendation cards (`[ 💡 Why this recommendation? ]`).
+- **Grounded Context:** The prompt pipeline injects the specific recommendation, active hourly forecast, dominant pollutant, and the relevant household member profile (anonymized).
+- **Output:** A structured, concise (2–3 sentence) plain-language explanation detailing the atmospheric physics and exposure rationale behind the recommendation.
+- **Deterministic Fallback:** If the AI call fails or the daily neuron quota is reached, instantly display a pre-computed deterministic explanation derived from the rule engine.
+
 ## 4.5 Cleaner Choices Explorer
 
 Help users make more sustainable everyday choices.
@@ -337,23 +353,29 @@ When estimating CO2e:
 
 Do not equate CO2e savings with immediate local AQI improvements.
 
-## 4.6 Personal Impact Dashboard
+## 4.6 Personal Impact Dashboard and Dual-Impact Tracking
 
-Track user-selected cleaner habits.
+Track completed user actions and cleaner habits adopted from the Daily Routine Planner and Cleaner Choices Explorer.
 
-Show:
+The dashboard displays two distinct, non-conflated impact categories:
 
-- Estimated CO2e avoided.
-- Weekly and monthly progress.
-- Cleaner transport choices.
-- Completed recommended habits.
-- Personal progress trends.
+1. **Personal Exposure Defense (Health & Protection):**
+   - Avoided peak smog duration (hours shifted away from high-inversion periods).
+   - Relative ambient exposure difference ($\Delta C$) between scheduled and alternative windows.
+   - Indoor clean air maintenance (filter cleaning cadence, timely window ventilation hours during minimum ambient pollution).
+   - Do not mandate or display speculative individual percentage reductions in inhaled particulate dose without a documented, scientifically defensible methodology and measured physiological inputs.
 
-Use deterministic calculations.
+2. **Environmental Emissions Avoided (Climate & Community Footprint):**
+   - Estimated CO2e avoided (kg CO2e) from cleaner commute choices and trip consolidation.
+   - Tailpipe criteria pollutants avoided (estimated grams of NOx and exhaust PM).
+   - Weekly and monthly cumulative totals.
 
-Do not use AI to calculate final numerical impact.
-
-Allow users to inspect the assumptions behind each calculation.
+Presentation and integrity requirements:
+- Use deterministic formulas only. Do not use AI to calculate final numerical impact.
+- Allow users to inspect the assumptions behind each calculation (emission factors, trip distances, baseline fuel efficiency).
+- Maintain distinct visual styling between personal exposure protection and planetary emissions.
+- Never claim that personal emissions savings immediately lower the city's measured ambient AQI.
+- Display completed recommended habits and personal progress trends with local-first persistence.
 
 ## 4.7 Community Air Intelligence
 
@@ -418,7 +440,7 @@ Do not diagnose medical conditions or replace professional medical advice.
 
 The application should feel like a complete, connected platform rather than one overcrowded dashboard.
 
-Suggested navigation:
+Baseline functional capabilities inventory:
 
 1. Overview
 2. Air Intelligence
@@ -434,6 +456,18 @@ Suggested navigation:
 12. Settings
 
 Use a coherent navigation structure. Do not force every section into the first screen.
+
+### 5.0.1 Proposed Five-Area Navigation Consolidation (Awaiting Product Owner Approval)
+
+To prevent fragmented user journeys across 12 separate links while preserving all required capabilities, the following streamlined 5-area navigation is proposed for Product Owner approval:
+
+1. **🌍 Air Intelligence (Phase 2):** Current environmental dashboard, 3D Earth Globe, pollutant matrix, WHO comparisons, 24-hour forecast bar, inversion risks, and scientific provenance. (Encompasses capabilities 1, 2, 11, 12).
+2. **📅 Family Daily Planner (Phase 3):** Household multi-member schedules (school runs, commutes, elderly walks), Actionable Routine Loop (adopt, edit, complete, remove), and exposure timing windows. (Encompasses capabilities 3, 4, 6).
+3. **🏡 Indoor Air Intelligence (Phase 4):** Room-by-room smog defense, practical low-cost/DIY hacks (Corsi-Rosenthal box fans, wet-mop protocols, cooking ventilation), and purifier guidance. (Encompasses capability 5).
+4. **🌱 Cleaner Choices & Impact (Phase 6):** Sustainable transport alternative comparisons, Dual Impact Tracking (personal exposure avoided vs. tailpipe emissions avoided), and local community alerts. (Encompasses capabilities 7, 9, 10).
+5. **🤖 AI Air Copilot (Phase 5):** Persistent conversational assistant grounded in current modelled air-quality data from Open-Meteo and relevant user context, accessible via a prominent drawer/panel and contextual in-situ triggers across all views. (Encompasses capability 8).
+
+*Status:* Proposed architectural consolidation. Requires explicit Product Owner sign-off before altering existing application navigation components.
 
 ## 5.1 First-time user journey
 
@@ -553,7 +587,7 @@ Before major UI and page implementation begins, a comprehensive, documented, and
 19. **Accessibility and contrast requirements:** Targeting WCAG 2.2 AA across all color combinations (minimum 4.5:1 for normal text, 3:1 for large text and UI components), minimum 44×44px tap targets, visible focus rings, and explicit text equivalents. A Lighthouse score alone does not establish WCAG compliance; actual verification with contrast measurement tools, keyboard walks, and accessibility tree inspection is required.
 
 ### 6.4.1 Centralized design tokens, visual consistency, and controlled flexibility
-1. **Centralized token baseline:** All core design tokens (colors, typography, spacing, radii, elevation) must be centralized in a dedicated design token module (e.g., CSS custom properties, StyleX tokens, or a dedicated theme configuration).
+1. **Centralized token baseline:** All core design tokens (colors, typography, spacing, radii, elevation) must be centralized in a dedicated design token module (e.g., CSS custom properties in `src/tokens/tokens.css`, Tailwind theme extensions, or a dedicated theme configuration).
 2. **Prohibition of arbitrary styling:** Individual pages and standard components are strictly prohibited from introducing ad-hoc hex codes, arbitrary font families, random margin/padding scales, or uncoordinated one-off styling.
 3. **Controlled component-specific styling exceptions:** Justified component-specific styling exceptions are permitted **only when strictly required** for:
    - Specialized visualizations (e.g., custom SVG globe geometries, atmospheric glow layers, complex multi-pollutant gradient dials, micro-gauge ticks, or timeline curves where standard tokens cannot provide the necessary mathematical fidelity).
@@ -566,53 +600,41 @@ Before major UI and page implementation begins, a comprehensive, documented, and
 
 # 7. INTERACTIVE EARTH GLOBE — PERFORMANCE-FIRST
 
-The globe is a signature visual feature, not the core intelligence engine.
+The globe is a signature visual and geographical exploration feature, designed to support environmental intelligence rather than displace scientific data.
 
-## 7.1 Implementation strategy
+## 7.1 Confirmed implementation and 3D globe architecture
 
-First implement a lightweight CSS/SVG globe.
+Following the escalation protocol in Section 7.3 to resolve 2D projection distortion and multi-axis rotation constraints, the Earth Globe has been implemented and confirmed using **MapLibre GL with 3D Globe Projection**:
 
-Potential techniques:
+- **Engine:** MapLibre GL (`maplibre-gl@^6.19.0`) operating with hardware-accelerated WebGL2 and an orthographic spherical projection (`projection: { type: 'globe' }`).
+- **Worker Configuration:** Web worker statically hosted at `/maplibre-gl-worker.mjs` via `maplibregl.setWorkerUrl('/maplibre-gl-worker.mjs')` to ensure reliable loading under Next.js Turbopack.
+- **Imagery & Tiles:** Public satellite imagery and vector boundaries operating under a strict ₹0 budget with zero API fees.
+- **Visual Styling:** Soft day-sky atmospheric radial glow, crisp geographic boundaries, and twilight terminator shading conforming to the Taste-approved luminous aesthetic.
 
-- CSS radial gradients.
-- SVG globe outlines.
-- Latitude and longitude curves.
-- Animated rotation.
-- Atmospheric glow.
-- Small location markers.
-- Carefully controlled opacity and shadows.
-- CSS transitions.
+## 7.2 Verified functional capabilities
 
-Do not begin with a high-polygon Earth model or expensive WebGL scene.
+The implemented 3D Globe provides:
 
-## 7.2 Required interactions
+1. **Multi-Axis 360° Navigation:** Smooth longitude drag, latitude pitch (`-85°` to `+85°`), and fluid zoom scaling from global overview (zoom 1.2) to regional inspection (zoom 6.0).
+2. **Global Anchor Network:** 12 curated global megacities (Delhi, Hyderabad, New York, London, Tokyo, Paris, Beijing, São Paulo, Cairo, Jakarta, Sydney, Lagos) with real-time AQI pills and dynamic surface projection (`map.project([lng, lat])`).
+3. **Back-Hemisphere Occlusion:** Automatic normal dot-product calculation ensuring markers on the non-visible side of the globe gracefully fade to `opacity: 0` and disable pointer events.
+4. **Provider-Backed Coordinate Data Probe & Distinct Data Tiers:**
+   The globe strictly and transparently distinguishes three distinct tiers of data:
+   - **Preconfigured CAMS Reference-City Data:** Clicking any of the 12 global anchor city markers displays pre-configured reference air-quality metrics derived from Copernicus Atmosphere Monitoring Service (CAMS) Global IFS atmospheric model baselines.
+   - **Arbitrary-Coordinate Regional Model Estimates:** Clicking an arbitrary coordinate point displays the geographic grid location (`Global Grid`) and an immediate baseline estimate representing a regional numerical model grid point ($0.4^\circ \approx 40\text{ km}$ resolution). It must strictly display the neutral description: *"Regional model estimate — check local conditions and health guidance."* The application must NEVER use wording claiming that a regional model grid estimate establishes that outdoor activity is safe at a specific coordinate, nor claim street-level precision or fabricate ground-sensor readings.
+   - **Freshly Fetched Open-Meteo API Data:** When the user clicks `[ 🎯 Focus & Load Coordinates ↵ ]`, the application initiates an API request to retrieve current modelled air-quality data from Open-Meteo for those exact coordinates, updating the main dashboard view in-place with zero page reload.
+5. **Floating Intelligence Card:** Compact, frosted glass card (285px width) displaying inspected coordinates, modeled AQI tier badge, weather metrics, the neutral regional estimate advisory, and the one-click in-place focus button that fetches current modelled air-quality data from Open-Meteo into the dashboard.
+6. **Accessible 2D Grid Mode:** Instant toggle button (`[ GRID ]` / `[ 3D GLOBE ]`) switching to an accessible, low-bandwidth 2D raster grid for users with motion sensitivity or lower-spec devices.
 
-- Gentle rotation.
-- Drag interaction where feasible.
-- Clickable location markers.
-- Selected-city highlighting.
-- Smooth marker transitions.
-- Location information preview.
-- Zoom or navigation to a location.
-- Responsive presentation.
+## 7.3 Performance, accessibility and technological boundaries
 
-A 2D map or list must remain available for precise geographical navigation and accessibility.
+To maintain scientific credibility and high efficiency:
 
-## 7.3 Escalation rule
-
-Only use Three.js or React Three Fiber if a documented requirement cannot be implemented properly with CSS/SVG.
-
-If WebGL is introduced:
-
-- Lazy-load it.
-- Use optimized textures.
-- Avoid excessive particles.
-- Limit rendering work.
-- Handle WebGL failure.
-- Provide a 2D fallback.
-- Test on lower-powered devices.
-
-Do not introduce WebGL merely to make the application look more impressive.
+- **Resource Throttling:** Idle rotation (`0.25°/frame`) runs via `requestAnimationFrame` and pauses automatically during user drag interaction or when the browser tab is hidden.
+- **WebGL Context Conservation:** Reuses a single canvas context across renders; safely cleans up on component unmount.
+- **Accessibility & Reduced Motion:** Respects `prefers-reduced-motion` by disabling idle rotation. The accessible 2D Grid mode ensures full functional parity for screen readers and assistive tech.
+- **Engine Boundaries:** Do NOT introduce heavy 3D scene graphs (e.g. Three.js scenes, React Three Fiber canvas hierarchies) or large 3D asset bundles. Three.js is present in the repository strictly as a lightweight vector math helper.
+- **Optional Future Polish:** Ambient cursor deceleration near markers and mobile haptic feedback are documented as strictly optional polish items, to be considered only after core Challenge 06 phases are complete.
 
 ## 7.4 Motion design
 
@@ -641,24 +663,22 @@ The repository currently contains:
 
 - **Antigravity AI IDE:** Integrated development and agent execution environment.
 - **Installed application packages (`package.json`):**
-  - `@astryxdesign/core@0.7.16`
-  - `@astryxdesign/theme-neutral@0.7.16`
-  - `@stylexjs/stylex@0.19.2`
-- **Transitive runtime dependencies in `node_modules`:**
-  - `react@19.3.1` (pulled in by Astryx core)
-  - `react-dom@19.3.1` (pulled in by Astryx core)
-  - `lucide-react@1.74.0` (pulled in by Astryx theme-neutral)
-  - `styleq@0.2.1` (pulled in by StyleX)
-  - `intl-messageformat@11.2.15` (pulled in by Astryx core)
+  - Next.js framework (`next@^16.4.6`) with React 19 (`react@^19.3.1`, `react-dom@^19.3.1`)
+  - TypeScript (declared: `typescript@^5.7.3`, installed runtime: `5.9.3`) with strict typing enabled
+  - Tailwind CSS 4 toolchain (`tailwindcss@^4.0.0`, `@tailwindcss/postcss@^4.0.0`, `postcss@^8.4.38`) paired with centralized design tokens in `src/tokens/tokens.css`
+  - Validation engine (`zod@^3.24.2`)
+  - Testing suite (`vitest@^5.1.0`)
+  - Smooth scrolling (`lenis@^1.3.27`)
+  - 3D Globe visualization (`maplibre-gl@^6.19.0`, with worker assets configured in `public/`)
+  - Application design primitives (`@astryxdesign/core@^0.7.16`, `@astryxdesign/theme-neutral@^0.7.16`, `@stylexjs/stylex@^0.19.2`)
 - **Chrome DevTools MCP:** Fully integrated into Antigravity MCP configuration (`mcp_config.json`) with global CLI (`chrome-devtools` v1.13.0).
 - **Installed Agent Skills:** 44 specialized engineering, design, testing, browser-debugging, and security skills in `.agents/skills/`.
 
 ### 8.1.1 Critical status distinctions
-- **Next.js is NOT yet installed.** Next.js has not been initialized.
-- **TypeScript is NOT yet configured in `devDependencies`.**
-- **GSAP runtime (`gsap`) is NOT installed.** GSAP skills are present in `.agents/skills/`, but the runtime package is not in `package.json`.
-- **Lenis is NOT installed.** Lenis is a planned runtime dependency for smooth scrolling, to be evaluated and installed in a later phase.
-- **Tailwind CSS is NOT installed.**
+- **Core Stack Active:** Next.js 16, TypeScript (installed 5.9.3), Tailwind CSS 4, Zod, and Vitest are installed, configured, and actively building with 0 errors.
+- **Interactive Globe Active:** MapLibre GL is operational in orthographic 3D projection with an accessible 2D grid fallback mode.
+- **GSAP runtime (`gsap`) is NOT installed:** Native CSS transitions, tailwind animations, and Lenis smooth scrolling are used.
+- **Cloudflare Workers AI:** Exclusive AI inference provider with zero external paid or secondary provider fallbacks.
 
 ## 8.2 Dependency policy and classification
 
@@ -666,15 +686,16 @@ Every dependency must belong to one of four strict classifications:
 
 | Category | Packages / Technologies | Status & Policy |
 | :--- | :--- | :--- |
-| **Installed Packages** | `@astryxdesign/core@0.7.16`, `@astryxdesign/theme-neutral@0.7.16`, `@stylexjs/stylex@0.19.2` (and transitive `react@19.3.1`, `react-dom@19.3.1`, `lucide-react@1.74.0`) | Present in repository. Do not delete, upgrade, or replace without documented rationale and verified compatibility. |
-| **Planned Dependencies** | Next.js, TypeScript (`typescript`, `@types/node`, `@types/react`, `@types/react-dom`), styling toolchain, Zod, Vitest testing toolchain, Lenis, GSAP runtime | Intended for addition during Phase 0/1 implementation. Requires compatibility verification before installation. |
-| **Proposed Technologies** | Open-Meteo Air Quality & Geocoding APIs, OpenAQ, Cloudflare Workers AI, Gemini API free tier | Proposed architecture components. Subject to API verification, quota, and licensing review before integration. |
-| **Dependencies Requiring Verification** | Next.js version selection vs. React 19.3.1 & StyleX; StyleX integration with Next.js compiler; Tailwind CSS co-existence vs. dedicated StyleX approach; Astryx Server Component compatibility | Must be formally evaluated in Phase 0 before package installation. |
+| **Installed Packages** | `next@^16.4.6`, `react@^19.3.1`, `react-dom@^19.3.1`, `typescript` (declared `^5.7.3`, installed `5.9.3`), `tailwindcss@^4.0.0`, `zod@^3.24.2`, `vitest@^5.1.0`, `maplibre-gl@^6.19.0`, `lenis@^1.3.27`, `@astryxdesign/core@^0.7.16` | Present in repository. Build, test, and lint verified. Do not delete or upgrade without documented verification. |
+| **Active Planned Integrations** | Open-Meteo Air Quality & Geocoding APIs, Cloudflare Workers AI free tier | Core data and inference providers. Adheres strictly to ₹0 budget and non-commercial usage guidelines. |
+| **Evaluated & Ruled Out** | Gemini API, OpenAI, Anthropic, paid commercial APIs, heavy WebGL scene frameworks | Explicitly ruled out to preserve the strict ₹0 operational budget and exclusive Cloudflare Workers AI provider mandate. |
+| **Dependencies Requiring Verification** | Any new npm packages proposed in future phases | Must be evaluated for security, license, bundle size, and ₹0 budget compliance before installation. |
 
-### 8.2.1 Next.js version policy
-- Do NOT blindly force a particular Next.js version (such as Next.js 15) simply because an earlier specification draft mentioned it.
-- Before initializing Next.js, evaluate current stable versions against React 19.3.1, Astryx integration requirements, StyleX compiler plugin compatibility, and official Next.js setup guidance.
-- Document the selected Next.js version and compatibility matrix in an Architecture Decision Record (ADR).
+### 8.2.1 Next.js and styling framework resolution
+- **Next.js Resolution:** Next.js 16 (`next@^16.4.6`) with the App Router and Turbopack is the confirmed, active framework, verified for compatibility with React 19 (`react@^19.3.1`).
+- **Styling Architecture Resolution:** Tailwind CSS 4 (`@tailwindcss/postcss@^4.0.0`) with CSS cascade layers and centralized design tokens in `src/tokens/tokens.css` is the confirmed styling engine.
+- **Astryx Integration:** Astryx Core (`@astryxdesign/core@0.7.16`) is used for underlying UI primitives and reset styles, strictly customized to conform to Taste-approved design tokens. StyleX compilation plugins are not used.
+- **Visual Authority:** Taste (`design-taste-frontend`) remains the primary visual design authority for all themes, palettes, typography, and component styling. Astryx serves the design system; it never dictates it.
 
 ### 8.2.2 Dependency addition rules
 - Strict ₹0 budget for all runtime packages and services.
@@ -707,7 +728,7 @@ Use a layered architecture:
 
 **Infrastructure Layer:**
 - Environmental API adapters (Open-Meteo, OpenAQ).
-- AI provider adapters (Cloudflare Workers AI, Gemini free tier).
+- AI provider adapter (Cloudflare Workers AI exclusively).
 - Deterministic fallback engine.
 - Browser localStorage adapter.
 - In-memory cache and request deduplication.
@@ -886,15 +907,18 @@ When converting between standards:
 - Preserve the original value.
 - Show conversion limitations.
 
-## 11.2 Exposure guidance
+## 11.2 Exposure guidance and defensible indicators
 
 Do not claim to calculate medically accurate personal exposure doses.
 
-If estimated exposure is introduced:
-- Identify the assumptions.
-- Use time and available environmental context.
-- Clearly label it as an estimate.
-- Never present it as a medical diagnosis.
+Do not mandate or display speculative individual percentage reductions in inhaled particulate dose without a documented, scientifically defensible methodology and measured physiological inputs (such as minute ventilation volume, respiratory rate, and deposition fractions).
+
+Use defensible exposure indicators instead:
+- Avoided peak smog duration (hours shifted away from morning/night inversions).
+- Relative ambient concentration difference ($\Delta C = C_{\text{scheduled}} - C_{\text{shifted}}$) between time windows.
+- Optimal ventilation intervals based on diurnal ambient minimums.
+- Identify all assumptions and atmospheric model limitations clearly.
+- Never present exposure guidance as a medical diagnosis or guaranteed health outcome.
 
 ## 11.3 CO2e calculations
 
@@ -1096,10 +1120,10 @@ Every evaluation parameter must be supported by concrete implementation, specifi
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Code Quality**  <br>*(HIGH IMPACT)* | - Layered modular architecture  <br>- Strict TypeScript types  <br>- Separation of concerns  <br>- Clean folder structure  <br>- Reusable components  <br>- Zero circular dependencies | `codebase-design`  <br>`domain-modeling`  <br>`code-review`  <br>`modern-web-guidance`  <br>`implement` | - `tsc --noEmit` type check  <br>- ESLint pass with zero errors  <br>- Code review against spec  <br>- Dead code & circular dependency scan | - Type check logs  <br>- Code review report  <br>- Architecture review notes  <br>- Dependency tree audit | Clean build, zero TypeScript errors, clean linter run, documented module boundaries, no duplicated business logic. | Claiming quality without running `tsc` or lint; claiming clean architecture with tangled component/business logic. |
 | **Security**  <br>*(MEDIUM IMPACT)* | - Zero client-side API secrets  <br>- Server-side Route Handler proxies  <br>- Zod schema validation on all inputs  <br>- Safe HTML output (no `dangerouslySetInnerHTML`)  <br>- LocalStorage schema validation  <br>- Supply-chain risk mitigation | `security-audit`  <br>`audit-context-building`  <br>`sharp-edges`  <br>`supply-chain-risk-auditor`  <br>`fp-check`  <br>`semgrep`  <br>`codeql` | - Environment variable bundle leak audit  <br>- Semgrep / CodeQL static analysis  <br>- `npm audit` supply chain scan  <br>- Malicious input / XSS injection tests  <br>- Corrupted storage injection tests | - Security audit report  <br>- Supply chain audit output  <br>- Static analysis findings and remediation log | Server-only secrets confirmed by bundle inspection; zero high/critical vulnerabilities; all external inputs strictly validated by Zod; sanitized error handling. | Storing API keys in `NEXT_PUBLIC_` variables; assuming client-side inputs are safe; claiming security without static analysis evidence. |
-| **Efficiency**  <br>*(MEDIUM IMPACT)* | - API response caching & deduplication  <br>- Debounced search inputs  <br>- Lightweight CSS/SVG globe  <br>- Dynamic imports / code-splitting  <br>- Optimized re-rendering  <br>- Minimal bundle footprint | `next-bundle-optimizer`  <br>`debug-optimize-lcp`  <br>`memory-leak-debugging`  <br>`gsap-performance`  <br>`chrome-devtools` | - Lighthouse performance audit  <br>- Next.js bundle analyzer check  <br>- Heap snapshot check for leaks  <br>- DevTools network waterfall review  <br>- Chrome DevTools MCP performance trace | - Lighthouse performance report  <br>- Bundle size analysis report  <br>- Trace / Core Web Vitals report  <br>- Network caching verification log | Meeting measurable engineering targets (FCP <1.5s, LCP <2.5s, 60 FPS animations, Lighthouse performance score >= 90) verified under documented testing conditions (device, network profile, viewport) with retained performance trace / audit evidence; clean bundle splitting with zero redundant API calls on navigation. | Claiming efficiency or unconditional performance guarantees without measuring bundle size, Core Web Vitals, or recording test conditions; claiming 60 FPS with unmeasured/unoptimized 3D or WebGL scenes. |
+| **Efficiency**  <br>*(MEDIUM IMPACT)* | - API response caching & deduplication  <br>- Debounced search inputs  <br>- MapLibre GL 3D globe with WebGL context reuse & throttled rotation  <br>- Dynamic imports / code-splitting  <br>- Optimized re-rendering  <br>- Minimal bundle footprint | `next-bundle-optimizer`  <br>`debug-optimize-lcp`  <br>`memory-leak-debugging`  <br>`gsap-performance`  <br>`chrome-devtools` | - Lighthouse performance audit  <br>- Next.js bundle analyzer check  <br>- Heap snapshot check for leaks  <br>- DevTools network waterfall review  <br>- Chrome DevTools MCP performance trace | - Lighthouse performance report  <br>- Bundle size analysis report  <br>- Trace / Core Web Vitals report  <br>- Network caching verification log | Meeting measurable engineering targets (FCP <1.5s, LCP <2.5s, 60 FPS animations, Lighthouse performance score >= 90) verified under documented testing conditions (device, network profile, viewport) with retained performance trace / audit evidence; clean bundle splitting with zero redundant API calls on navigation. | Claiming efficiency or unconditional performance guarantees without measuring bundle size, Core Web Vitals, or recording test conditions; claiming 60 FPS with unmeasured/unoptimized 3D or WebGL scenes. |
 | **Testing**  <br>*(LOW IMPACT)* | - Unit tests for domain logic (AQI, CO2e, rules)  <br>- Integration tests for API adapters  <br>- Component UI state tests  <br>- Fallback & error handling tests  <br>- Local storage resilience tests | `tdd`  <br>`diagnosing-bugs`  <br>`code-review` | - Vitest test suite execution  <br>- Edge case tests (timeouts, missing fields)  <br>- Regression tests for fixed defects  <br>- Mocked API adapter tests | - Test execution output and summary  <br>- Test coverage summary  <br>- Regression test suite | All unit and integration test suites pass green with reproducible commands (`npm test`); verified formula test coverage targeting 100% of mathematical and conversion formulas, backed by documented execution logs and coverage reports. | Fabricating test results; reporting test passes without running tests; claiming complete coverage without edge-case tests or documented test execution logs. |
 | **Accessibility**  <br>*(LOW IMPACT)* | - Full keyboard navigability  <br>- Visible focus rings  <br>- WCAG 2.2 AA color contrast target  <br>- Semantic HTML elements  <br>- Screen-reader accessible AQI & charts  <br>- `prefers-reduced-motion` support  <br>- Accessible 2D alternative to globe | `a11y-debugging`  <br>`web-design-guidelines`  <br>`chrome-devtools`  <br>`review-animations` | - Lighthouse accessibility audit  <br>- Chrome DevTools `take_snapshot` a11y tree review  <br>- Keyboard-only navigation walk  <br>- Color contrast automated verification  <br>- Screen reader emulation check | - Lighthouse a11y audit report (score >= 95)  <br>- A11y tree snapshot log  <br>- Contrast ratio verification log  <br>- Reduced motion verification record | Verified against the WCAG 2.2 AA accessibility target: zero critical axe-core violations; all interactive controls focusable via Tab with visible focus rings; all status indicators accompanied by descriptive text; accessibility tree verified via Chrome DevTools MCP `take_snapshot`. Note: A Lighthouse accessibility score (even >= 95) is a supporting automated check, but does NOT alone establish WCAG 2.2 AA compliance without manual keyboard and tree verification. | Claiming WCAG 2.2 AA compliance based solely on an automated Lighthouse score without keyboard walk, screen reader tree inspection, and contrast verification; relying on color alone to convey AQI danger; missing alt text or ARIA labels; trapping keyboard focus. |
-| **Problem Statement Alignment**  <br>*(HIGH IMPACT)* | - Location-aware live environmental intelligence  <br>- Personalized daily routine planner  <br>- Practical indoor air improvement hacks  <br>- Sustainable cleaner choices explorer  <br>- Transparent CO2e impact calculator  <br>- Grounded AI Air Copilot  <br>- Real family & community use cases | `grill-with-docs`  <br>`to-spec`  <br>`design-taste-frontend`  <br>`modern-web-guidance` | - End-to-end user journey validation  <br>- Onboarding to daily plan flow check  <br>- Indoor room advice generation check  <br>- Alternative transport comparison check  <br>- AI grounded response check  <br>- Offline/stale data handling check | - End-to-end feature verification log  <br>- PromptWars Challenge 06 compliance matrix  <br>- User journey walkthrough record | Every feature of Challenge 06 is fully interactive and functional with real/modelled data; daily plans adjust to AQI; calculations are transparent. | Prioritizing decorative 3D effects over challenge features; delivering non-interactive mock screens; generating ungrounded AI hallucinations. |
+| **Problem Statement Alignment**  <br>*(HIGH IMPACT)* | - Location-aware live environmental intelligence  <br>- Coordinated family multi-member daily planner  <br>- Actionable Daily Routine Loop (adopt/edit/complete)  <br>- Practical indoor air improvement hacks  <br>- Sustainable cleaner choices explorer  <br>- Dual impact tracking (exposure avoided vs. emissions avoided)  <br>- Grounded AI Air Copilot & contextual explanations  <br>- Real winter smog use cases | `grill-with-docs`  <br>`to-spec`  <br>`design-taste-frontend`  <br>`modern-web-guidance` | - End-to-end user journey validation  <br>- Onboarding to daily plan flow check  <br>- Indoor room advice generation check  <br>- Alternative transport comparison check  <br>- AI grounded response check  <br>- Offline/stale data handling check | - End-to-end feature verification log  <br>- PromptWars Challenge 06 compliance matrix  <br>- User journey walkthrough record | Every feature of Challenge 06 is fully interactive and functional with real/modelled data; daily plans adjust to AQI; calculations are transparent. | Prioritizing decorative 3D effects over challenge features; delivering non-interactive mock screens; generating ungrounded AI hallucinations. |
 
 ---
 
@@ -1194,9 +1218,8 @@ The repository currently has the following packages installed in `package.json`:
 
 ### 17.2.1 Integration rules for Astryx
 - Astryx must be documented and handled under application dependencies and design-system infrastructure.
-- Verify its actual documentation, component API, and integration requirements before utilizing components.
-- Verify compatibility with the selected Next.js version, React 19.3.1, and the Next.js App Router (RSC vs. Client Components).
-- Do NOT assume Tailwind CSS and StyleX can be combined without explicit configuration decisions. If StyleX is used, its compilation pipeline must be properly configured.
+- Tailwind CSS 4 (`@tailwindcss/postcss`) with CSS cascade layers and centralized design tokens in `src/tokens/tokens.css` is the confirmed styling framework.
+- Astryx Core (`@astryxdesign/core@0.7.16`) is used for foundational UI primitives and precompiled CSS resets, strictly customized to conform to Taste-approved design tokens. StyleX compiler plugins are not utilized.
 - Use Astryx components where they genuinely accelerate development and meet quality standards.
 - Customize or build custom components where needed to achieve the Taste-approved visual identity.
 - **Astryx defaults must NEVER override the approved AirAware design system.** Astryx serves the design system; it does not dictate it.
@@ -1262,7 +1285,7 @@ AirAware requires disciplined documentation management to ensure that decisions 
 Every technical and product statement must fall into one of three explicit categories:
 
 1. **Confirmed Decisions:** Fully approved choices (e.g., ₹0 budget, no authentication, local-first storage, Taste as design authority). Must be implemented as specified.
-2. **Technical Proposals:** Recommended approaches (e.g., specific Next.js version, StyleX vs. Tailwind integration, Cloudflare Workers AI model names). Must be verified before commitment.
+2. **Technical Proposals:** Recommended approaches (e.g., specific cache invalidation strategies, Cloudflare Workers AI model selection). Must be verified before commitment.
 3. **Items Awaiting Verification:** Technical uncertainties (e.g., Next.js App Router compatibility with Astryx components, OpenAQ API key requirements, rate limits). Must be formally tested and documented in Phase 0.
 
 ## 18.3 Required documentation artifacts
@@ -1287,8 +1310,8 @@ Development proceeds strictly through nine sequential phases. Do not advance to 
 - Inspect existing repository structure, files, and Git status.
 - Verify installed packages (`@astryxdesign/core`, `@astryxdesign/theme-neutral`, `@stylexjs/stylex`, `react@19.3.1`, `react-dom@19.3.1`).
 - Verify installed skills (44 skills) and Chrome DevTools MCP integration.
-- Formally evaluate and resolve Next.js, React, Astryx, and styling toolchain compatibility.
-- Evaluate StyleX integration requirements in Next.js vs. Tailwind CSS co-existence.
+- Formally evaluate and resolve Next.js, React, Astryx, and Tailwind CSS toolchain compatibility.
+- Configure Tailwind CSS 4 with CSS cascade layers and centralized design tokens.
 - Identify architectural risks and technical debt.
 - Prepare a comprehensive dependency installation plan (Next.js, TypeScript, styling, validation, testing).
 - Prepare a Taste visual design exploration plan.
@@ -1316,27 +1339,29 @@ Development proceeds strictly through nine sequential phases. Do not advance to 
 - City search with debounced input and geocoding integration.
 - Optional browser GPS location detection with graceful permission handling.
 - Environmental data adapters (Open-Meteo Air Quality API).
-- AQI interpretation engine supporting local and global standards.
-- Pollutant cards (PM2.5, PM10, NO2, O3, SO2, CO) with units and freshness timestamps.
-- Hourly and daily forecast visualizations.
-- Historical trend visualization when reliable data exists.
+- AQI interpretation engine supporting local and global standards (US EPA AQI & European EAQI).
+- Pollutant cards (PM2.5, PM10, NO2, O3, SO2, CO) with units, freshness timestamps, and WHO 2021 comparisons.
+- Hourly and daily forecast visualizations with non-shifting timeline bars.
+- Atmospheric dispersion and winter boundary-layer ventilation index intelligence.
 - Multiple saved locations and primary location selection.
-- Lightweight CSS/SVG interactive globe prototype.
-- Accessible 2D map/list view alternative to the globe.
+- Hardware-accelerated 3D MapLibre GL Earth globe with orthographic projection, multi-axis rotation, satellite photorealism, anchor cities, and provider-backed coordinate probe.
+- Accessible 2D map/list grid view alternative for motion-sensitive and low-power devices.
+- Scientific provenance disclosure (CAMS atmospheric model vs. in-situ stations; US EPA vs. Indian CPCB AQI).
 
-*Deliverable:* Functional location-aware environmental intelligence dashboard.
+*Deliverable:* Functional, scientifically grounded location-aware environmental intelligence dashboard.
+*Status:* Technically implemented, tested, and verified (95 passing tests, zero type/lint errors, automated browser CDP audit). Formal Product Owner visual design and product sign-off remains pending.
 
-## Phase 3 — Personalization and daily routine planner
+## Phase 3 — Personalization, Coordinated Family Planner, and Actionable Routine Loop
 
-- Household profile management (household size, children, elderly, sensitivities).
-- Lifestyle profile (work/school hours, commute type/distance, outdoor exercise habits).
-- Deterministic recommendation engine matching AQI conditions to user schedule.
-- Interactive, editable daily routine planner.
-- Specific activity recommendations (outdoor exercise windows, ventilation times, errand timing).
-- Commute optimization guidance.
+- Household profile management supporting multi-member schedules (up to 4 members: children/students, working commuters, seniors/vulnerable, outdoor enthusiasts).
+- Coordinated Family Planner presentation aligning daily timings (school runs, commute windows, outdoor exercise, home ventilation).
+- Deterministic recommendation engine matching forecast AQI conditions and diurnal smog patterns to user schedules.
+- Actionable Daily Routine Loop: Full lifecycle actions (adopt, edit, complete, remove) with local-first persistence (`airaware_active_plan`).
+- Recommendation-to-impact connection: Specific activity recommendations with defensible exposure indicators (avoided peak exposure duration, concentration delta) and environmental emissions savings.
+- Interface and data contract preparation for contextual explanations (data schemas, UI explanation trigger buttons, and deterministic rule explanations; actual Cloudflare Workers AI generation is implemented in Phase 5).
 - Family and vulnerable group health advisories.
 
-*Deliverable:* Practical, personalized daily routine planner.
+*Deliverable:* Practical, personalized daily routine planner and coordinated family smog management system.
 
 ## Phase 4 — Indoor Air Intelligence
 
@@ -1349,16 +1374,17 @@ Development proceeds strictly through nine sequential phases. Do not advance to 
 
 *Deliverable:* Comprehensive indoor air improvement assistant.
 
-## Phase 5 — AI Air Copilot
+## Phase 5 — AI Air Copilot and Contextual Explanations
 
 - Cloudflare Workers AI exclusive adapter with verified three-tier model hierarchy (Gemma 4 26B, GLM-4.7 Flash, Granite 4.0 Micro).
-- Grounded prompt engineering pipeline incorporating live environmental facts and minimal profile context.
+- Grounded prompt engineering pipeline incorporating live environmental facts and minimal, sanitized profile context.
+- Actual implementation of Contextual AI Explanations ("Why this recommendation?") connected to recommendation cards using live forecast data.
 - Structured AI response validation using Zod.
 - Deterministic fallback engine providing instant offline/rule-based guidance upon AI failure.
 - Conversational UI with pre-built prompt suggestions and structured answers.
 - Privacy filter stripping sensitive personal data before AI transmission.
 
-*Deliverable:* Functional, data-grounded AI environmental assistant.
+*Deliverable:* Functional, data-grounded AI environmental assistant and in-situ explanation engine.
 
 ## Phase 6 — Cleaner Choices Explorer and Personal Impact Dashboard
 
@@ -1406,17 +1432,17 @@ AirAware is ready for final submission only when all 22 criteria are met:
 3. Environmental data displays clear source attribution, measurement method, and freshness timestamps.
 4. AQI standards (US AQI, European EAQI, local standards) are correctly identified and never mixed without explanation.
 5. Pollutant concentrations (PM2.5, PM10, NO2, O3, SO2, CO) are displayed with proper units and health categories.
-6. Short personalized onboarding captures essential lifestyle context without asking for intrusive medical data.
-7. Daily routine recommendations are deterministic-first, traceable to real environmental conditions and user context.
-8. Users can edit, adjust, and customize their recommended daily plans.
+6. Short personalized onboarding captures essential lifestyle and multi-member household context without asking for intrusive medical data.
+7. Daily routine recommendations are deterministic-first, traceable to real environmental conditions, and coordinate multi-member household schedules through a unified family planner.
+8. The Actionable Daily Routine Loop enables users to adopt, edit, complete, and remove recommended daily actions, with reliable local persistence.
 9. Indoor air intelligence provides actionable, practical advice for ventilation, cooking, dust, and filtration.
-10. The AI Air Copilot answers queries using grounded environmental facts and structured responses.
+10. The AI Air Copilot answers queries and provides in-situ contextual explanations ('Why this recommendation?') using grounded environmental facts and structured responses.
 11. AI provider failure or quota exhaustion triggers deterministic fallback without breaking the UI.
 12. Cleaner transport alternatives provide transparent, side-by-side comparisons.
-13. Personal impact calculations clearly display their emission factors, formulas, and assumptions.
-14. Saved locations, primary location, profile preferences, and habit logs persist reliably in local storage.
+13. Personal impact calculations clearly display their emission factors, formulas, and assumptions, utilizing defensible exposure indicators (avoided peak exposure hours, ambient concentration delta) rather than speculative inhaled-dose percentages, and strictly distinguishing personal exposure defense from environmental emissions savings without claiming ambient AQI reductions.
+14. Saved locations, primary location, profile preferences, household member schedules, and habit logs persist reliably in local storage.
 15. Stale, missing, or unavailable API data is honestly labelled and accompanied by cached safety guidance.
-16. The interactive Earth globe operates smoothly using lightweight techniques without requiring heavy 3D scenes.
+16. The interactive Earth globe operates smoothly using hardware-accelerated 3D MapLibre GL with orthographic projection, with an accessible 2D grid alternative for motion sensitivity.
 17. The entire application is fully responsive and visually polished across mobile, tablet, and desktop viewports.
 18. Accessibility standards (targeting WCAG 2.2 AA with actual verification beyond automated Lighthouse scores) are verified for keyboard navigation, contrast, screen reader accessibility, and `prefers-reduced-motion`.
 19. Security protections (server-side API proxies, input validation, zero client secrets) are verified.
@@ -1437,7 +1463,7 @@ You are the engineering agent responsible for implementing AirAware. Follow thes
 5. **Taste is the design authority:** Use `design-taste-frontend` for all visual direction, palette, theme, typography, and component aesthetic decisions.
 6. **Respect visual preferences:** Follow the approved soft, light, elegant, and sophisticated visual direction. Do NOT force a dark-first theme or hard-code the old navy/cyan palette.
 7. **Astryx is a library, not a design authority:** Treat Astryx as an application component library. Astryx must conform to the Taste-approved design tokens.
-8. **Verify compatibility before installing:** Formally verify package compatibility (Next.js, React 19, StyleX, TypeScript) before installing or upgrading dependencies.
+8. **Verify compatibility before installing:** Formally verify package compatibility (Next.js, React 19, Tailwind CSS, TypeScript) before installing or upgrading dependencies.
 9. **Zero-budget mandate:** Preserve the strict ₹0 budget and no-paid-fallback rule across all services and APIs.
 10. **Zero fabrication:** Never fabricate API data, AI responses, test results, performance metrics, or accessibility scores.
 11. **Keep evaluation parameters in view:** Maintain alignment with all Six PromptWars Evaluation Parameters throughout implementation.
