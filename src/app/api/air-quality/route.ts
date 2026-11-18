@@ -1,0 +1,89 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
+const AirQualityQuerySchema = z.object({
+  latitude: z.coerce.number().min(-90).max(90),
+  longitude: z.coerce.number().min(-180).max(180),
+  timezone: z.string().default('auto'),
+});
+
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+
+  const parseResult = AirQualityQuerySchema.safeParse({
+    latitude: searchParams.get('latitude'),
+    longitude: searchParams.get('longitude'),
+    timezone: searchParams.get('timezone') ?? 'auto',
+  });
+
+  if (!parseResult.success) {
+    return NextResponse.json(
+      { error: 'Invalid geographic coordinates provided' },
+      { status: 400 }
+    );
+  }
+
+  const { latitude, longitude, timezone } = parseResult.data;
+
+  try {
+    const currentParams = [
+      'european_aqi',
+      'us_aqi',
+      'pm10',
+      'pm2_5',
+      'carbon_monoxide',
+      'nitrogen_dioxide',
+      'sulphur_dioxide',
+      'ozone',
+    ].join(',');
+
+    const hourlyParams = [
+      'pm10',
+      'pm2_5',
+      'carbon_monoxide',
+      'nitrogen_dioxide',
+      'sulphur_dioxide',
+      'ozone',
+      'european_aqi',
+      'us_aqi',
+    ].join(',');
+
+    const targetUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${latitude}&longitude=${longitude}&current=${currentParams}&hourly=${hourlyParams}&forecast_days=2&timezone=${encodeURIComponent(
+      timezone
+    )}`;
+
+    const res = await fetch(targetUrl, {
+      next: { revalidate: 900 }, // 15-minute SWR caching
+      headers: {
+        Accept: 'application/json',
+      },
+    });
+
+    if (!res.ok) {
+      return NextResponse.json(
+        { error: `Air Quality provider responded with status ${res.status}` },
+        { status: 502 }
+      );
+    }
+
+    const data = await res.json();
+
+    if (!data.current || !data.hourly) {
+      return NextResponse.json(
+        { error: 'Environmental data is temporarily unavailable for this coordinate' },
+        { status: 502 }
+      );
+    }
+
+    return NextResponse.json(data, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=900, stale-while-revalidate=300',
+      },
+    });
+  } catch (err) {
+    return NextResponse.json(
+      { error: 'Failed to retrieve environmental data from provider' },
+      { status: 500 }
+    );
+  }
+}

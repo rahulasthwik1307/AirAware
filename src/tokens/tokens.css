@@ -69,6 +69,33 @@
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.04);
+
+  /* =========================================================================
+   * Provisional Astryx Bridge (Pending Taste Design Exploration)
+   * ========================================================================= */
+  --color-accent: var(--brand-primary);
+  --color-accent-muted: var(--brand-surface);
+  --color-on-accent: var(--ink-inverse);
+  --color-background-surface: var(--surface-card);
+  --color-background-body: var(--surface-ground);
+  --color-border: var(--border-subtle);
+  --color-border-emphasized: var(--border-strong);
+  --color-text-primary: var(--ink-primary);
+  --color-text-secondary: var(--ink-secondary);
+  --color-text-muted: var(--ink-muted);
+
+  /* Radius mapping */
+  --radius-inner: var(--r-sm);
+  --radius-element: var(--r-md);
+  --radius-container: var(--r-lg);
+
+  /* Status mapping */
+  --color-success: var(--aqi-good);
+  --color-success-muted: var(--aqi-good-bg);
+  --color-warning: var(--aqi-moderate);
+  --color-warning-muted: var(--aqi-moderate-bg);
+  --color-error: var(--aqi-unhealthy);
+  --color-error-muted: var(--aqi-unhealthy-bg);
 }
 
 @theme {
