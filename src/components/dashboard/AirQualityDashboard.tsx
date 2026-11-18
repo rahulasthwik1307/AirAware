@@ -156,16 +156,16 @@ export function AirQualityDashboard() {
       {/* Loading Skeletons */}
       {isLoading && (
         <div aria-busy="true" aria-label="Acquiring atmospheric telemetry..." className="space-y-4">
-          <div className="h-44 sm:h-52 rounded-lg bg-[var(--surface-subtle)] border border-[var(--border-subtle)] animate-pulse" />
+          <div className="h-44 sm:h-52 rounded-lg bg-(--surface-subtle) border border-(--border-subtle)ate-pulse" />
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {[...Array(6)].map((_, i) => (
               <div
                 key={i}
-                className="h-28 rounded-lg bg-[var(--surface-subtle)] border border-[var(--border-subtle)] animate-pulse"
+                className="h-28 rounded-lg bg-(--surface-subtle) border border-(--border-subtle) animate-pulse"
               />
             ))}
           </div>
-          <div className="h-32 rounded-lg bg-[var(--surface-subtle)] border border-[var(--border-subtle)] animate-pulse" />
+          <div className="h-32 rounded-lg bg-(--surface-subtle) border border-(--border-subtle) animate-pulse" />
         </div>
       )}
 
@@ -173,21 +173,21 @@ export function AirQualityDashboard() {
       {!isLoading && error && (
         <div
           role="alert"
-          className="rounded-lg border border-[var(--aqi-unhealthy-border)] bg-[var(--aqi-unhealthy-bg)] p-5 text-center"
+          className="rounded-lg border border-(--aqi-unhealthy-border) bg-(--aqi-unhealthy-bg) p-5 text-center"
         >
           <span className="text-xl font-mono" aria-hidden="true">
             ⚠️
           </span>
-          <h3 className="text-sm font-bold font-mono text-[var(--aqi-unhealthy)] mt-1.5 uppercase tracking-wide">
+          <h3 className="text-sm font-bold font-mono text-(--aqi-unhealthy) mt-1.5 uppercase tracking-wide">
             Atmospheric Telemetry Offline
           </h3>
-          <p className="text-xs text-[var(--ink-secondary)] mt-1 max-w-md mx-auto">
+          <p className="text-xs text-(--ink-secondary) mt-1 max-w-md mx-auto">
             {error}
           </p>
           <button
             type="button"
             onClick={handleRetry}
-            className="mt-3 px-3.5 py-1.5 rounded-md bg-[var(--brand-primary)] text-white text-xs font-mono font-bold shadow-xs hover:bg-[var(--brand-hover)] transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--brand-primary)]"
+            className="mt-3 px-3.5 py-1.5 rounded-md bg-(--brand-primary) text-white text-xs font-mono font-bold shadow-xs hover:bg-(--brand-hover) transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-(--brand-primary)"
           >
             RECONNECT SENSOR FEED
           </button>
@@ -198,22 +198,22 @@ export function AirQualityDashboard() {
       {!isLoading && !error && !selectedLocation && (
         <section
           aria-labelledby="welcome-discovery-heading"
-          className="rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-card)] p-6 sm:p-10 text-center shadow-xs"
+          className="rounded-lg border border-(--border-subtle) bg-(--surface-card) p-6 sm:p-10 text-center shadow-xs"
         >
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-[var(--brand-surface)] text-xl text-[var(--brand-primary)] border border-[var(--border-subtle)] mb-3 shadow-xs font-mono">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-(--brand-surface) text-xl text-(--brand-primary) border border-(--border-subtle) mb-3 shadow-xs font-mono">
             🌍
           </div>
           <h3
             id="welcome-discovery-heading"
-            className="text-lg sm:text-xl font-extrabold text-[var(--ink-primary)] tracking-tight font-sans"
+            className="text-lg sm:text-xl font-extrabold text-(--ink-primary) tracking-tight font-sans"
           >
             Futuristic Environmental Intelligence
           </h3>
-          <p className="mt-1.5 text-xs text-[var(--ink-secondary)] max-w-lg mx-auto leading-relaxed">
+          <p className="mt-1.5 text-xs text-(--ink-secondary) max-w-lg mx-auto leading-relaxed">
             Real-time atmospheric telemetry across 6 core criteria pollutants, 24-hour predictive
             modelling, and transparent open-science standards for any location on Earth.
           </p>
-          <p className="mt-3 text-[11px] font-mono font-bold text-[var(--ink-muted)] uppercase tracking-wider">
+          <p className="mt-3 text-[11px] font-mono font-bold text-(--ink-muted) uppercase tracking-wider">
             Enter a city name above or select a preset to initialize telemetry.
           </p>
         </section>

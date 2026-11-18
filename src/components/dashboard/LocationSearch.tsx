@@ -260,23 +260,25 @@ export function LocationSearch({
       </div>
 
       <div ref={containerRef} className="relative w-full max-w-4xl mx-auto">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-          {/* Main Search Bar with Futuristic Environmental Styling */}
-          <div className="relative flex-1">
-            <div className="flex items-center justify-between mb-1.5 px-0.5">
-              <label
-                htmlFor="location-search-input"
-                className="text-[11px] font-bold tracking-widest text-[var(--ink-secondary)] uppercase font-mono"
-              >
-                TARGET TELEMETRY // GLOBAL DISCOVERY
-              </label>
-              {selectedLocation && (
-                <span className="text-[11px] font-mono text-[var(--ink-muted)]">
-                  ACTIVE: {selectedLocation.latitude.toFixed(2)}°N, {selectedLocation.longitude.toFixed(2)}°E
-                </span>
-              )}
-            </div>
+        {/* Telemetry Header Bar Spanning Full Width */}
+        <div className="flex items-center justify-between mb-1.5 px-0.5">
+          <label
+            htmlFor="location-search-input"
+            className="text-[11px] font-bold tracking-widest text-[var(--ink-secondary)] uppercase font-mono"
+          >
+            TARGET TELEMETRY // GLOBAL DISCOVERY
+          </label>
+          {selectedLocation && (
+            <span className="text-[11px] font-mono text-[var(--ink-muted)]">
+              ACTIVE: {selectedLocation.latitude.toFixed(2)}°N, {selectedLocation.longitude.toFixed(2)}°E
+            </span>
+          )}
+        </div>
 
+        {/* Input & Precision GPS Action Controls */}
+        <div className="flex flex-col sm:flex-row items-stretch gap-2">
+          {/* Main Search Input Container */}
+          <div className="relative flex-1">
             <div className="relative flex items-center">
               <span
                 className="absolute left-3.5 text-sm text-[var(--ink-muted)] pointer-events-none font-mono"
@@ -357,25 +359,31 @@ export function LocationSearch({
             )}
           </div>
 
-          {/* Optional GPS Button */}
-          <div className="flex items-end">
-            <button
-              type="button"
-              onClick={handleGpsLocation}
-              disabled={gpsLoading || isLoading}
-              aria-label="Acquire coordinates from browser GPS"
-              className="w-full sm:w-auto h-11 px-3.5 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-card)] text-xs font-semibold text-[var(--ink-primary)] shadow-xs hover:bg-[var(--surface-subtle)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--brand-primary)] disabled:opacity-50 transition-all flex items-center justify-center gap-1.5 cursor-pointer font-mono"
-            >
-              {gpsLoading ? (
-                <span className="h-3 w-3 rounded-full border-2 border-[var(--brand-primary)] border-t-transparent animate-spin" />
-              ) : (
-                <span aria-hidden="true" className="text-sm">
-                  📍
-                </span>
-              )}
-              <span>GPS LOCATE</span>
-            </button>
-          </div>
+          {/* Optional GPS Button - Flush Alignment */}
+          <button
+            type="button"
+            onClick={handleGpsLocation}
+            disabled={gpsLoading || isLoading}
+            aria-label="Acquire coordinates from browser GPS"
+            className="w-full sm:w-auto h-11 px-4 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-card)] text-xs font-semibold text-[var(--ink-primary)] shadow-xs hover:bg-[var(--surface-subtle)] hover:border-[var(--border-strong)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--brand-primary)] disabled:opacity-50 transition-all flex items-center justify-center gap-2 cursor-pointer font-mono shrink-0"
+          >
+            {gpsLoading ? (
+              <span className="h-3.5 w-3.5 rounded-full border-2 border-[var(--brand-primary)] border-t-transparent animate-spin" />
+            ) : (
+              <svg
+                className="h-3.5 w-3.5 text-[var(--brand-primary)] shrink-0"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+                aria-hidden="true"
+              >
+                <circle cx="12" cy="12" r="3" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v3m0 14v3M2 12h3m14 0h3" />
+              </svg>
+            )}
+            <span>GPS LOCATE</span>
+          </button>
         </div>
 
         {/* Global Quick-Pick City Telemetry Pills */}
