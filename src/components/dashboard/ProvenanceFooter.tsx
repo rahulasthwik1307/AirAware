@@ -43,8 +43,8 @@ export function ProvenanceFooter({ report }: ProvenanceFooterProps) {
             . Models assimilate satellite observations, in-situ measurements, and meteorological forecasts.
           </p>
           <p className="mt-2 text-[11px] text-[var(--ink-muted)] leading-relaxed">
-            <strong>Disclaimer:</strong> Modelled grid forecasts reflect ambient regional conditions
-            (approximately 11km resolution) and are designed for general public awareness. They do
+            <strong>Disclaimer:</strong> Modelled grid forecasts reflect ambient regional conditions{' '}
+            {report ? `(${report.modelMetadata.spatialResolution})` : '(11–45km horizontal grid)'} and are designed for general public awareness. They do
             not replace street-level micro-sensors or official civil defense emergency directives.
           </p>
         </div>
@@ -55,7 +55,7 @@ export function ProvenanceFooter({ report }: ProvenanceFooterProps) {
               Model Run: {report.modelTimestamp}
             </span>
             <span>Interval: {report.intervalSeconds / 3600}h resolution</span>
-            <span>Dataset: CAMS Global & European Ensemble</span>
+            <span>Dataset: {report.modelMetadata.domainName}</span>
             <span className="text-[var(--brand-primary)] font-medium">✓ Model Data Validated</span>
           </div>
         )}

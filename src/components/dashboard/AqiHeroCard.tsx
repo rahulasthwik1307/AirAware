@@ -37,6 +37,9 @@ export function AqiHeroCard({ report, onSwitchStandard, isLoading = false }: Aqi
     }
   }
 
+  const feedLabel =
+    report.modelMetadata?.domain === 'CAMS_EUROPE' ? 'CAMS EUROPE ENSEMBLE' : 'CAMS GLOBAL IFS';
+
   return (
     <article
       aria-labelledby="hero-aqi-heading"
@@ -47,11 +50,11 @@ export function AqiHeroCard({ report, onSwitchStandard, isLoading = false }: Aqi
         <div className="flex items-center gap-3">
           <span className="inline-flex items-center gap-1.5 font-bold text-(--ink-primary)">
             <span className="h-2 w-2 rounded-full bg-(--brand-primary) animate-pulse" />
-            TELEMETRY FEED // CAMS ENSEMBLE
+            TELEMETRY FEED // {feedLabel}
           </span>
           <span className="hidden sm:inline text-(--border-strong)">|</span>
           <span className="hidden sm:inline">
-            COORDS: {coordinates.latitude.toFixed(2)}°N, {coordinates.longitude.toFixed(2)}°E
+            GRID CELL: {coordinates.latitude.toFixed(2)}°N, {coordinates.longitude.toFixed(2)}°E
           </span>
         </div>
         <div className="flex items-center gap-3">

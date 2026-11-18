@@ -93,6 +93,16 @@ export interface CpcbComparisonContext {
   readonly methodologyDifference: string;
 }
 
+export type AtmosphericModelDomain = 'CAMS_EUROPE' | 'CAMS_GLOBAL';
+
+export interface AtmosphericModelMetadata {
+  readonly domain: AtmosphericModelDomain;
+  readonly domainName: string;
+  readonly spatialResolution: string;
+  readonly temporalResolution: string;
+  readonly updateCadence: string;
+}
+
 export interface AirQualityReport {
   readonly location: GeoLocation;
   readonly modelTimestamp: string;
@@ -115,4 +125,5 @@ export interface AirQualityReport {
   };
   readonly averagingPeriodNote: string;
   readonly cpcbComparison: CpcbComparisonContext | null;
+  readonly modelMetadata: AtmosphericModelMetadata;
 }

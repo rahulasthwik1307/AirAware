@@ -96,8 +96,8 @@ export function ScientificGrounding({ report }: ScientificGroundingProps) {
 
         {/* Spatial Resolution & Scientific Model Physics */}
         <div className="text-[11px] text-[var(--ink-muted)] flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1 font-mono">
-          <span>MODEL PHYSICS: CAMS Atmospheric Composition (~11km horizontal cell)</span>
-          <span>SPATIAL DOMAIN: ECMWF Integrated Forecasting System (IFS)</span>
+          <span>MODEL PHYSICS: {report.modelMetadata.domainName} ({report.modelMetadata.spatialResolution})</span>
+          <span>CADENCE: {report.modelMetadata.temporalResolution} • {report.modelMetadata.updateCadence}</span>
         </div>
       </div>
     </section>

@@ -4,7 +4,12 @@
  * for unsupported jurisdictions.
  */
 
-import { AqiStandardKey, AqiStandardMetadata, StandardRole } from '../types';
+import {
+  AqiStandardKey,
+  AqiStandardMetadata,
+  AtmosphericModelMetadata,
+  StandardRole,
+} from '../types';
 
 /**
  * European countries/territories covered by the European Environment Agency (EEA) / CAMS European ensemble.
@@ -14,6 +19,31 @@ const EUROPEAN_COUNTRY_CODES = new Set([
   'IE', 'IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES',
   'SE', 'GB', 'IS', 'NO', 'CH', 'LI'
 ]);
+
+export function isEuropeanDomainCountry(countryCode: string): boolean {
+  return EUROPEAN_COUNTRY_CODES.has(countryCode.toUpperCase());
+}
+
+export function getAtmosphericModelMetadata(countryCode: string): AtmosphericModelMetadata {
+  const isEurope = isEuropeanDomainCountry(countryCode);
+  if (isEurope) {
+    return {
+      domain: 'CAMS_EUROPE',
+      domainName: 'CAMS European Air Quality Ensemble',
+      spatialResolution: '0.1° (~11 km horizontal grid)',
+      temporalResolution: 'Hourly forecasts (1h intervals)',
+      updateCadence: 'Daily (24h update cycle)',
+    };
+  }
+
+  return {
+    domain: 'CAMS_GLOBAL',
+    domainName: 'CAMS Global Atmospheric Composition (ECMWF IFS)',
+    spatialResolution: '0.4° (~45 km horizontal grid)',
+    temporalResolution: '3-hourly native, interpolated hourly in API',
+    updateCadence: '12-hourly update cycle',
+  };
+}
 
 export function getDefaultStandardForCountry(countryCode: string): AqiStandardKey {
   const code = countryCode.toUpperCase();

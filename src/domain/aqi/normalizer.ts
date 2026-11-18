@@ -20,7 +20,11 @@ import {
   PollutantKey,
   PollutantMeasurement,
 } from '../types';
-import { getDefaultStandardForCountry, resolveStandardMetadata } from './standards-resolver';
+import {
+  getDefaultStandardForCountry,
+  resolveStandardMetadata,
+  getAtmosphericModelMetadata,
+} from './standards-resolver';
 import {
   EAQI_TIERS,
   getEaqiPollutantLevel,
@@ -255,11 +259,13 @@ export function normalizeAirQualityReport(
       equivalentCategory: cpcbCat,
       estimatedAqiRange: cpcbRange,
       stationContext:
-        'Modelled ~11km regional grid. Physical CAAQMS monitors (e.g. Anand Vihar, RK Puram) measure localized ground plumes which typically report higher concentrations during thermal inversions.',
+        'Modelled ~45km regional grid (CAMS Global IFS). Physical CAAQMS monitors (e.g. Anand Vihar, RK Puram) measure localized ground plumes which typically report higher concentrations during thermal inversions.',
       methodologyDifference:
         'India CPCB NAQI permits up to 60 μg/m³ PM2.5 for "Satisfactory" (51–100), whereas US EPA classifies >35.4 μg/m³ as Unhealthy for Sensitive Groups (>100).',
     };
   }
+
+  const modelMetadata = getAtmosphericModelMetadata(location.countryCode);
 
   return {
     location,
@@ -283,5 +289,6 @@ export function normalizeAirQualityReport(
     },
     averagingPeriodNote,
     cpcbComparison,
+    modelMetadata,
   };
 }
