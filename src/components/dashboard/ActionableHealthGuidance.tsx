@@ -188,6 +188,19 @@ export function ActionableHealthGuidance({
   const cards = getActionCards(level);
 
   const getBadgeStyle = (type: ActionCard['badgeType']) => {
+    if (variant === 'light') {
+      switch (type) {
+        case 'good':
+          return 'bg-emerald-50 text-emerald-800 border-emerald-300';
+        case 'moderate':
+          return 'bg-amber-50 text-amber-800 border-amber-300';
+        case 'warning':
+          return 'bg-orange-50 text-orange-800 border-orange-300';
+        case 'alert':
+        default:
+          return 'bg-rose-50 text-rose-800 border-rose-300';
+      }
+    }
     switch (type) {
       case 'good':
         return 'bg-[var(--aqi-good-bg)] text-[var(--aqi-good)] border-[var(--aqi-good-border)]';
@@ -204,14 +217,14 @@ export function ActionableHealthGuidance({
   const isDark = variant === 'dark';
 
   return (
-    <div className={`w-full mt-4 pt-4 border-t ${isDark ? 'border-slate-800/80' : 'border-[var(--border-subtle)]'}`}>
+    <div className={`w-full mt-4 pt-4 border-t ${isDark ? 'border-slate-800/80' : 'border-slate-200/80'}`}>
       <div className="flex items-center justify-between mb-2.5">
-        <span className={`text-[11px] font-bold tracking-wider uppercase font-mono ${isDark ? 'text-slate-300' : 'text-[var(--ink-secondary)]'}`}>
+        <span className={`text-[11px] font-bold tracking-wider uppercase font-mono ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
           Actionable Health Guidance // Real-Time Protocols
         </span>
         {dominantPollutant && (
-          <span className={`text-[10px] font-mono ${isDark ? 'text-slate-400' : 'text-[var(--ink-muted)]'}`}>
-            Primary Driver: <strong className={isDark ? 'text-sky-300 uppercase' : 'text-[var(--ink-primary)]'}>{dominantPollutant}</strong>
+          <span className={`text-[10px] font-mono ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+            Primary Driver: <strong className={isDark ? 'text-sky-300 uppercase' : 'text-sky-700 uppercase'}>{dominantPollutant}</strong>
           </span>
         )}
       </div>
@@ -223,7 +236,7 @@ export function ActionableHealthGuidance({
             className={`flex items-start gap-2.5 p-3 rounded-xl border transition-all ${
               isDark
                 ? 'border-slate-800/90 bg-slate-900/60 backdrop-blur-md hover:bg-slate-900/90 hover:border-slate-700/80 shadow-md'
-                : 'border-[var(--border-subtle)] bg-[var(--surface-subtle)]/60 hover:bg-[var(--surface-subtle)]'
+                : 'border-slate-200/90 bg-white/95 backdrop-blur-md hover:bg-white hover:border-slate-300 shadow-xs hover:shadow-md'
             }`}
           >
             <span className="text-xl shrink-0 mt-0.5 select-none" aria-hidden="true">
@@ -231,7 +244,7 @@ export function ActionableHealthGuidance({
             </span>
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between gap-1 mb-1">
-                <span className={`text-xs font-bold ${isDark ? 'text-white' : 'text-[var(--ink-primary)]'}`}>
+                <span className={`text-xs font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
                   {card.title}
                 </span>
                 <span
@@ -242,7 +255,7 @@ export function ActionableHealthGuidance({
                   {card.badge}
                 </span>
               </div>
-              <p className={`text-[11px] leading-relaxed ${isDark ? 'text-slate-300' : 'text-[var(--ink-secondary)]'}`}>
+              <p className={`text-[11px] leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
                 {card.recommendation}
               </p>
             </div>

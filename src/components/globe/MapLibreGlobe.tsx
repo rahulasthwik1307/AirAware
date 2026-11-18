@@ -12,6 +12,7 @@ interface MapLibreGlobeProps {
   readonly aqiColor?: string;
   readonly aqiTierLabel?: string;
   readonly currentAqi?: number | null;
+  readonly theme?: 'light' | 'dark';
 }
 
 export type GlobeMapStyleKey = 'satellite' | 'streets' | 'scientific';
@@ -203,6 +204,7 @@ export function MapLibreGlobe({
   onSelectLocation,
   aqiColor = '#10B981',
   currentAqi,
+  theme = 'light',
 }: MapLibreGlobeProps) {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -246,10 +248,10 @@ export function MapLibreGlobe({
 
       try {
         map.setSky({
-          'sky-color': '#020617',
-          'horizon-color': '#38bdf8',
-          'fog-color': '#0b1528',
-          'fog-ground-blend': 0.7,
+          'sky-color': theme === 'light' ? '#BAE6FD' : '#020617',
+          'horizon-color': theme === 'light' ? '#E0F2FE' : '#38bdf8',
+          'fog-color': theme === 'light' ? '#F0F9FF' : '#0b1528',
+          'fog-ground-blend': 0.8,
         });
       } catch {}
     });
@@ -572,11 +574,52 @@ export function MapLibreGlobe({
     map.resetNorthPitch({ duration: 800 });
   };
 
+  // Focus and select location from inspect card
+  const handleSelectInspectLocation = useCallback((data: LocationInspectData) => {
+    onSelectLocation({
+      id: Math.floor(Math.abs(data.latitude * 1000 + data.longitude * 100)),
+      name: data.name,
+      country: data.country,
+      countryCode: data.countryCode,
+      latitude: data.latitude,
+      longitude: data.longitude,
+      timezone: 'auto',
+    });
+    const map = mapRef.current;
+    if (map) {
+      map.flyTo({
+        center: [data.longitude, data.latitude],
+        zoom: Math.max(map.getZoom(), 4.5),
+        duration: 1600,
+      });
+    }
+  }, [onSelectLocation]);
+
+  const isGridPoint = inspectData ? (inspectData.countryCode === 'GRID' || inspectData.name.includes('°')) : false;
+  const inspectTitle = inspectData ? (isGridPoint ? 'Global Grid Coordinate' : inspectData.name) : '';
+  const inspectSubtitle = inspectData
+    ? isGridPoint
+      ? `${Math.abs(inspectData.latitude).toFixed(2)}°${inspectData.latitude >= 0 ? 'N' : 'S'}, ${Math.abs(inspectData.longitude).toFixed(2)}°${inspectData.longitude >= 0 ? 'E' : 'W'} • Numerical Model`
+      : `${inspectData.country} • ${Math.abs(inspectData.latitude).toFixed(2)}°N, ${Math.abs(inspectData.longitude).toFixed(2)}°E`
+    : '';
+
   return (
-    <div className="relative w-full h-[540px] sm:h-[620px] lg:h-[680px] rounded-3xl overflow-hidden border border-white/10 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] bg-[#070B14] select-none">
+    <div
+      className={`relative w-full h-[540px] sm:h-[620px] lg:h-[680px] rounded-3xl overflow-hidden border select-none transition-all ${
+        theme === 'light'
+          ? 'border-slate-200/90 shadow-[0_12px_40px_-10px_rgba(15,23,42,0.1)] bg-gradient-to-b from-[#E0F2FE] via-[#F0F9FF] to-[#E6F0FA]'
+          : 'border-white/10 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] bg-[#070B14]'
+      }`}
+    >
       {/* 3D Atmospheric Celestial Aura / Orbital Ring Glow */}
       <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-        <div className="w-[500px] h-[500px] sm:w-[580px] sm:h-[580px] rounded-full bg-radial from-transparent via-sky-500/10 to-transparent blur-3xl pointer-events-none" />
+        <div
+          className={`w-[500px] h-[500px] sm:w-[580px] sm:h-[580px] rounded-full blur-3xl pointer-events-none ${
+            theme === 'light'
+              ? 'bg-radial from-transparent via-sky-400/25 to-transparent'
+              : 'bg-radial from-transparent via-sky-500/10 to-transparent'
+          }`}
+        />
       </div>
 
       {/* MapLibre WebGL Canvas Container */}
@@ -585,12 +628,22 @@ export function MapLibreGlobe({
       {/* Floating Top Controls: Projection, Layer, and Compass */}
       <div className="absolute top-4 inset-x-4 flex items-center justify-between z-20 pointer-events-none">
         {/* Left: 3D Globe vs 2D Mercator Toggle */}
-        <div className="inline-flex p-1 rounded-xl bg-slate-900/85 backdrop-blur-md border border-white/15 shadow-xl text-[11px] font-mono font-bold pointer-events-auto">
+        <div
+          className={`inline-flex p-1 rounded-xl backdrop-blur-md shadow-lg text-[11px] font-mono font-bold pointer-events-auto ${
+            theme === 'light'
+              ? 'bg-white/90 border border-slate-200/90 text-slate-700'
+              : 'bg-slate-900/85 border border-white/15 text-slate-300'
+          }`}
+        >
           <button
             type="button"
             onClick={() => setIsGlobe(true)}
             className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
-              isGlobe ? 'bg-sky-500 text-white shadow-xs font-black' : 'text-slate-400 hover:text-white'
+              isGlobe
+                ? 'bg-sky-600 text-white shadow-xs font-black'
+                : theme === 'light'
+                ? 'text-slate-600 hover:text-slate-900'
+                : 'text-slate-400 hover:text-white'
             }`}
           >
             🌐 3D Globe
@@ -599,7 +652,11 @@ export function MapLibreGlobe({
             type="button"
             onClick={() => setIsGlobe(false)}
             className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
-              !isGlobe ? 'bg-sky-500 text-white shadow-xs font-black' : 'text-slate-400 hover:text-white'
+              !isGlobe
+                ? 'bg-sky-600 text-white shadow-xs font-black'
+                : theme === 'light'
+                ? 'text-slate-600 hover:text-slate-900'
+                : 'text-slate-400 hover:text-white'
             }`}
           >
             🗺️ 2D Map
@@ -609,12 +666,22 @@ export function MapLibreGlobe({
         {/* Right: Map Style & Compass */}
         <div className="flex items-center gap-2 pointer-events-auto">
           {/* Style Switcher */}
-          <div className="inline-flex p-1 rounded-xl bg-slate-900/85 backdrop-blur-md border border-white/15 shadow-xl text-[11px] font-mono font-bold">
+          <div
+            className={`inline-flex p-1 rounded-xl backdrop-blur-md shadow-lg text-[11px] font-mono font-bold ${
+              theme === 'light'
+                ? 'bg-white/90 border border-slate-200/90'
+                : 'bg-slate-900/85 border border-white/15'
+            }`}
+          >
             <button
               type="button"
               onClick={() => setActiveStyle('satellite')}
               className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
-                activeStyle === 'satellite' ? 'bg-sky-500 text-white shadow-xs font-black' : 'text-slate-400 hover:text-white'
+                activeStyle === 'satellite'
+                  ? 'bg-sky-600 text-white shadow-xs font-black'
+                  : theme === 'light'
+                  ? 'text-slate-600 hover:text-slate-900'
+                  : 'text-slate-400 hover:text-white'
               }`}
               title="Photorealistic Earth satellite imagery with city labels"
             >
@@ -624,7 +691,11 @@ export function MapLibreGlobe({
               type="button"
               onClick={() => setActiveStyle('streets')}
               className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
-                activeStyle === 'streets' ? 'bg-sky-500 text-white shadow-xs font-black' : 'text-slate-400 hover:text-white'
+                activeStyle === 'streets'
+                  ? 'bg-sky-600 text-white shadow-xs font-black'
+                  : theme === 'light'
+                  ? 'text-slate-600 hover:text-slate-900'
+                  : 'text-slate-400 hover:text-white'
               }`}
               title="Detailed topographic and street network"
             >
@@ -634,7 +705,11 @@ export function MapLibreGlobe({
               type="button"
               onClick={() => setActiveStyle('scientific')}
               className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
-                activeStyle === 'scientific' ? 'bg-sky-500 text-white shadow-xs font-black' : 'text-slate-400 hover:text-white'
+                activeStyle === 'scientific'
+                  ? 'bg-sky-600 text-white shadow-xs font-black'
+                  : theme === 'light'
+                  ? 'text-slate-600 hover:text-slate-900'
+                  : 'text-slate-400 hover:text-white'
               }`}
               title="Clean scientific vector grid"
             >
@@ -646,7 +721,11 @@ export function MapLibreGlobe({
           <button
             type="button"
             onClick={handleResetNorth}
-            className="w-8 h-8 rounded-xl bg-slate-900/85 backdrop-blur-md border border-white/15 shadow-xl flex items-center justify-center text-slate-300 hover:text-white hover:bg-slate-800 transition-all font-mono font-bold text-xs cursor-pointer"
+            className={`w-8 h-8 rounded-xl backdrop-blur-md shadow-lg flex items-center justify-center transition-all font-mono font-bold text-xs cursor-pointer ${
+              theme === 'light'
+                ? 'bg-white/90 border border-slate-200/90 text-slate-700 hover:text-slate-900 hover:bg-slate-100'
+                : 'bg-slate-900/85 border border-white/15 text-slate-300 hover:text-white hover:bg-slate-800'
+            }`}
             title="Reset North & Pitch"
             aria-label="Reset North"
           >
@@ -655,48 +734,93 @@ export function MapLibreGlobe({
         </div>
       </div>
 
-      {/* Floating Interactive Environmental Intelligence Card (PromptWars Challenge 06 & Spec Section 7.2) */}
+      {/* Floating Interactive Environmental Intelligence Card */}
       {inspectData && (
         <div
           role="dialog"
           aria-label="Environmental Intelligence Telemetry"
-          className="absolute top-16 right-4 sm:right-6 max-w-[340px] w-full p-4 rounded-2xl bg-slate-900/90 backdrop-blur-xl border border-white/20 shadow-2xl z-30 text-white animate-fadeIn pointer-events-auto"
+          className={`absolute top-16 right-4 sm:right-6 max-w-[285px] w-full p-3 rounded-2xl backdrop-blur-xl shadow-[0_14px_38px_-8px_rgba(15,23,42,0.2)] z-30 animate-fadeIn pointer-events-auto transition-all ${
+            theme === 'light'
+              ? 'bg-white/95 border border-slate-200/90 text-slate-900'
+              : 'bg-slate-900/95 border border-white/20 text-white'
+          }`}
         >
-          {/* Header */}
-          <div className="flex items-start justify-between gap-2 border-b border-white/10 pb-2 mb-2.5">
+          {/* Header: Clean Non-Redundant Location Anchor */}
+          <div
+            className={`flex items-start justify-between gap-1.5 border-b pb-2 mb-2 ${
+              theme === 'light' ? 'border-slate-100' : 'border-white/10'
+            }`}
+          >
             <div className="flex items-center gap-2 min-w-0">
-              <span className="h-2.5 w-2.5 rounded-full animate-ping shrink-0" style={{ backgroundColor: inspectData.tierColor }} />
-              <div className="truncate">
-                <span className="font-bold text-xs font-sans text-white block truncate">
-                  {inspectData.name}, {inspectData.country}
-                </span>
-                <span className="text-[10px] font-mono text-slate-400">
-                  {inspectData.latitude.toFixed(2)}°N, {inspectData.longitude.toFixed(2)}°E
+              <span className="relative flex h-2.5 w-2.5 shrink-0">
+                <span
+                  className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
+                  style={{ backgroundColor: inspectData.tierColor }}
+                />
+                <span
+                  className="relative inline-flex rounded-full h-2.5 w-2.5 border border-white shadow-2xs"
+                  style={{ backgroundColor: inspectData.tierColor }}
+                />
+              </span>
+              <div className="min-w-0">
+                <h4
+                  className={`font-extrabold text-[12.5px] font-sans leading-tight truncate ${
+                    theme === 'light' ? 'text-slate-900' : 'text-white'
+                  }`}
+                >
+                  {inspectTitle}
+                </h4>
+                <span
+                  className={`text-[9.5px] font-mono leading-tight block truncate mt-0.5 ${
+                    theme === 'light' ? 'text-slate-500 font-medium' : 'text-slate-400'
+                  }`}
+                >
+                  {inspectSubtitle}
                 </span>
               </div>
             </div>
             <button
               type="button"
               onClick={() => setInspectData(null)}
-              className="text-slate-400 hover:text-white text-base px-1 cursor-pointer leading-none"
+              className={`w-5 h-5 rounded-full flex items-center justify-center transition-colors text-xs font-bold leading-none cursor-pointer shrink-0 ${
+                theme === 'light'
+                  ? 'text-slate-400 hover:text-slate-800 hover:bg-slate-100'
+                  : 'text-slate-400 hover:text-white hover:bg-white/10'
+              }`}
               aria-label="Close telemetry preview"
             >
               ×
             </button>
           </div>
 
-          {/* AQI Stat & Tier Badge */}
-          <div className="flex items-center justify-between mb-2">
+          {/* Prominently Highlighted: AQI & Health Tier Centerpiece */}
+          <div
+            className={`flex items-center justify-between px-2.5 py-1.5 rounded-xl border mb-2 shadow-2xs ${
+              theme === 'light'
+                ? 'bg-gradient-to-r from-slate-50 to-white border-slate-200/70'
+                : 'bg-white/[0.04] border-white/10'
+            }`}
+          >
             <div className="flex items-baseline gap-1.5">
-              <span className="text-3xl font-black font-mono tracking-tight" style={{ color: inspectData.tierColor }}>
+              <span
+                className="text-3xl font-black font-mono tracking-tight tabular-nums"
+                style={{ color: inspectData.tierColor }}
+              >
                 {inspectData.aqi}
               </span>
-              <span className="text-[11px] font-mono text-slate-400">AQI</span>
+              <div className="flex flex-col">
+                <span className={`text-[10px] font-mono font-bold leading-none ${theme === 'light' ? 'text-slate-700' : 'text-slate-200'}`}>
+                  AQI
+                </span>
+                <span className={`text-[8px] font-mono uppercase tracking-wider ${theme === 'light' ? 'text-slate-400' : 'text-slate-500'}`}>
+                  US EPA
+                </span>
+              </div>
             </div>
             <span
-              className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider border shadow-xs"
+              className="px-2.5 py-0.5 rounded-full text-[9.5px] font-mono font-extrabold uppercase tracking-wider border shadow-2xs"
               style={{
-                backgroundColor: `${inspectData.tierColor}25`,
+                backgroundColor: `${inspectData.tierColor}16`,
                 borderColor: `${inspectData.tierColor}60`,
                 color: inspectData.tierColor,
               }}
@@ -705,50 +829,56 @@ export function MapLibreGlobe({
             </span>
           </div>
 
-          {/* Micro Weather Metrics */}
-          <div className="grid grid-cols-3 gap-1.5 py-1.5 px-2 rounded-xl bg-white/[0.04] border border-white/10 text-[10px] font-mono text-center mb-2.5">
-            <div>
-              <span className="text-slate-400 block text-[9px]">TEMP</span>
-              <span className="text-white font-bold">{inspectData.temperature}°C</span>
+          {/* Micro Weather Metrics Row with Visual Icons */}
+          <div
+            className={`grid grid-cols-3 gap-1 py-1.5 px-1.5 rounded-xl text-center mb-2 border ${
+              theme === 'light'
+                ? 'bg-slate-50/70 border-slate-200/60 text-slate-800'
+                : 'bg-white/[0.03] border-white/10 text-white'
+            }`}
+          >
+            <div className="flex flex-col items-center">
+              <span className={`text-[8.5px] font-mono font-bold uppercase tracking-wider flex items-center gap-0.5 ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
+                <span>🌡️</span> TEMP
+              </span>
+              <span className="text-[11px] font-mono font-black mt-0.5">{inspectData.temperature}°C</span>
             </div>
-            <div>
-              <span className="text-slate-400 block text-[9px]">HUMIDITY</span>
-              <span className="text-white font-bold">{inspectData.humidity}%</span>
+            <div className={`flex flex-col items-center border-x px-0.5 ${theme === 'light' ? 'border-slate-200/60' : 'border-white/10'}`}>
+              <span className={`text-[8.5px] font-mono font-bold uppercase tracking-wider flex items-center gap-0.5 ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
+                <span>💧</span> HUMID
+              </span>
+              <span className="text-[11px] font-mono font-black mt-0.5">{inspectData.humidity}%</span>
             </div>
-            <div>
-              <span className="text-slate-400 block text-[9px]">WIND</span>
-              <span className="text-white font-bold">{inspectData.windSpeed}k</span>
+            <div className="flex flex-col items-center">
+              <span className={`text-[8.5px] font-mono font-bold uppercase tracking-wider flex items-center gap-0.5 ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
+                <span>💨</span> WIND
+              </span>
+              <span className="text-[11px] font-mono font-black mt-0.5">{inspectData.windSpeed}k</span>
             </div>
           </div>
 
-          {/* Practical Health Guidance (PromptWars Challenge 06) */}
-          <div className="p-2 rounded-xl bg-sky-950/40 border border-sky-400/20 text-[11px] text-sky-200 leading-snug mb-3">
-            <p>{inspectData.healthAction}</p>
+          {/* Actionable Health Insight (PromptWars Challenge 06) */}
+          <div
+            className={`flex items-start gap-1.5 p-2 rounded-xl text-[10.5px] leading-tight mb-2.5 border shadow-2xs ${
+              theme === 'light'
+                ? 'bg-sky-50/80 border-sky-200/80 text-sky-950'
+                : 'bg-sky-950/40 border-sky-400/20 text-sky-200'
+            }`}
+          >
+            <span className="text-xs shrink-0 select-none mt-0.5" aria-hidden="true">
+              🛡️
+            </span>
+            <p className="font-medium line-clamp-2">{inspectData.healthAction}</p>
           </div>
 
-          {/* Instant Telemetry Switch Action (Zero Page Reload) */}
+          {/* Primary Action Button (Compact & Sleek) */}
           <button
             type="button"
-            onClick={() => {
-              onSelectLocation({
-                id: Math.floor(Math.abs(inspectData.latitude * 1000 + inspectData.longitude * 100)),
-                name: inspectData.name,
-                country: inspectData.country,
-                countryCode: inspectData.countryCode,
-                latitude: inspectData.latitude,
-                longitude: inspectData.longitude,
-                timezone: 'auto',
-              });
-              mapRef.current?.flyTo({
-                center: [inspectData.longitude, inspectData.latitude],
-                zoom: Math.max(mapRef.current?.getZoom() ?? 2, 4.5),
-                duration: 1600,
-              });
-            }}
-            className="w-full py-2 px-3 rounded-xl bg-sky-500 hover:bg-sky-400 active:scale-[0.98] text-slate-950 font-mono font-black text-xs transition-all shadow-lg cursor-pointer flex items-center justify-center gap-1.5"
+            onClick={() => handleSelectInspectLocation(inspectData)}
+            className="w-full py-1.5 px-3 rounded-xl bg-gradient-to-r from-sky-600 to-sky-500 hover:from-sky-500 hover:to-sky-400 active:scale-[0.98] text-white font-mono font-bold text-[11px] tracking-wide transition-all shadow-xs hover:shadow-md cursor-pointer flex items-center justify-center gap-1.5"
           >
             <span>🎯 Focus &amp; Load Telemetry</span>
-            <span>↵</span>
+            <span className="text-xs">↵</span>
           </button>
         </div>
       )}
@@ -756,12 +886,22 @@ export function MapLibreGlobe({
       {/* Bottom Floating Telemetry Bar */}
       <div className="absolute bottom-4 inset-x-4 flex items-center justify-between z-20 pointer-events-none">
         {/* Left: Action Buttons (Auto-Rotate & Focus Active) */}
-        <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-900/85 backdrop-blur-md border border-white/15 shadow-xl text-[11px] font-mono font-bold pointer-events-auto">
+        <div
+          className={`flex items-center gap-1.5 p-1 rounded-xl backdrop-blur-md shadow-lg text-[11px] font-mono font-bold pointer-events-auto ${
+            theme === 'light'
+              ? 'bg-white/90 border border-slate-200/90'
+              : 'bg-slate-900/85 border border-white/15'
+          }`}
+        >
           <button
             type="button"
             onClick={() => setIsRotating((r) => !r)}
             className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
-              isRotating ? 'bg-sky-500 text-white shadow-xs font-black' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+              isRotating
+                ? 'bg-sky-600 text-white shadow-xs font-black'
+                : theme === 'light'
+                ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800'
             }`}
           >
             {isRotating ? '🔄 ROTATING' : '⏸️ PAUSED'}
@@ -769,27 +909,49 @@ export function MapLibreGlobe({
           <button
             type="button"
             onClick={handleFocusActive}
-            className="px-3 py-1 text-sky-300 hover:text-white hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+            className={`px-3 py-1 rounded-lg transition-colors cursor-pointer ${
+              theme === 'light'
+                ? 'text-sky-700 hover:text-sky-900 hover:bg-slate-100'
+                : 'text-sky-300 hover:text-white hover:bg-slate-800'
+            }`}
           >
             🎯 FOCUS ACTIVE
           </button>
         </div>
 
         {/* Center: Real-Time HUD Coordinates & Zoom Level */}
-        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/85 backdrop-blur-md border border-white/15 shadow-xl text-[10px] font-mono text-slate-300">
-          <span className="text-sky-300 font-bold">
+        <div
+          className={`hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl backdrop-blur-md shadow-lg text-[10px] font-mono ${
+            theme === 'light'
+              ? 'bg-white/90 border border-slate-200/90 text-slate-600'
+              : 'bg-slate-900/85 border border-white/15 text-slate-300'
+          }`}
+        >
+          <span className={`font-bold ${theme === 'light' ? 'text-sky-700' : 'text-sky-300'}`}>
             {cursorCoords ? `${cursorCoords.lat}°N, ${cursorCoords.lng}°E` : 'Explore Globe'}
           </span>
-          <span className="text-white/20">|</span>
-          <span>Zoom: {currentZoom} ({currentZoom < 4 ? 'Space' : currentZoom < 9 ? 'Region' : 'Street Level'})</span>
+          <span className={theme === 'light' ? 'text-slate-300' : 'text-white/20'}>|</span>
+          <span>
+            Zoom: {currentZoom} ({currentZoom < 4 ? 'Space' : currentZoom < 9 ? 'Region' : 'Street Level'})
+          </span>
         </div>
 
         {/* Right: Zoom + / - Controls */}
-        <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-900/85 backdrop-blur-md border border-white/15 shadow-xl text-[11px] font-mono pointer-events-auto">
+        <div
+          className={`flex items-center gap-1 p-1 rounded-xl backdrop-blur-md shadow-lg text-[11px] font-mono pointer-events-auto ${
+            theme === 'light'
+              ? 'bg-white/90 border border-slate-200/90'
+              : 'bg-slate-900/85 border border-white/15'
+          }`}
+        >
           <button
             type="button"
             onClick={() => handleZoom(1)}
-            className="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold transition-colors cursor-pointer"
+            className={`w-7 h-7 flex items-center justify-center rounded-lg font-bold transition-colors cursor-pointer ${
+              theme === 'light'
+                ? 'bg-slate-100 hover:bg-slate-200 text-slate-800'
+                : 'bg-slate-800 hover:bg-slate-700 text-white'
+            }`}
             aria-label="Zoom in"
           >
             +
@@ -797,7 +959,11 @@ export function MapLibreGlobe({
           <button
             type="button"
             onClick={() => handleZoom(-1)}
-            className="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold transition-colors cursor-pointer"
+            className={`w-7 h-7 flex items-center justify-center rounded-lg font-bold transition-colors cursor-pointer ${
+              theme === 'light'
+                ? 'bg-slate-100 hover:bg-slate-200 text-slate-800'
+                : 'bg-slate-800 hover:bg-slate-700 text-white'
+            }`}
             aria-label="Zoom out"
           >
             −
