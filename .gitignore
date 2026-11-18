@@ -47,6 +47,10 @@ next-env.d.ts
 shots/
 shots
 
+# Chrome scratch temporary files / profiles
+.chrome-scratch-polished/
+.chrome-scratch-polished
+
 # Agent configuration & skills
 .agents/
 

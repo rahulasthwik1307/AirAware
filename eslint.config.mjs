@@ -6,6 +6,8 @@ const config = [
       '.next/**',
       'node_modules/**',
       '.agents/**',
+      '.taste-skill/**',
+      'shots/**',
       'dist/**',
       'postcss.config.mjs',
     ],

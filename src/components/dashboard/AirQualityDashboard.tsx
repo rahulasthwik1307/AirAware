@@ -207,8 +207,8 @@ export function AirQualityDashboard() {
         isLoading={isLoading}
       />
 
-      {/* Loading Skeletons */}
-      {isLoading && (
+      {/* Loading Skeletons: Only display on initial load before any telemetry report exists */}
+      {isLoading && !report && (
         <div aria-busy="true" aria-label="Acquiring atmospheric telemetry..." className="space-y-4">
           <div className="h-56 sm:h-64 rounded-2xl bg-[var(--surface-subtle)] border border-[var(--border-subtle)] animate-pulse" />
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
@@ -224,7 +224,7 @@ export function AirQualityDashboard() {
       )}
 
       {/* Error State with Manual Retry */}
-      {!isLoading && error && (
+      {!isLoading && error && !report && (
         <div
           role="alert"
           className="rounded-xl border border-[var(--aqi-unhealthy-border)] bg-[var(--aqi-unhealthy-bg)] p-6 text-center shadow-xs"
@@ -273,8 +273,8 @@ export function AirQualityDashboard() {
         </section>
       )}
 
-      {/* Main Environmental Intelligence Content */}
-      {!isLoading && !error && report && (
+      {/* Main Environmental Intelligence Content (Remains smoothly mounted during telemetry transitions) */}
+      {report && (
         <div className="space-y-7 animate-fadeIn">
           {/* 2. Signature Asymmetric Hero: Primary Telemetry + Interactive Earth Globe */}
           <AqiHeroCard
