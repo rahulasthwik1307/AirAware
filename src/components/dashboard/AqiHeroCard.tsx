@@ -1,11 +1,27 @@
 'use client';
 
 import React, { useState } from 'react';
+import dynamic from 'next/dynamic';
 import { AirQualityReport, AqiStandardKey, GeoLocation } from '@/domain/types';
-import { InteractiveEarthGlobe } from '@/components/globe/InteractiveEarthGlobe';
 import { ActionableHealthGuidance } from './ActionableHealthGuidance';
 import { WeatherData } from '@/app/api/weather/route';
 import { GLOBE_REFERENCE_CITIES } from '../globe/world-landmass';
+
+// Dynamically import MapLibre 3D Globe with SSR disabled to protect WebGL contexts
+const MapLibreGlobe = dynamic(
+  () => import('@/components/globe/MapLibreGlobe').then((mod) => mod.MapLibreGlobe),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-full h-[540px] sm:h-[620px] lg:h-[680px] rounded-2xl flex flex-col items-center justify-center bg-slate-900 text-white gap-3 border border-slate-700/60 shadow-inner select-none">
+        <div className="h-9 w-9 animate-spin rounded-full border-3 border-sky-400 border-t-transparent" />
+        <span className="text-xs font-mono text-slate-300 font-bold uppercase tracking-widest">
+          Loading 3D Planetary Engine...
+        </span>
+      </div>
+    ),
+  }
+);
 
 interface AqiHeroCardProps {
   readonly report: AirQualityReport;
@@ -56,10 +72,20 @@ export function AqiHeroCard({
   return (
     <article
       aria-labelledby="hero-aqi-heading"
-      className="relative overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-[0_10px_35px_-10px_rgba(15,23,42,0.08)] text-slate-900 transition-all"
+      className="relative overflow-hidden rounded-3xl border border-slate-300/80 shadow-[0_12px_40px_-10px_rgba(15,23,42,0.10)] text-slate-900 transition-all"
+      style={{
+        backgroundColor: '#EBF2F8',
+        backgroundImage: `
+          radial-gradient(ellipse 70% 50% at 90% 15%, rgba(56, 189, 248, 0.18) 0%, transparent 65%),
+          radial-gradient(ellipse 50% 60% at 10% 85%, rgba(20, 184, 166, 0.14) 0%, transparent 65%),
+          linear-gradient(rgba(15, 23, 42, 0.025) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(15, 23, 42, 0.025) 1px, transparent 1px)
+        `,
+        backgroundSize: '100% 100%, 100% 100%, 36px 36px, 36px 36px',
+      }}
     >
       {/* Precision Telemetry Status Ribbon */}
-      <div className="flex flex-wrap items-center justify-between border-b border-slate-100 bg-slate-50/80 px-6 py-2.5 sm:px-8 text-[11px] font-mono text-slate-600">
+      <div className="flex flex-wrap items-center justify-between border-b border-slate-200/90 bg-white/80 backdrop-blur-md px-6 py-2.5 sm:px-8 text-[11px] font-mono text-slate-700">
         <div className="flex items-center gap-2 sm:gap-3">
           <span className="inline-flex items-center gap-1.5 font-bold text-slate-800">
             <span
@@ -69,7 +95,7 @@ export function AqiHeroCard({
             {feedLabel}
           </span>
           <span className="text-slate-300">|</span>
-          <span className="text-sky-700 font-medium">
+          <span className="text-sky-800 font-semibold">
             {coordinates.latitude.toFixed(2)}°N, {coordinates.longitude.toFixed(2)}°E
           </span>
         </div>
@@ -77,35 +103,35 @@ export function AqiHeroCard({
         <div className="flex items-center gap-3">
           <span className="hidden sm:inline text-slate-500">Model Run: {modelTimestamp}</span>
           <span className="hidden sm:inline text-slate-300">|</span>
-          <span className="font-semibold text-slate-700">Local: {localTime}</span>
+          <span className="font-semibold text-slate-800">Local: {localTime}</span>
         </div>
       </div>
 
       <div className="p-6 sm:p-8">
-        {/* Main Stage Grid: Left = Telemetry Cards (~33%), Right = Dominant 3D Globe / 2D List (~67%) */}
+        {/* Main Stage Grid: Left = Telemetry Deck (~33%), Right = Dominant 3D Globe (~67%) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
           {/* Left Column: Refined Glassmorphic Telemetry Deck */}
           <div className="lg:col-span-4 flex flex-col justify-between gap-4 z-10">
             {/* Title & Active Region */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-sky-700">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-sky-800">
                   Global Environmental Intelligence
                 </span>
                 <div
                   role="radiogroup"
                   aria-label="Active Air Quality Index Standard"
-                  className="inline-flex p-0.5 rounded-lg bg-slate-100 border border-slate-200 text-[10px] font-mono font-bold"
+                  className="inline-flex p-0.5 rounded-xl bg-white/90 border border-slate-200/90 shadow-xs text-[10px] font-mono font-bold"
                 >
                   <button
                     type="button"
                     role="radio"
                     aria-checked={activeStandard === 'EUROPEAN_EAQI'}
                     onClick={() => onSwitchStandard('EUROPEAN_EAQI')}
-                    className={`px-2 py-0.5 rounded transition-all cursor-pointer ${
+                    className={`px-2.5 py-0.5 rounded-lg transition-all cursor-pointer ${
                       activeStandard === 'EUROPEAN_EAQI'
-                        ? 'bg-white text-slate-900 shadow-xs'
-                        : 'text-slate-500 hover:text-slate-900'
+                        ? 'bg-slate-900 text-white shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
                     EAQI
@@ -115,10 +141,10 @@ export function AqiHeroCard({
                     role="radio"
                     aria-checked={activeStandard === 'US_EPA'}
                     onClick={() => onSwitchStandard('US_EPA')}
-                    className={`px-2 py-0.5 rounded transition-all cursor-pointer ${
+                    className={`px-2.5 py-0.5 rounded-lg transition-all cursor-pointer ${
                       activeStandard === 'US_EPA'
-                        ? 'bg-white text-slate-900 shadow-xs'
-                        : 'text-slate-500 hover:text-slate-900'
+                        ? 'bg-slate-900 text-white shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
                     US EPA
@@ -126,7 +152,7 @@ export function AqiHeroCard({
                 </div>
               </div>
 
-              {/* Consistent, Uniform Typography (Zero Italic) */}
+              {/* Clean, Uniform Typography (No Italic) */}
               <h1
                 id="hero-aqi-heading"
                 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-900 font-sans"
@@ -134,17 +160,17 @@ export function AqiHeroCard({
                 Air Quality Index
               </h1>
 
-              <div className="flex items-center gap-2 text-xs font-mono text-slate-500 pt-0.5">
+              <div className="flex items-center gap-2 text-xs font-mono text-slate-600 pt-0.5">
                 <span>{localTime || 'Real-time telemetry'}</span>
                 <span>•</span>
-                <span className="text-teal-700 font-semibold truncate">
+                <span className="text-teal-800 font-bold truncate">
                   {location.name}, {location.country} [{location.countryCode}]
                 </span>
               </div>
             </div>
 
             {/* Card 1: Main Statistics Card */}
-            <div className="rounded-2xl bg-gradient-to-br from-slate-50/90 to-white border border-slate-200/90 p-5 shadow-xs hover:shadow-md transition-all space-y-3">
+            <div className="rounded-2xl bg-white/95 backdrop-blur-xl border border-slate-200/90 p-5 shadow-sm hover:shadow-md transition-all space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-mono font-bold tracking-wider uppercase text-slate-500">
                   Main Statistics
@@ -170,30 +196,30 @@ export function AqiHeroCard({
                 >
                   {hasAqi ? providerAqi : '--'}
                 </span>
-                <span className="text-xs font-mono text-slate-400 font-semibold">
+                <span className="text-xs font-mono text-slate-500 font-semibold">
                   / {activeStandard === 'EUROPEAN_EAQI' ? '120 Scale' : '500 Scale'}
                 </span>
               </div>
 
-              <div className="flex items-center justify-between text-xs font-mono text-slate-600 pt-2 border-t border-slate-100">
+              <div className="flex items-center justify-between text-xs font-mono text-slate-700 pt-2 border-t border-slate-100">
                 <span>
-                  Dominant: <strong className="text-slate-800 uppercase">{dominantPollutant ? dominantPollutant.toUpperCase() : 'PM2.5'}</strong>
+                  Dominant: <strong className="text-slate-900 uppercase">{dominantPollutant ? dominantPollutant.toUpperCase() : 'PM2.5'}</strong>
                 </span>
                 <span>
                   Wind:{' '}
-                  <strong className="text-slate-800">
+                  <strong className="text-slate-900">
                     {weather?.windSpeed !== null && weather?.windSpeed !== undefined ? `${weather.windSpeed} km/h` : 'Calm'}
                   </strong>
                 </span>
               </div>
 
-              <p className="text-xs text-slate-500 leading-relaxed">
+              <p className="text-xs text-slate-600 leading-relaxed">
                 {tier?.description || 'Real-time atmospheric composition based on verified CAMS global runs.'}
               </p>
             </div>
 
             {/* Card 2: Risk of Pollution / Weather Dispersion */}
-            <div className="rounded-2xl bg-gradient-to-br from-sky-50/40 via-white to-slate-50/60 border border-slate-200/90 p-5 shadow-xs hover:shadow-md transition-all space-y-3">
+            <div className="rounded-2xl bg-white/95 backdrop-blur-xl border border-slate-200/90 p-5 shadow-sm hover:shadow-md transition-all space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-mono font-bold tracking-wider uppercase text-slate-500">
                   Risk of Pollution
@@ -204,7 +230,7 @@ export function AqiHeroCard({
               </div>
 
               <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-extrabold font-mono text-sky-700">
+                <span className="text-3xl font-extrabold font-mono text-sky-800">
                   {weather?.dispersionIndex === 'POOR' ? '72%' : weather?.dispersionIndex === 'GOOD' ? '18%' : '35%'}
                 </span>
                 <span className="text-xs text-slate-600 font-medium truncate">
@@ -213,20 +239,20 @@ export function AqiHeroCard({
               </div>
 
               <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-100 text-[11px] font-mono">
-                <div className="bg-white/80 p-2 rounded-xl border border-slate-200/70 text-center shadow-xs">
-                  <span className="text-slate-400 block text-[9px] font-bold">TEMP</span>
+                <div className="bg-slate-50/90 p-2 rounded-xl border border-slate-200/80 text-center shadow-xs">
+                  <span className="text-slate-500 block text-[9px] font-bold">TEMP</span>
                   <span className="text-slate-800 font-bold">
                     {weather?.temperature !== null && weather?.temperature !== undefined ? `${weather.temperature}°C` : '--'}
                   </span>
                 </div>
-                <div className="bg-white/80 p-2 rounded-xl border border-slate-200/70 text-center shadow-xs">
-                  <span className="text-slate-400 block text-[9px] font-bold">HUMIDITY</span>
+                <div className="bg-slate-50/90 p-2 rounded-xl border border-slate-200/80 text-center shadow-xs">
+                  <span className="text-slate-500 block text-[9px] font-bold">HUMIDITY</span>
                   <span className="text-slate-800 font-bold">
                     {weather?.humidity !== null && weather?.humidity !== undefined ? `${weather.humidity}%` : '--'}
                   </span>
                 </div>
-                <div className="bg-white/80 p-2 rounded-xl border border-slate-200/70 text-center shadow-xs">
-                  <span className="text-slate-400 block text-[9px] font-bold">WIND</span>
+                <div className="bg-slate-50/90 p-2 rounded-xl border border-slate-200/80 text-center shadow-xs">
+                  <span className="text-slate-500 block text-[9px] font-bold">WIND</span>
                   <span className="text-slate-800 font-bold truncate">
                     {weather?.windDirectionCardinal || 'N'} {weather?.windSpeed !== null && weather?.windSpeed !== undefined ? `${weather.windSpeed}k` : ''}
                   </span>
@@ -234,41 +260,41 @@ export function AqiHeroCard({
               </div>
             </div>
 
-            {/* Geographical Telemetry Anchor (Duplicate presets removed) */}
-            <div className="flex items-center justify-between text-[11px] font-mono text-slate-500 pt-1 border-t border-slate-100">
+            {/* Geographical Telemetry Anchor (Unified, Clean) */}
+            <div className="flex items-center justify-between text-[11px] font-mono text-slate-600 pt-1 border-t border-slate-200/80">
               <span>
-                Telemetry Grid: <strong className="text-slate-700">{coordinates.latitude.toFixed(3)}°N, {coordinates.longitude.toFixed(3)}°E</strong>
+                Telemetry Grid: <strong className="text-slate-800">{coordinates.latitude.toFixed(3)}°N, {coordinates.longitude.toFixed(3)}°E</strong>
               </span>
-              <span className="text-slate-400 text-[10px]">
+              <span className="text-slate-500 text-[10px]">
                 Resolution: 0.4° (~45 km)
               </span>
             </div>
           </div>
 
-          {/* Right Column: Dominant 3D Globe with Accessible 2D Grid Switcher */}
+          {/* Right Column: Dominant MapLibre 3D Globe with 2D Grid Switcher */}
           <div className="lg:col-span-8 relative flex flex-col items-center justify-center">
             {/* Visual Viewport Header with 2D / 3D Mode Toggle (Spec Section 7.2 & 14.1) */}
             <div className="w-full flex items-center justify-between px-2 mb-2">
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-mono font-bold tracking-widest text-slate-500 uppercase">
-                  Global Earth Telemetry
+                <span className="text-[10px] font-mono font-bold tracking-widest text-slate-600 uppercase">
+                  Global Earth Telemetry • 3D Space to Street Engine
                 </span>
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
               </div>
 
               {/* View Switcher: 3D Earth Globe vs Accessible 2D Global Grid */}
               <div
                 role="group"
                 aria-label="Environmental Visualization Mode"
-                className="inline-flex p-0.5 rounded-xl bg-slate-100 border border-slate-200 text-[11px] font-mono font-bold"
+                className="inline-flex p-0.5 rounded-xl bg-white/95 border border-slate-200/90 shadow-sm text-[11px] font-mono font-bold"
               >
                 <button
                   type="button"
                   onClick={() => setViewMode('3d')}
                   className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
                     viewMode === '3d'
-                      ? 'bg-white text-slate-900 shadow-xs'
-                      : 'text-slate-500 hover:text-slate-900'
+                      ? 'bg-slate-900 text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
                   🌐 3D Globe
@@ -278,8 +304,8 @@ export function AqiHeroCard({
                   onClick={() => setViewMode('grid')}
                   className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
                     viewMode === 'grid'
-                      ? 'bg-white text-slate-900 shadow-xs'
-                      : 'text-slate-500 hover:text-slate-900'
+                      ? 'bg-slate-900 text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
                   📋 Global Grid (2D)
@@ -287,10 +313,10 @@ export function AqiHeroCard({
               </div>
             </div>
 
-            {/* View Mode 1: Signature 3D Interactive Earth Globe */}
+            {/* View Mode 1: Signature MapLibre 3D Globe (Space to Street Zoom) */}
             {viewMode === '3d' && (
               <div className="w-full relative flex items-center justify-center">
-                <InteractiveEarthGlobe
+                <MapLibreGlobe
                   selectedLocation={location}
                   onSelectLocation={onSelectLocation}
                   aqiColor={tier?.colorToken || '#0F766E'}
@@ -302,7 +328,7 @@ export function AqiHeroCard({
 
             {/* View Mode 2: Accessible 2D Global Reference Grid (Master Spec Section 7.2 & 14.1) */}
             {viewMode === 'grid' && (
-              <div className="w-full h-[540px] sm:h-[620px] lg:h-[680px] rounded-2xl border border-slate-200/80 bg-slate-50/50 p-5 overflow-y-auto space-y-3">
+              <div className="w-full h-[540px] sm:h-[620px] lg:h-[680px] rounded-2xl border border-slate-200/90 bg-white/90 p-5 overflow-y-auto space-y-3 shadow-inner">
                 <div className="border-b border-slate-200 pb-3">
                   <h3 className="text-sm font-bold font-sans text-slate-800">
                     Accessible Global Environmental Telemetry
@@ -392,8 +418,8 @@ export function AqiHeroCard({
         </div>
 
         {/* Continuous Linear Atmospheric Spectrum Bar */}
-        <div className="mt-8 pt-5 border-t border-slate-100">
-          <div className="flex items-center justify-between text-[10px] font-mono text-slate-500 uppercase mb-2">
+        <div className="mt-8 pt-5 border-t border-slate-200/80">
+          <div className="flex items-center justify-between text-[10px] font-mono text-slate-600 uppercase mb-2">
             <span>Index Spectrum Range</span>
             <span>Value: {hasAqi ? `${providerAqi} (${tier?.label})` : 'N/A'}</span>
           </div>
@@ -404,12 +430,12 @@ export function AqiHeroCard({
                 className="absolute top-0 -translate-x-1/2 flex flex-col items-center"
                 style={{ left: `${spectrumPercent}%` }}
               >
-                <div className="w-3 h-3 bg-white border-2 border-slate-900 rounded-full shadow-md -mt-0.5" />
+                <div className="w-3.5 h-3.5 bg-white border-2 border-slate-900 rounded-full shadow-md -mt-0.75" />
               </div>
             )}
           </div>
 
-          <div className="flex justify-between text-[10px] font-mono text-slate-400 mt-2">
+          <div className="flex justify-between text-[10px] font-mono text-slate-500 mt-2">
             <span>0 Good</span>
             <span>50 Mod</span>
             <span>100 USG</span>
@@ -428,7 +454,7 @@ export function AqiHeroCard({
           />
         </div>
 
-        <p className="text-[11px] text-slate-400 mt-4 leading-relaxed border-t border-slate-100 pt-3">
+        <p className="text-[11px] text-slate-500 mt-4 leading-relaxed border-t border-slate-200/80 pt-3">
           {averagingPeriodNote}
         </p>
       </div>
