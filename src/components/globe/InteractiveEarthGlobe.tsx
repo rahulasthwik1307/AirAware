@@ -234,6 +234,21 @@ export function InteractiveEarthGlobe({
     isDown: false,
   });
 
+  // Polar-Locked Orientation: North is strictly locked UP (+Y axis)
+  // yaw = rotation around Earth's polar axis (longitude)
+  // pitch = tilt around horizontal viewing axis (latitude angle, clamped to ±45°)
+  const orientationRef = useRef<{
+    yaw: number;
+    pitch: number;
+    targetYaw: number | null;
+    targetPitch: number | null;
+  }>({
+    yaw: -( (78.5 * Math.PI) / 180 + Math.PI / 2 ), // Initial facing India longitude
+    pitch: 0.1, // Subtle natural 6° viewing pitch
+    targetYaw: null,
+    targetPitch: null,
+  });
+
   // Three.js instances ref
   const threeRef = useRef<{
     scene: THREE.Scene;
@@ -250,23 +265,30 @@ export function InteractiveEarthGlobe({
     velocityX: number;
     velocityY: number;
     animId: number | null;
-    targetQuaternion: THREE.Quaternion | null;
   } | null>(null);
 
-  // Smoothly pivots globe to face a target (lat, lon) directly using Quaternion SLERP
+  // Smoothly pivots globe to face a target (lat, lon) strictly keeping North UP
   const pivotToLocation = useCallback((lat: number, lon: number) => {
-    const t = threeRef.current;
-    if (!t) return;
-    const localPos = latLonToVector3(lat, lon, 2.05);
+    const o = orientationRef.current;
+    const lambda = (lon * Math.PI) / 180;
+    // Calculate target yaw around North-South polar axis (+Y)
+    const rawTargetYaw = -(lambda + Math.PI / 2);
+    // Bring latitude into view with subtle natural perspective (clamped within safe range)
+    const targetPitch = Math.max(-0.6, Math.min(0.6, (lat - 8) * (Math.PI / 180)));
 
-    // Target orientation: Bring selected point to face the camera (+Z) with a subtle 8° natural perspective tilt
-    const desiredTarget = new THREE.Vector3(0, 0.14, 0.99).normalize();
-    t.targetQuaternion = new THREE.Quaternion().setFromUnitVectors(
-      localPos.clone().normalize(),
-      desiredTarget
-    );
-    t.velocityX = 0;
-    t.velocityY = 0;
+    // Shortest angular path around longitude circle (avoids spinning the long way around)
+    let diff = (rawTargetYaw - o.yaw) % (2 * Math.PI);
+    if (diff > Math.PI) diff -= 2 * Math.PI;
+    if (diff < -Math.PI) diff += 2 * Math.PI;
+
+    o.targetYaw = o.yaw + diff;
+    o.targetPitch = targetPitch;
+
+    const t = threeRef.current;
+    if (t) {
+      t.velocityX = 0;
+      t.velocityY = 0;
+    }
   }, []);
 
   // Initialize Three.js Scene
@@ -345,9 +367,9 @@ export function InteractiveEarthGlobe({
 
     const borderGeometry = new THREE.BufferGeometry().setFromPoints(borderPoints);
     const borderMaterial = new THREE.LineBasicMaterial({
-      color: 0x38bdf8, // Luminous cyan/teal
+      color: 0x0284c7, // Subtle ocean-depth teal/slate (replaces aggressive neon blue)
       transparent: true,
-      opacity: 0.38,
+      opacity: 0.32,
     });
     const borderLines = new THREE.LineSegments(borderGeometry, borderMaterial);
     earthGroup.add(borderLines);
@@ -400,7 +422,6 @@ export function InteractiveEarthGlobe({
       velocityX: 0,
       velocityY: 0,
       animId: null,
-      targetQuaternion: null,
     };
 
     // Responsive Resize Observer
@@ -458,29 +479,36 @@ export function InteractiveEarthGlobe({
       const deltaSec = Math.min((time - lastTime) / 1000, 0.1);
       lastTime = time;
 
-      // Handle Smooth Inertial Dragging, Pivot Slerp, or Gentle Auto-Rotation
+      // Handle Smooth Inertial Dragging, Polar Pivot, or Gentle Auto-Rotation
+      const o = orientationRef.current;
       if (!t.isDragging) {
-        if (t.targetQuaternion !== null) {
-          // Smooth spherical quaternion interpolation directly to the target location
-          t.earthGroup.quaternion.slerp(t.targetQuaternion, 0.08);
-
-          if (t.earthGroup.quaternion.angleTo(t.targetQuaternion) < 0.005) {
-            t.targetQuaternion = null;
+        if (o.targetYaw !== null && o.targetPitch !== null) {
+          // Smooth polar interpolation
+          o.yaw += (o.targetYaw - o.yaw) * 0.08;
+          o.pitch += (o.targetPitch - o.pitch) * 0.08;
+          if (Math.abs(o.targetYaw - o.yaw) < 0.002 && Math.abs(o.targetPitch - o.pitch) < 0.002) {
+            o.yaw = o.targetYaw;
+            o.pitch = o.targetPitch;
+            o.targetYaw = null;
+            o.targetPitch = null;
           }
         } else if (isRotating) {
-          // Gentle celestial rotation (~2.2 deg/sec) around the planet's polar axis
-          const rotDelta = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), deltaSec * 0.038);
-          t.earthGroup.quaternion.multiply(rotDelta);
+          // Gentle celestial rotation around Earth's polar axis (Eastward spin)
+          o.yaw += deltaSec * 0.035;
         } else {
           // Damped momentum from drag release
           if (Math.abs(t.velocityX) > 0.0001 || Math.abs(t.velocityY) > 0.0001) {
-            const rotDeltaY = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), t.velocityX);
-            const rotDeltaX = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), t.velocityY);
-            t.earthGroup.quaternion.multiply(rotDeltaY).multiply(rotDeltaX);
+            o.yaw += t.velocityX;
+            o.pitch = Math.max(-0.75, Math.min(0.75, o.pitch - t.velocityY));
             t.velocityX *= 0.92;
             t.velocityY *= 0.92;
           }
         }
+
+        // Reconstruct orientation strictly with North pointing UP
+        const qY = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), o.yaw);
+        const qX = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), o.pitch);
+        t.earthGroup.quaternion.copy(qX.multiply(qY));
       }
 
       const canvas = canvasRef.current;
@@ -632,7 +660,8 @@ export function InteractiveEarthGlobe({
     t.previousMouseY = e.clientY;
     t.velocityX = 0;
     t.velocityY = 0;
-    t.targetQuaternion = null;
+    orientationRef.current.targetYaw = null;
+    orientationRef.current.targetPitch = null;
 
     dragTrackerRef.current = {
       startX: e.clientX,
@@ -664,9 +693,15 @@ export function InteractiveEarthGlobe({
       t.velocityX = deltaX * 0.005;
       t.velocityY = deltaY * 0.005;
 
-      const rotDeltaY = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), t.velocityX);
-      const rotDeltaX = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), t.velocityY);
-      t.earthGroup.quaternion.multiply(rotDeltaY).multiply(rotDeltaX);
+      const o = orientationRef.current;
+      o.yaw += deltaX * 0.005;
+      // Pitch strictly clamped between -45° and +45° so Earth never flips upside down or sideways
+      o.pitch = Math.max(-0.75, Math.min(0.75, o.pitch - deltaY * 0.005));
+
+      // Reconstruct orientation strictly with North pointing UP
+      const qY = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), o.yaw);
+      const qX = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), o.pitch);
+      t.earthGroup.quaternion.copy(qX.multiply(qY));
       return;
     }
 
@@ -771,14 +806,14 @@ export function InteractiveEarthGlobe({
         aria-label="Interactive 3D Earth Globe. Drag to rotate. Click any country to inspect."
       />
 
-      {/* Luminous Country Name Labels on the Globe Surface */}
+      {/* Country Name Labels on the Globe Surface */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         {countryLabels.map((lbl) => {
           if (!lbl.visible) return null;
           return (
             <div
               key={lbl.name}
-              className="absolute -translate-x-1/2 -translate-y-1/2 text-[10px] font-mono font-bold tracking-widest text-sky-300/80 drop-shadow-md select-none transition-opacity duration-150"
+              className="absolute -translate-x-1/2 -translate-y-1/2 text-[10px] font-mono font-black tracking-widest text-slate-800 drop-shadow-[0_1px_2px_rgba(255,255,255,0.9)] select-none transition-opacity duration-150"
               style={{ left: `${lbl.screenX}px`, top: `${lbl.screenY}px` }}
             >
               {lbl.name}
@@ -816,13 +851,13 @@ export function InteractiveEarthGlobe({
 
               {/* Numbered AQI Badge Bubble */}
               <div
-                className={`px-2 py-0.5 rounded-full font-mono font-black text-white shadow-xl border border-white/25 backdrop-blur-md flex items-center gap-1 ${
-                  pin.isActive ? 'text-xs ring-1 ring-white/50' : 'text-[11px]'
+                className={`px-2 py-0.5 rounded-full font-mono font-black text-white shadow-xl border border-white/40 backdrop-blur-md flex items-center gap-1 ${
+                  pin.isActive ? 'text-xs ring-2 ring-white/80' : 'text-[11px]'
                 }`}
-                style={{ backgroundColor: `${pin.colorHex}EE` }}
+                style={{ backgroundColor: `${pin.colorHex}F0` }}
               >
                 <span>{pin.name}</span>
-                <span className="opacity-75">[{pin.aqi}]</span>
+                <span className="opacity-80">[{pin.aqi}]</span>
               </div>
             </div>
           );
@@ -838,20 +873,20 @@ export function InteractiveEarthGlobe({
             top: `${Math.min(Math.max(activeDisplayPoint.screenY - 90, 20), dimensions.height - 180)}px`,
           }}
         >
-          <div className="rounded-xl bg-[#071322]/95 backdrop-blur-xl border border-sky-500/50 p-3.5 shadow-2xl text-left min-w-[220px] max-w-[270px] animate-fadeIn">
-            <div className="flex items-center justify-between gap-2 border-b border-white/10 pb-1.5 mb-2">
-              <span className="text-[11px] font-mono font-bold text-sky-400 truncate">
+          <div className="rounded-2xl bg-white/95 backdrop-blur-xl border border-slate-200/90 p-4 shadow-2xl text-left min-w-[220px] max-w-[270px] animate-fadeIn text-slate-900">
+            <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-2 mb-2">
+              <span className="text-xs font-mono font-bold text-slate-800 truncate">
                 {activeDisplayPoint.name}
               </span>
               <div className="flex items-center gap-1">
-                <span className="text-[9px] font-mono bg-sky-950 text-sky-300 px-1.5 py-0.5 rounded border border-sky-800">
+                <span className="text-[10px] font-mono font-bold bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded border border-slate-200">
                   {activeDisplayPoint.countryCode}
                 </span>
                 {lockedPoint && (
                   <button
                     type="button"
                     onClick={() => setLockedPoint(null)}
-                    className="text-slate-400 hover:text-white text-xs px-1 cursor-pointer"
+                    className="text-slate-400 hover:text-slate-700 text-sm px-1 cursor-pointer"
                     aria-label="Close card"
                   >
                     ×
@@ -862,21 +897,21 @@ export function InteractiveEarthGlobe({
 
             <div className="flex items-baseline gap-2 mb-1.5">
               <span
-                className="text-2xl font-black font-mono tracking-tight"
+                className="text-3xl font-black font-mono tracking-tight tabular-nums"
                 style={{ color: activeDisplayPoint.colorHex }}
               >
                 {activeDisplayPoint.aqi}
               </span>
-              <span className="text-[10px] font-semibold text-slate-300 leading-tight">
+              <span className="text-[11px] font-bold text-slate-600 uppercase leading-tight truncate">
                 {activeDisplayPoint.category}
               </span>
             </div>
 
-            <div className="text-[10px] text-slate-400 font-mono flex items-center gap-2 mb-3">
+            <div className="text-[10px] text-slate-500 font-mono flex items-center gap-2 mb-3">
               <span>{activeDisplayPoint.weatherSummary}</span>
             </div>
 
-            {/* Explicit Set Active Button — Seamless Two-Way Synchronization */}
+            {/* Explicit Set Active Button — Two-Way Dashboard Synchronization */}
             <button
               type="button"
               onClick={() => {
@@ -893,7 +928,7 @@ export function InteractiveEarthGlobe({
                 pivotToLocation(activeDisplayPoint.latitude, activeDisplayPoint.longitude);
                 setLockedPoint(null);
               }}
-              className="w-full py-1.5 px-3 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 text-[10px] font-mono font-bold tracking-wide transition-all shadow-md cursor-pointer flex items-center justify-center gap-1.5"
+              className="w-full py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-mono font-bold tracking-wide transition-all shadow-md cursor-pointer flex items-center justify-center gap-1.5"
             >
               <span>Set as Active Location</span>
               <span>↵</span>
@@ -905,14 +940,14 @@ export function InteractiveEarthGlobe({
       {/* Bottom Controls Bar: Mode Pills & Zoom */}
       <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between z-20 pointer-events-auto">
         {/* 3D GLOBE / ROTATE MODE PILL */}
-        <div className="inline-flex items-center rounded-lg bg-slate-900/85 backdrop-blur-md border border-slate-700/60 p-1 shadow-lg text-[11px] font-mono">
+        <div className="inline-flex items-center rounded-xl bg-white/90 backdrop-blur-md border border-slate-200/90 p-1 shadow-md text-[11px] font-mono text-slate-700">
           <button
             type="button"
             onClick={() => setIsRotating(!isRotating)}
-            className={`px-3 py-1 rounded font-bold transition-all cursor-pointer ${
+            className={`px-3 py-1 rounded-lg font-bold transition-all cursor-pointer ${
               isRotating
-                ? 'bg-sky-500 text-slate-950 shadow-xs'
-                : 'text-slate-300 hover:text-white'
+                ? 'bg-slate-900 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
             {isRotating ? '3D ROTATING' : '3D PAUSED'}
@@ -925,19 +960,19 @@ export function InteractiveEarthGlobe({
                 pivotToLocation(selectedLocation.latitude, selectedLocation.longitude);
               }
             }}
-            className="px-3 py-1 text-sky-400 hover:text-white font-bold transition-colors cursor-pointer"
+            className="px-3 py-1 text-sky-700 hover:text-sky-900 hover:bg-sky-50 rounded-lg font-bold transition-colors cursor-pointer"
           >
             FOCUS ACTIVE
           </button>
         </div>
 
         {/* ZOOM CONTROLS */}
-        <div className="flex items-center gap-1 bg-slate-900/85 backdrop-blur-md border border-slate-700/60 rounded-lg p-1 shadow-lg text-[11px] font-mono text-slate-300">
+        <div className="flex items-center gap-1 bg-white/90 backdrop-blur-md border border-slate-200/90 rounded-xl p-1 shadow-md text-[11px] font-mono text-slate-700">
           <span className="px-2 text-[10px] uppercase font-bold text-slate-400">Zoom</span>
           <button
             type="button"
             onClick={() => setZoomLevel((z) => Math.max(4.5, z - 0.5))}
-            className="w-6 h-6 flex items-center justify-center rounded bg-slate-800/80 hover:bg-slate-700 text-white font-bold transition-colors cursor-pointer"
+            className="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold transition-colors cursor-pointer"
             aria-label="Zoom in"
           >
             +
@@ -945,7 +980,7 @@ export function InteractiveEarthGlobe({
           <button
             type="button"
             onClick={() => setZoomLevel((z) => Math.min(8.5, z + 0.5))}
-            className="w-6 h-6 flex items-center justify-center rounded bg-slate-800/80 hover:bg-slate-700 text-white font-bold transition-colors cursor-pointer"
+            className="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold transition-colors cursor-pointer"
             aria-label="Zoom out"
           >
             -
