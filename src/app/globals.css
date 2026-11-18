@@ -56,4 +56,28 @@
   .tabular-nums {
     font-variant-numeric: tabular-nums;
   }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fadeIn {
+    animation: fadeIn 0.35s ease-out forwards;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-fadeIn {
+      animation: none !important;
+    }
+    .animate-pulse {
+      animation: none !important;
+    }
+  }
 }

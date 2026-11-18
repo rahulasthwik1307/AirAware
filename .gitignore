@@ -41,6 +41,11 @@ next-env.d.ts
 
 # Taste skill temporary files / cache
 .taste-skill/
+.taste-skill
+
+# Visual review screenshots & captures
+shots/
+shots
 
 # Agent configuration & skills
 .agents/

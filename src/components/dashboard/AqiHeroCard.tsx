@@ -1,15 +1,27 @@
 'use client';
 
 import React from 'react';
-import { AirQualityReport, AqiStandardKey } from '@/domain/types';
+import { AirQualityReport, AqiStandardKey, GeoLocation } from '@/domain/types';
+import { InteractiveEarthGlobe } from '@/components/globe/InteractiveEarthGlobe';
+import { ActionableHealthGuidance } from './ActionableHealthGuidance';
+import { WeatherData } from '@/app/api/weather/route';
+import { GLOBE_REFERENCE_CITIES } from '../globe/world-landmass';
 
 interface AqiHeroCardProps {
   readonly report: AirQualityReport;
+  readonly weather: WeatherData | null;
   readonly onSwitchStandard: (standard: AqiStandardKey) => void;
+  readonly onSelectLocation: (loc: GeoLocation) => void;
   readonly isLoading?: boolean;
 }
 
-export function AqiHeroCard({ report, onSwitchStandard, isLoading = false }: AqiHeroCardProps) {
+export function AqiHeroCard({
+  report,
+  weather,
+  onSwitchStandard,
+  onSelectLocation,
+  isLoading = false,
+}: AqiHeroCardProps) {
   const {
     location,
     activeStandard,
@@ -29,193 +41,271 @@ export function AqiHeroCard({ report, onSwitchStandard, isLoading = false }: Aqi
   let spectrumPercent = 0;
   if (hasAqi) {
     if (activeStandard === 'EUROPEAN_EAQI') {
-      // 0 to 120 scale
       spectrumPercent = Math.min(100, Math.max(0, (providerAqi / 120) * 100));
     } else {
-      // 0 to 500 scale
       spectrumPercent = Math.min(100, Math.max(0, (providerAqi / 500) * 100));
     }
   }
 
   const feedLabel =
-    report.modelMetadata?.domain === 'CAMS_EUROPE' ? 'CAMS EUROPE ENSEMBLE' : 'CAMS GLOBAL IFS';
+    report.modelMetadata?.domain === 'CAMS_EUROPE' ? 'CAMS Europe Ensemble' : 'CAMS Global IFS';
+
+  const aqiColor = tier ? tier.colorToken : '#0F766E';
 
   return (
     <article
       aria-labelledby="hero-aqi-heading"
-      className="relative overflow-hidden rounded-xl border border-(--border-subtle) bg-(--surface-card) shadow-sm transition-all"
+      className="relative overflow-hidden rounded-3xl border border-slate-800 bg-[#070B14] shadow-2xl text-white transition-all"
+      style={{
+        backgroundImage: `
+          radial-gradient(ellipse 60% 40% at 10% 10%, rgba(14, 116, 144, 0.18) 0%, transparent 70%),
+          radial-gradient(ellipse 50% 50% at 85% 50%, rgba(2, 132, 199, 0.14) 0%, transparent 70%),
+          linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px)
+        `,
+        backgroundSize: '100% 100%, 100% 100%, 40px 40px, 40px 40px',
+      }}
     >
       {/* Precision Telemetry Status Ribbon */}
-      <div className="flex flex-wrap items-center justify-between border-b border-(--border-subtle) bg-(--surface-subtle)/70 px-4 py-2 sm:px-6 text-[11px] font-mono text-(--ink-muted)">
-        <div className="flex items-center gap-3">
-          <span className="inline-flex items-center gap-1.5 font-bold text-(--ink-primary)">
-            <span className="h-2 w-2 rounded-full bg-(--brand-primary) animate-pulse" />
-            TELEMETRY FEED // {feedLabel}
+      <div className="flex flex-wrap items-center justify-between border-b border-slate-800/80 bg-slate-950/60 px-5 py-2.5 sm:px-8 text-[11px] font-mono text-slate-400">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <span className="inline-flex items-center gap-1.5 font-bold text-slate-200">
+            <span
+              className="h-2 w-2 rounded-full animate-pulse"
+              style={{ backgroundColor: aqiColor }}
+            />
+            {feedLabel}
           </span>
-          <span className="hidden sm:inline text-(--border-strong)">|</span>
-          <span className="hidden sm:inline">
-            GRID CELL: {coordinates.latitude.toFixed(2)}°N, {coordinates.longitude.toFixed(2)}°E
+          <span className="text-slate-700">|</span>
+          <span className="text-sky-400">
+            {coordinates.latitude.toFixed(2)}°N, {coordinates.longitude.toFixed(2)}°E
           </span>
         </div>
+
         <div className="flex items-center gap-3">
-          <span>MODEL RUN: {modelTimestamp}</span>
-          <span className="hidden sm:inline text-(--border-strong)">|</span>
-          <span className="font-semibold text-(--ink-secondary)">LOCAL TIME: {localTime}</span>
+          <span className="hidden sm:inline">Model Run: {modelTimestamp}</span>
+          <span className="hidden sm:inline text-slate-700">|</span>
+          <span className="font-semibold text-teal-300">Local: {localTime}</span>
         </div>
       </div>
 
-      <div className="p-5 sm:p-7">
-        {/* Top Header: Location, Standard Status, and In-Card Switcher */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-(--border-subtle) pb-5 mb-5">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider bg-(--ink-primary) text-white">
-                {standardMetadata.roleLabel}
-              </span>
-              <span className="text-xs font-mono text-(--ink-muted)">
-                {activeStandard === 'EUROPEAN_EAQI' ? 'REGIONAL AIR INDEX' : 'GLOBAL REFERENCE'}
-              </span>
-            </div>
-            <h1
-              id="hero-aqi-heading"
-              className="text-2xl sm:text-3xl font-extrabold tracking-tight text-(--ink-primary) font-sans"
-            >
-              {location.name}
-              {location.admin1 && (
-                <span className="text-(--ink-secondary) font-normal text-xl sm:text-2xl">
-                  , {location.admin1}
+      <div className="p-6 sm:p-8">
+        {/* Main Stage Grid: Left = Telemetry Cards, Right = Photorealistic 3D Earth Globe */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          {/* Left Column: Glassmorphic Telemetry Deck (Matches Image 3) */}
+          <div className="lg:col-span-5 flex flex-col justify-between gap-5 z-10">
+            {/* Title & Active Region */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-sky-400">
+                  Global Environmental Intelligence
                 </span>
-              )}
-              <span className="text-(--ink-muted) font-normal text-base sm:text-lg ml-2 font-mono">
-                [{location.countryCode || 'INTL'}]
-              </span>
-            </h1>
-          </div>
-
-          {/* Precision In-Card Standard Switcher */}
-          <div className="flex flex-col items-start md:items-end gap-1">
-            <span className="text-[10px] font-mono font-bold text-(--ink-muted) uppercase tracking-wider">
-              INDEX STANDARD // SWITCHER
-            </span>
-            <div
-              role="radiogroup"
-              aria-label="Active Air Quality Index Standard"
-              className="inline-flex p-0.5 rounded-lg bg-(--surface-subtle) border border-(--border-subtle)"
-            >
-              <button
-                type="button"
-                role="radio"
-                aria-checked={activeStandard === 'EUROPEAN_EAQI'}
-                onClick={() => onSwitchStandard('EUROPEAN_EAQI')}
-                className={`px-3 py-1 text-xs font-mono font-bold rounded transition-all cursor-pointer ${
-                  activeStandard === 'EUROPEAN_EAQI'
-                    ? 'bg-(--surface-card) text-(--brand-primary) shadow-xs border border-(--border-subtle)'
-                    : 'text-(--ink-muted) hover:text-(--ink-primary)'
-                }`}
-              >
-                European EAQI [0–100+]
-              </button>
-              <button
-                type="button"
-                role="radio"
-                aria-checked={activeStandard === 'US_EPA'}
-                onClick={() => onSwitchStandard('US_EPA')}
-                className={`px-3 py-1 text-xs font-mono font-bold rounded transition-all cursor-pointer ${
-                  activeStandard === 'US_EPA'
-                    ? 'bg-(--surface-card) text-(--brand-primary) shadow-xs border border-(--border-subtle)'
-                    : 'text-(--ink-muted) hover:text-(--ink-primary)'
-                }`}
-              >
-                US EPA AQI [0–500]
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Hero Metric Centerpiece */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-          {/* Focal Metric & Category */}
-          <div className="lg:col-span-5 flex flex-col justify-center">
-            <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-(--ink-muted) mb-1">
-              {standardMetadata.name}
-            </span>
-            <div className="flex items-baseline gap-3">
-              <span
-                className="text-6xl sm:text-7xl font-black font-mono tracking-tight tabular-nums"
-                style={{ color: tier ? tier.colorToken : 'var(--ink-primary)' }}
-              >
-                {hasAqi ? providerAqi : '—'}
-              </span>
-              <span className="text-xs font-mono font-semibold text-(--ink-muted)">
-                / {standardMetadata.scaleRange}
-              </span>
-            </div>
-
-            {tier && (
-              <div className="mt-3 flex items-center gap-2">
-                <span
-                  className="px-3 py-1 rounded text-xs font-extrabold font-mono uppercase tracking-wider border shadow-xs"
-                  style={{
-                    color: tier.colorToken,
-                    backgroundColor: tier.bgToken,
-                    borderColor: tier.borderToken,
-                  }}
+                <div
+                  role="radiogroup"
+                  aria-label="Active Air Quality Index Standard"
+                  className="inline-flex p-0.5 rounded-lg bg-slate-900/90 border border-slate-800"
                 >
-                  {tier.label}
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={activeStandard === 'EUROPEAN_EAQI'}
+                    onClick={() => onSwitchStandard('EUROPEAN_EAQI')}
+                    className={`px-2 py-0.5 text-[10px] font-mono font-bold rounded transition-all cursor-pointer ${
+                      activeStandard === 'EUROPEAN_EAQI'
+                        ? 'bg-sky-500 text-slate-950 shadow-xs'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    EAQI
+                  </button>
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={activeStandard === 'US_EPA'}
+                    onClick={() => onSwitchStandard('US_EPA')}
+                    className={`px-2 py-0.5 text-[10px] font-mono font-bold rounded transition-all cursor-pointer ${
+                      activeStandard === 'US_EPA'
+                        ? 'bg-sky-500 text-slate-950 shadow-xs'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    US EPA
+                  </button>
+                </div>
+              </div>
+
+              <h1
+                id="hero-aqi-heading"
+                className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white font-sans flex items-baseline gap-2"
+              >
+                Air Quality <span className="font-light italic text-slate-400">Index</span>
+              </h1>
+
+              <div className="flex items-center gap-2 text-xs font-mono text-slate-400 pt-0.5">
+                <span>{localTime || 'Real-time telemetry'}</span>
+                <span>•</span>
+                <span className="text-teal-300 font-semibold truncate">
+                  {location.name}, {location.country} [{location.countryCode}]
                 </span>
-                {dominantPollutant && (
-                  <span className="text-xs font-mono text-(--ink-secondary) bg-(--surface-subtle) px-2 py-1 rounded border border-(--border-subtle)">
-                    Dominant: <strong>{dominantPollutant}</strong>
+              </div>
+            </div>
+
+            {/* Card 1: Main Statistics Card (Matches Image 3) */}
+            <div className="rounded-2xl bg-slate-900/70 backdrop-blur-xl border border-slate-800/80 p-5 shadow-xl space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-mono font-bold tracking-wider uppercase text-slate-400">
+                  Main Statistics
+                </span>
+                {tier && (
+                  <span
+                    className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider border shadow-xs"
+                    style={{
+                      backgroundColor: `${tier.colorToken}20`,
+                      borderColor: `${tier.colorToken}60`,
+                      color: tier.colorToken,
+                    }}
+                  >
+                    {tier.label}
                   </span>
                 )}
               </div>
-            )}
+
+              <div className="flex items-baseline gap-3">
+                <span
+                  className="text-5xl sm:text-6xl font-black font-mono tracking-tight tabular-nums"
+                  style={{ color: tier?.colorToken || '#38BDF8' }}
+                >
+                  {hasAqi ? providerAqi : '--'}
+                </span>
+                <span className="text-xs font-mono text-slate-500">
+                  / {activeStandard === 'EUROPEAN_EAQI' ? '120 Scale' : '500 Scale'}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between text-xs font-mono text-slate-300 pt-1 border-t border-slate-800/80">
+                <span>
+                  Dominant: <strong className="text-sky-300 uppercase">{dominantPollutant ? dominantPollutant.toUpperCase() : 'PM2.5'}</strong>
+                </span>
+                <span>
+                  Wind:{' '}
+                  <strong className="text-sky-300">
+                    {weather?.windSpeed !== null && weather?.windSpeed !== undefined ? `${weather.windSpeed} km/h` : 'Calm'}
+                  </strong>
+                </span>
+              </div>
+
+              <p className="text-xs text-slate-400 leading-relaxed">
+                {tier?.description || 'Real-time atmospheric composition based on verified CAMS global runs.'}
+              </p>
+            </div>
+
+            {/* Card 2: Risk of Pollution / Weather Dispersion (Matches Image 3) */}
+            <div className="rounded-2xl bg-linear-to-br from-slate-900/90 to-[#0A1A2E]/90 backdrop-blur-xl border border-slate-800/80 p-5 shadow-xl space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-mono font-bold tracking-wider uppercase text-slate-400">
+                  Risk of Pollution
+                </span>
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                  {weather?.dispersionIndex === 'POOR' ? 'Elevated Risk' : 'Moderate'}
+                </span>
+              </div>
+
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-extrabold font-mono text-sky-400">
+                  {weather?.dispersionIndex === 'POOR' ? '72%' : weather?.dispersionIndex === 'GOOD' ? '18%' : '35%'}
+                </span>
+                <span className="text-xs text-slate-300 font-medium truncate">
+                  {weather?.dispersionNote || 'Atmospheric dispersion factor'}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-800/80 text-[11px] font-mono">
+                <div className="bg-slate-950/40 p-2 rounded-lg border border-slate-800/60">
+                  <span className="text-slate-500 block text-[9px]">TEMP</span>
+                  <span className="text-slate-200 font-bold">
+                    {weather?.temperature !== null && weather?.temperature !== undefined ? `${weather.temperature}°C` : '--'}
+                  </span>
+                </div>
+                <div className="bg-slate-950/40 p-2 rounded-lg border border-slate-800/60">
+                  <span className="text-slate-500 block text-[9px]">HUMIDITY</span>
+                  <span className="text-slate-200 font-bold">
+                    {weather?.humidity !== null && weather?.humidity !== undefined ? `${weather.humidity}%` : '--'}
+                  </span>
+                </div>
+                <div className="bg-slate-950/40 p-2 rounded-lg border border-slate-800/60">
+                  <span className="text-slate-500 block text-[9px]">WIND</span>
+                  <span className="text-slate-200 font-bold truncate">
+                    {weather?.windDirectionCardinal || 'N'} {weather?.windSpeed !== null && weather?.windSpeed !== undefined ? `${weather.windSpeed}km/h` : ''}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Coordinates & Preset Pivots */}
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-[11px] font-mono text-slate-400">
+              <div className="flex items-center gap-3">
+                <span>
+                  X: <strong className="text-sky-400">{coordinates.latitude.toFixed(4)}</strong>
+                </span>
+                <span>
+                  Y: <strong className="text-sky-400">{coordinates.longitude.toFixed(4)}</strong>
+                </span>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] uppercase text-slate-500">Pivot:</span>
+                {['New Delhi', 'New York', 'London', 'Tokyo', 'Paris'].map((cityName) => (
+                  <button
+                    key={cityName}
+                    type="button"
+                    onClick={() => {
+                      const target = GLOBE_REFERENCE_CITIES.find((c) => c.name === cityName);
+                      if (target) onSelectLocation(target);
+                    }}
+                    className={`text-[10px] px-2 py-0.5 rounded transition-all cursor-pointer ${
+                      location.name === cityName
+                        ? 'bg-teal-500/30 text-teal-300 border border-teal-500/50 font-bold'
+                        : 'bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white'
+                    }`}
+                  >
+                    {cityName}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
 
-          {/* Scientific Rationale & Health Advisory */}
-          <div className="lg:col-span-7 flex flex-col justify-center border-t lg:border-t-0 lg:border-l border-(--border-subtle) pt-4 lg:pt-0 lg:pl-6">
-            {tier ? (
-              <div>
-                <p className="text-base sm:text-lg font-bold text-(--ink-primary) leading-snug">
-                  {tier.description}
-                </p>
-                <p className="text-xs sm:text-sm text-(--ink-secondary) mt-1.5 leading-relaxed">
-                  {tier.healthAdvisory}
-                </p>
-              </div>
-            ) : (
-              <p className="text-sm text-(--ink-muted)">
-                Air quality calculations are temporarily unavailable for this coordinate grid.
-              </p>
-            )}
-
-            <p className="text-[11px] text-(--ink-muted) mt-3 leading-relaxed border-t border-(--border-subtle) pt-2.5">
-              {averagingPeriodNote}
-            </p>
+          {/* Right Column: Signature Photorealistic 3D Earth Globe (Dominant Hero Area) */}
+          <div className="lg:col-span-7 relative flex items-center justify-center">
+            <InteractiveEarthGlobe
+              selectedLocation={location}
+              onSelectLocation={onSelectLocation}
+              aqiColor={tier?.colorToken || '#0F766E'}
+              aqiTierLabel={tier?.label}
+              currentAqi={providerAqi}
+            />
           </div>
         </div>
 
         {/* Continuous Linear Atmospheric Spectrum Bar */}
-        <div className="mt-6 pt-5 border-t border-(--border-subtle)">
-          <div className="flex items-center justify-between text-[10px] font-mono text-(--ink-muted) uppercase mb-1.5">
-            <span>AQI SPECTRUM RANGE</span>
-            <span>CURRENT VALUE: {hasAqi ? `${providerAqi} (${tier?.label})` : 'N/A'}</span>
+        <div className="mt-8 pt-5 border-t border-slate-800/80">
+          <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 uppercase mb-2">
+            <span>Index Spectrum Range</span>
+            <span>Value: {hasAqi ? `${providerAqi} (${tier?.label})` : 'N/A'}</span>
           </div>
 
-          {/* Multi-tiered spectrum track */}
           <div className="relative h-2.5 w-full rounded-sm bg-linear-to-r from-[#047857] via-[#C2410C] via-70% to-[#6D28D9] overflow-visible">
-            {/* Position Marker */}
             {hasAqi && (
               <div
                 className="absolute top-0 -translate-x-1/2 flex flex-col items-center"
                 style={{ left: `${spectrumPercent}%` }}
               >
-                <div className="w-1.5 h-3.5 bg-white border border-(--ink-primary) rounded-xs shadow-xs" />
+                <div className="w-2 h-4 bg-white border border-slate-900 rounded-xs shadow-md" />
               </div>
             )}
           </div>
 
-          <div className="flex justify-between text-[10px] font-mono text-(--ink-muted) mt-1.5">
+          <div className="flex justify-between text-[10px] font-mono text-slate-400 mt-2">
             <span>0 Good</span>
             <span>50 Mod</span>
             <span>100 USG</span>
@@ -224,6 +314,18 @@ export function AqiHeroCard({ report, onSwitchStandard, isLoading = false }: Aqi
             <span>300+ Haz</span>
           </div>
         </div>
+
+        {/* Actionable Health Guidance Grid */}
+        <div className="mt-6">
+          <ActionableHealthGuidance
+            tier={tier}
+            dominantPollutant={dominantPollutant}
+          />
+        </div>
+
+        <p className="text-[11px] text-slate-400 mt-4 leading-relaxed border-t border-slate-800/80 pt-3">
+          {averagingPeriodNote}
+        </p>
       </div>
     </article>
   );

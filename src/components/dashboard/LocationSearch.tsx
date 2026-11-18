@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { GeoLocation } from '@/domain/types';
+import { SavedLocationsManager } from './SavedLocationsManager';
 
 interface LocationSearchProps {
   readonly onSelectLocation: (location: GeoLocation) => void;
@@ -119,7 +120,7 @@ export function LocationSearch({
       } finally {
         setIsSearching(false);
       }
-    }, 300);
+    }, 280);
 
     return () => {
       clearTimeout(timeoutId);
@@ -153,7 +154,7 @@ export function LocationSearch({
       setSearchTerm('');
       setSuggestions([]);
       setIsOpen(false);
-      setStatusMessage(`Target telemetry locked: ${loc.name}, ${loc.country}`);
+      setStatusMessage(`Location selected: ${loc.name}, ${loc.country}`);
       onSelectLocation(loc);
     },
     [onSelectLocation]
@@ -259,20 +260,28 @@ export function LocationSearch({
         {statusMessage}
       </div>
 
-      <div ref={containerRef} className="relative w-full max-w-4xl mx-auto">
-        {/* Telemetry Header Bar Spanning Full Width */}
-        <div className="flex items-center justify-between mb-1.5 px-0.5">
-          <label
-            htmlFor="location-search-input"
-            className="text-[11px] font-bold tracking-widest text-[var(--ink-secondary)] uppercase font-mono"
-          >
-            TARGET TELEMETRY // GLOBAL DISCOVERY
-          </label>
-          {selectedLocation && (
-            <span className="text-[11px] font-mono text-[var(--ink-muted)]">
-              ACTIVE: {selectedLocation.latitude.toFixed(2)}°N, {selectedLocation.longitude.toFixed(2)}°E
-            </span>
-          )}
+      <div ref={containerRef} className="relative w-full">
+        {/* Header Bar with Saved Locations Action */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+          <div className="flex items-center gap-2">
+            <label
+              htmlFor="location-search-input"
+              className="text-xs font-bold tracking-wider text-[var(--ink-secondary)] uppercase font-mono"
+            >
+              Location Discovery &amp; Global Grid
+            </label>
+            {selectedLocation && (
+              <span className="text-[11px] font-mono text-[var(--ink-muted)]">
+                ({selectedLocation.latitude.toFixed(2)}°N, {selectedLocation.longitude.toFixed(2)}°E)
+              </span>
+            )}
+          </div>
+
+          {/* Saved Locations Manager Integration */}
+          <SavedLocationsManager
+            currentLocation={selectedLocation}
+            onSelectLocation={onSelectLocation}
+          />
         </div>
 
         {/* Input & Precision GPS Action Controls */}
@@ -281,10 +290,10 @@ export function LocationSearch({
           <div className="relative flex-1">
             <div className="relative flex items-center">
               <span
-                className="absolute left-3.5 text-sm text-[var(--ink-muted)] pointer-events-none font-mono"
+                className="absolute left-3.5 text-sm text-[var(--ink-muted)] pointer-events-none select-none"
                 aria-hidden="true"
               >
-                ⌖
+                🔍
               </span>
               <input
                 id="location-search-input"
@@ -300,14 +309,14 @@ export function LocationSearch({
                 onChange={handleInputChange}
                 onKeyDown={handleKeyDown}
                 onFocus={() => suggestions.length > 0 && setIsOpen(true)}
-                placeholder="Enter city or coordinates (e.g. New Delhi, London, Tokyo, Paris)..."
+                placeholder="Search any global city or coordinates (e.g. New Delhi, London, Tokyo, Paris)..."
                 autoComplete="off"
                 spellCheck="false"
-                className="w-full h-11 pl-9 pr-10 text-sm font-medium text-[var(--ink-primary)] bg-[var(--surface-card)] border border-[var(--border-subtle)] rounded-lg shadow-xs placeholder:text-[var(--ink-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--brand-primary)] focus:border-[var(--brand-primary)] transition-all font-sans"
+                className="w-full h-11 pl-9 pr-10 text-sm font-medium text-[var(--ink-primary)] bg-[var(--surface-card)] border border-[var(--border-subtle)] rounded-xl shadow-xs placeholder:text-[var(--ink-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/40 focus:border-[var(--brand-primary)] transition-all font-sans"
               />
               {isSearching && (
                 <div
-                  className="absolute right-3.5 h-3.5 w-3.5 rounded-full border-2 border-[var(--brand-primary)] border-t-transparent animate-spin"
+                  className="absolute right-3.5 h-4 w-4 rounded-full border-2 border-[var(--brand-primary)] border-t-transparent animate-spin"
                   aria-hidden="true"
                 />
               )}
@@ -319,7 +328,7 @@ export function LocationSearch({
                 id="location-results-list"
                 role="listbox"
                 aria-label="Location search suggestions"
-                className="absolute left-0 right-0 top-full mt-1 z-50 max-h-64 overflow-y-auto rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-card)] p-1 shadow-lg"
+                className="absolute left-0 right-0 top-full mt-1.5 z-50 max-h-64 overflow-y-auto rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-card)] p-1.5 shadow-xl"
               >
                 {suggestions.map((loc, idx) => {
                   const isSelected = idx === activeIndex;
@@ -330,7 +339,7 @@ export function LocationSearch({
                       role="option"
                       aria-selected={isSelected}
                       onClick={() => handleSelect(loc)}
-                      className={`flex items-center justify-between px-3 py-2 rounded-md text-xs cursor-pointer transition-colors ${
+                      className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-xs cursor-pointer transition-colors ${
                         isSelected
                           ? 'bg-[var(--brand-surface)] text-[var(--brand-primary)] font-bold'
                           : 'text-[var(--ink-primary)] hover:bg-[var(--surface-subtle)]'
@@ -359,28 +368,18 @@ export function LocationSearch({
             )}
           </div>
 
-          {/* Optional GPS Button - Flush Alignment */}
+          {/* GPS Button */}
           <button
             type="button"
             onClick={handleGpsLocation}
             disabled={gpsLoading || isLoading}
             aria-label="Acquire coordinates from browser GPS"
-            className="w-full sm:w-auto h-11 px-4 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-card)] text-xs font-semibold text-[var(--ink-primary)] shadow-xs hover:bg-[var(--surface-subtle)] hover:border-[var(--border-strong)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--brand-primary)] disabled:opacity-50 transition-all flex items-center justify-center gap-2 cursor-pointer font-mono shrink-0"
+            className="w-full sm:w-auto h-11 px-4 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-card)] text-xs font-semibold text-[var(--ink-primary)] shadow-xs hover:bg-[var(--surface-subtle)] hover:border-[var(--border-strong)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]/40 disabled:opacity-50 transition-all flex items-center justify-center gap-2 cursor-pointer font-mono shrink-0"
           >
             {gpsLoading ? (
               <span className="h-3.5 w-3.5 rounded-full border-2 border-[var(--brand-primary)] border-t-transparent animate-spin" />
             ) : (
-              <svg
-                className="h-3.5 w-3.5 text-[var(--brand-primary)] shrink-0"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-                aria-hidden="true"
-              >
-                <circle cx="12" cy="12" r="3" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v3m0 14v3M2 12h3m14 0h3" />
-              </svg>
+              <span className="text-base" aria-hidden="true">📍</span>
             )}
             <span>GPS LOCATE</span>
           </button>
@@ -399,7 +398,7 @@ export function LocationSearch({
                 key={city.id}
                 type="button"
                 onClick={() => handleSelect(city)}
-                className={`text-[11px] font-mono px-2.5 py-0.5 rounded border transition-all cursor-pointer ${
+                className={`text-[11px] font-mono px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
                   isCityActive
                     ? 'border-[var(--brand-primary)] bg-[var(--brand-surface)] text-[var(--brand-primary)] font-bold shadow-xs'
                     : 'border-[var(--border-subtle)] bg-[var(--surface-card)] text-[var(--ink-secondary)] hover:border-[var(--border-strong)] hover:text-[var(--ink-primary)]'

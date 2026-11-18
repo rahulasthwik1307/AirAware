@@ -749,7 +749,7 @@ User question
 → Retrieve minimum necessary profile context (schedule, sensitivities)  
 → Apply deterministic rules (safety boundaries, baseline recommendations)  
 → Build grounded AI prompt context  
-→ Call available free provider (Cloudflare Workers AI / Gemini)  
+→ Call Cloudflare Workers AI (exclusive AI inference provider)  
 → Validate structured output (schema conformance)  
 → Verify factual references and calculations against domain facts  
 → Display contextualized explanation to user.
@@ -809,19 +809,14 @@ OpenAQ values must not automatically be treated as a universal AQI.
 
 ## 9.3 AI services
 
-Cloudflare Workers AI:
-- Preferred primary AI service.
-- Verify free allowance.
-- Verify supported model names.
-- Verify request limits.
-
-Gemini:
-- Secondary free-tier provider.
-- Verify model availability and current free-tier eligibility.
-- Never automatically activate paid billing.
-
-Both unavailable:
-- Deterministic fallback.
+Cloudflare Workers AI (Exclusive AI inference provider):
+- Only permitted AI inference provider (Strict ₹0 budget).
+- Primary model: `@cf/google/gemma-4-26b-a4b-it` (256k context, MoE 26B/4B).
+- Secondary model: `@cf/zai-org/glm-4.7-flash` (128k context, multilingual).
+- Tertiary model: `@cf/ibm-granite/granite-4.0-h-micro` (131k context, edge micro).
+- Daily free allowance: 10,000 Neurons per calendar day (resets 00:00 UTC).
+- No paid AI providers, no Gemini, OpenAI, Anthropic, or external fallbacks.
+- On daily quota exhaustion, provider overload, or network timeout: Instant deterministic TypeScript fallback.
 
 ## 9.4 API verification requirement
 
@@ -1353,7 +1348,7 @@ Development proceeds strictly through nine sequential phases. Do not advance to 
 
 ## Phase 5 — AI Air Copilot
 
-- Cloudflare Workers AI primary adapter and Gemini API free-tier secondary adapter.
+- Cloudflare Workers AI exclusive adapter with verified three-tier model hierarchy (Gemma 4 26B, GLM-4.7 Flash, Granite 4.0 Micro).
 - Grounded prompt engineering pipeline incorporating live environmental facts and minimal profile context.
 - Structured AI response validation using Zod.
 - Deterministic fallback engine providing instant offline/rule-based guidance upon AI failure.
