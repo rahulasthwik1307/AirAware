@@ -56,11 +56,15 @@ export function getDeterministicGuidance(data: GuidanceRequest): GuidanceRespons
       }
       actionRecommendations.push('Keep an eye on air trends if planning prolonged outdoor activities.');
       sensitiveGroupAdvisory =
-        'Individuals with asthma, heart disease, or respiratory illness should monitor their breathing comfort.';
-      // Scientific ventilation guidance based on EPA pollutant thresholds:
-      // Lower moderate (AQI <= 75): Natural cross-ventilation is encouraged to dilute indoor CO2/VOCs.
-      // Upper moderate (AQI 76-100): Brief ventilation during low-traffic hours to prevent particulate buildup.
-      ventilationRecommendation = aqi <= 75 ? 'open_windows' : 'ventilate_briefly';
+        'EPA statistical risk bands indicate low risk, though individuals with asthma or respiratory conditions should monitor their comfort.';
+      // Scientific ventilation guidance based on pollutant characteristics & environmental conditions:
+      // - Ozone (O3): Photochemically driven; spikes in warm afternoons and degrades indoors on surfaces.
+      // - Particulates (PM2.5/PM10): Outdoor air enters through openings; brief airing flushes indoor CO2/VOCs without major PM loading.
+      if (dominantPollutant === 'o3' && weather.temperatureC >= 25) {
+        ventilationRecommendation = 'ventilate_briefly';
+      } else {
+        ventilationRecommendation = aqi <= 75 ? 'open_windows' : 'ventilate_briefly';
+      }
       break;
 
     case 'Unhealthy for Sensitive Groups':
@@ -186,19 +190,31 @@ export function getDeterministicCopilotAnswer(data: CopilotRequest): CopilotResp
         'Wear an N95/FFP2 respirator mask if cycling is unavoidable.'
       );
     }
-  } else if (qLower.includes('window') || qLower.includes('bedroom') || qLower.includes('indoor') || qLower.includes('purifier')) {
+  } else if (qLower.includes('window') || qLower.includes('bedroom') || qLower.includes('indoor') || qLower.includes('purifier') || qLower.includes('ventilat')) {
     if (aqi <= 50) {
-      directAnswer = `Outdoor air is clean (AQI ${aqi}). Opening your bedroom windows is recommended to refresh indoor air.`;
+      directAnswer = `Outdoor air is clean (AQI ${aqi}). Opening windows is recommended to flush indoor CO2, VOCs, and moisture.`;
       recommendedAction = 'Open windows on opposing walls for 20–30 minutes to create cross-ventilation.';
-      explanation = 'Natural ventilation expels trapped indoor CO2, VOCs, and moisture without introducing particulate hazards.';
+      explanation = 'Natural ventilation expels trapped indoor contaminants. Local microclimates (e.g. adjacent busy roads) should still be considered.';
       practicalAlternatives.push('Leave trickle vents open throughout the day.');
+    } else if (aqi <= 100) {
+      if (dominantPollutant === 'o3') {
+        directAnswer = `Ventilate briefly in morning or evening hours when ground-level ozone is lowest (current AQI ${aqi}).`;
+        recommendedAction = 'Avoid opening windows during peak warm afternoon hours when photochemical ozone forms.';
+        explanation = 'Ozone decomposes indoors upon contact with surfaces. Keeping windows closed during peak sunlight hours minimizes indoor levels.';
+        practicalAlternatives.push('Ventilate during dawn or late evening when ozone concentrations are minimal.');
+      } else {
+        directAnswer = `Briefly air rooms (5–10 minutes) during low-traffic periods, then keep windows closed (AQI ${aqi}).`;
+        recommendedAction = 'Combine brief airing to clear CO2 with an active indoor air purifier to capture infiltrated particulates.';
+        explanation = `Ambient thresholds are statistical guides: outdoor ${dominantPollutant.toUpperCase()} infiltrates through open windows, but rooms also require oxygen exchange.`;
+        practicalAlternatives.push('Run a HEPA air cleaner continuously if windows cannot be opened safely.');
+      }
     } else {
-      directAnswer = `Keep your windows closed and run a HEPA air purifier to protect your indoor air (outdoor AQI is ${aqi}).`;
-      recommendedAction = 'Seal bedroom windows and set your air purifier to continuous auto or medium mode.';
-      explanation = `Outdoor ${dominantPollutant.toUpperCase()} infiltrates quickly through open windows, degrading indoor air quality within minutes.`;
+      directAnswer = `Keep your windows closed and run a HEPA air purifier to protect indoor air (ambient AQI is ${aqi}, ${category}).`;
+      recommendedAction = 'Seal windows and run an air purifier on continuous auto or medium mode.';
+      explanation = `At AQI ${aqi}, outdoor ${dominantPollutant.toUpperCase()} quickly degrades indoor air quality. Actual infiltration depends on building sealing.`;
       practicalAlternatives.push(
-        'Use an air purifier with both HEPA (particulates) and activated carbon (odors/VOCs).',
-        'Avoid indoor sources of pollution like incense, frying, or vacuuming without a HEPA exhaust filter.'
+        'Use an air purifier with both HEPA and activated carbon filtration.',
+        'Avoid indoor emission sources like burning incense or cooking without an exhaust hood.'
       );
     }
   } else {
@@ -222,8 +238,8 @@ export function getDeterministicCopilotAnswer(data: CopilotRequest): CopilotResp
   }
 
   const environmentalConditions = `Current AQI: ${aqi} (${category}), Dominant Pollutant: ${dominantPollutant.toUpperCase()} (${data.pollutantConcentration} ${data.pollutantUnit}), Temp: ${weather.temperatureC}°C, Humidity: ${weather.humidityPercent}%.`;
-  const dataSourceAndFreshness = 'Source: Grounded deterministic rules derived from US EPA breakpoints and WHO global air quality guidelines (15-min refresh).';
-  const limitationsOrUncertainty = 'Guidance applies to general ambient conditions; microclimates near major highways or localized burning may have significantly higher localized pollution.';
+  const dataSourceAndFreshness = 'Source: Grounded deterministic rules derived from US EPA breakpoints and WHO air quality guidelines (15-min refresh).';
+  const limitationsOrUncertainty = 'Regional ambient estimate; microclimates near roadways, building seal quality, and individual health factors introduce variability.';
 
   return {
     directAnswer,

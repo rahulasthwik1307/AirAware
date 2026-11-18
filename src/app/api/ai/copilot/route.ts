@@ -48,7 +48,8 @@ export async function POST(req: Request) {
     const result = await askAirCopilot(validatedInput);
 
     const headers: Record<string, string> = {
-      'Cache-Control': 'public, s-maxage=1800, stale-while-revalidate=600',
+      'Cache-Control': 'private, no-cache, no-store, max-age=0, must-revalidate',
+      Pragma: 'no-cache',
     };
 
     if (aiCache.isDailyQuotaExhausted()) {

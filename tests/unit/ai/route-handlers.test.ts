@@ -97,6 +97,8 @@ describe('AI Route Handlers (HTTP Seam)', () => {
 
     const res = await guidanceHandler(req);
     expect(res.status).toBe(200);
+    expect(res.headers.get('Cache-Control')).toBe('private, no-cache, no-store, max-age=0, must-revalidate');
+    expect(res.headers.get('Pragma')).toBe('no-cache');
 
     const json = await res.json();
     expect(json.isDeterministicFallback).toBe(true);
@@ -113,6 +115,8 @@ describe('AI Route Handlers (HTTP Seam)', () => {
 
     const res = await copilotHandler(req);
     expect(res.status).toBe(200);
+    expect(res.headers.get('Cache-Control')).toBe('private, no-cache, no-store, max-age=0, must-revalidate');
+    expect(res.headers.get('Pragma')).toBe('no-cache');
 
     const json = await res.json();
     expect(json.isDeterministicFallback).toBe(true);

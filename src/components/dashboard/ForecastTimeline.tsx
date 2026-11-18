@@ -81,28 +81,35 @@ export function ForecastTimeline({ forecast, activeStandard }: ForecastTimelineP
       {!showTableView ? (
         /* Integrated Futuristic Forecast Telemetry Strip with Interactive Tooltips */
         <div className="relative">
-          {/* Active Hover Floating Info Bar */}
-          {activeHoverPoint && (
-            <div className="mb-2 p-2.5 rounded-lg bg-[var(--surface-card)] border border-[var(--brand-primary)]/40 shadow-sm flex items-center justify-between text-xs font-mono animate-fadeIn">
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-[var(--ink-primary)]">
-                  Hour {activeHoverPoint.displayTime}:
+          {/* Stable Header Info Bar with Fixed Height (Zero Layout Shift / Zero Flickering) */}
+          <div className="h-10 mb-2 flex items-center justify-between px-3 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-subtle)]/70 text-xs font-mono transition-colors">
+            {activeHoverPoint ? (
+              <>
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-[var(--ink-primary)]">
+                    Hour {activeHoverPoint.displayTime}:
+                  </span>
+                  <span
+                    className="font-extrabold px-2 py-0.5 rounded text-[11px]"
+                    style={{
+                      color: activeHoverPoint.tier?.colorToken,
+                      backgroundColor: activeHoverPoint.tier?.bgToken,
+                    }}
+                  >
+                    {activeHoverPoint.activeAqi} AQI • {activeHoverPoint.tier?.label}
+                  </span>
+                </div>
+                <span className="text-[11px] text-[var(--ink-secondary)] hidden sm:inline truncate max-w-[340px]">
+                  {activeHoverPoint.tier?.healthAdvisory}
                 </span>
-                <span
-                  className="font-extrabold px-2 py-0.5 rounded text-[11px]"
-                  style={{
-                    color: activeHoverPoint.tier?.colorToken,
-                    backgroundColor: activeHoverPoint.tier?.bgToken,
-                  }}
-                >
-                  {activeHoverPoint.activeAqi} AQI • {activeHoverPoint.tier?.label}
-                </span>
+              </>
+            ) : (
+              <div className="flex items-center justify-between w-full text-[11px] text-[var(--ink-muted)]">
+                <span>Hourly AQI Projections</span>
+                <span>Hover or tap any bar to inspect hourly guidance</span>
               </div>
-              <span className="text-[11px] text-[var(--ink-secondary)] hidden sm:inline">
-                {activeHoverPoint.tier?.healthAdvisory}
-              </span>
-            </div>
-          )}
+            )}
+          </div>
 
           <div
             role="region"

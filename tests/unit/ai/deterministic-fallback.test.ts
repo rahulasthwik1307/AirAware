@@ -107,7 +107,33 @@ describe('Deterministic Offline Guidance Engine', () => {
     expect(res.explanation).toBeDefined();
     expect(res.practicalAlternatives.length).toBeGreaterThanOrEqual(1);
     expect(res.dataSourceAndFreshness).toContain('EPA');
-    expect(res.limitationsOrUncertainty).toContain('ambient conditions');
+    expect(res.limitationsOrUncertainty).toContain('ambient');
+  });
+
+  it('differentiates ozone ventilation in warm weather vs particulate ventilation', () => {
+    // Warm weather ozone: recommend brief airing / avoid afternoon windows
+    const warmO3 = getDeterministicGuidance({
+      aqi: 65,
+      category: 'Moderate',
+      dominantPollutant: 'o3',
+      pollutantConcentration: 62.0,
+      pollutantUnit: 'µg/m³',
+      weather: { ...baseWeather, temperatureC: 28 },
+      userContext: { isSensitiveGroup: false, primaryActivity: 'general', locale: 'en' },
+    });
+    expect(warmO3.ventilationRecommendation).toBe('ventilate_briefly');
+
+    // Cool weather ozone: open windows
+    const coolO3 = getDeterministicGuidance({
+      aqi: 65,
+      category: 'Moderate',
+      dominantPollutant: 'o3',
+      pollutantConcentration: 62.0,
+      pollutantUnit: 'µg/m³',
+      weather: { ...baseWeather, temperatureC: 18 },
+      userContext: { isSensitiveGroup: false, primaryActivity: 'general', locale: 'en' },
+    });
+    expect(coolO3.ventilationRecommendation).toBe('open_windows');
   });
 
   it('warns against outdoor playground for children when AQI is Unhealthy', () => {

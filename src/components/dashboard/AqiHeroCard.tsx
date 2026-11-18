@@ -90,10 +90,10 @@ export function AqiHeroCard({
       </div>
 
       <div className="p-6 sm:p-8">
-        {/* Main Stage Grid: Left = Telemetry Cards, Right = Photorealistic 3D Earth Globe */}
+        {/* Main Stage Grid: Left = Compact Telemetry Cards, Right = Dominant Real 3D Earth Globe */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-          {/* Left Column: Glassmorphic Telemetry Deck (Matches Image 3) */}
-          <div className="lg:col-span-5 flex flex-col justify-between gap-5 z-10">
+          {/* Left Column: Compact Glassmorphic Telemetry Deck (Occupies ~33% width) */}
+          <div className="lg:col-span-4 flex flex-col justify-between gap-4 z-10">
             {/* Title & Active Region */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
@@ -275,8 +275,8 @@ export function AqiHeroCard({
             </div>
           </div>
 
-          {/* Right Column: Signature Photorealistic 3D Earth Globe (Dominant Hero Area) */}
-          <div className="lg:col-span-7 relative flex items-center justify-center">
+          {/* Right Column: Dominant Real 3D Earth Globe (Occupies ~67% width) */}
+          <div className="lg:col-span-8 relative flex items-center justify-center">
             <InteractiveEarthGlobe
               selectedLocation={location}
               onSelectLocation={onSelectLocation}

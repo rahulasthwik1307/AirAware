@@ -22,9 +22,9 @@ function getServerReducedMotionSnapshot(): boolean {
 }
 
 /**
- * Resolves CSS variable tokens or raw hex color strings into canvas-safe RGB/RGBA values.
+ * Resolves CSS variable tokens or raw hex color strings into sanitized hex values.
  */
-function resolveAqiColor(colorToken: string = ''): { hex: string; rgba: (alpha: number) => string; rgb: THREE.Color } {
+function resolveAqiColor(colorToken: string = ''): { hex: string; rgba: (alpha: number) => string } {
   const map: Record<string, string> = {
     'var(--aqi-good)': '#047857',
     'var(--aqi-moderate)': '#B45309',
@@ -58,7 +58,6 @@ function resolveAqiColor(colorToken: string = ''): { hex: string; rgba: (alpha: 
   return {
     hex,
     rgba: (alpha: number) => `rgba(${r}, ${g}, ${b}, ${alpha})`,
-    rgb: new THREE.Color(hex),
   };
 }
 
@@ -77,7 +76,7 @@ function latLonToVector3(lat: number, lon: number, radius: number): THREE.Vector
 /**
  * Converts a 3D Sphere surface position back into (lat, lon)
  */
-function vector3ToLatLon(v: THREE.Vector3, radius: number): { lat: number; lon: number } {
+function vector3ToLatLon(v: THREE.Vector3): { lat: number; lon: number } {
   const norm = v.clone().normalize();
   const phi = Math.acos(Math.min(Math.max(norm.y, -1), 1));
   const lat = 90 - (phi * 180) / Math.PI;
@@ -129,9 +128,10 @@ export function InteractiveEarthGlobe({
   );
 
   const [isRotating, setIsRotating] = useState<boolean>(!prefersReducedMotion);
-  const [zoomLevel, setZoomLevel] = useState<number>(5.2);
-  const [dimensions, setDimensions] = useState<{ width: number; height: number }>({ width: 600, height: 600 });
+  const [zoomLevel, setZoomLevel] = useState<number>(4.8);
+  const [dimensions, setDimensions] = useState<{ width: number; height: number }>({ width: 700, height: 650 });
   const [hoveredPoint, setHoveredPoint] = useState<InteractivePointData | null>(null);
+  const [lockedPoint, setLockedPoint] = useState<InteractivePointData | null>(null);
   const [screenPins, setScreenPins] = useState<
     Array<{
       city: GlobeCityPin;
@@ -142,6 +142,19 @@ export function InteractiveEarthGlobe({
       colorHex: string;
     }>
   >([]);
+
+  // Drag interaction state ref to distinguish drag from click
+  const dragTrackerRef = useRef<{
+    startX: number;
+    startY: number;
+    maxDistance: number;
+    isDown: boolean;
+  }>({
+    startX: 0,
+    startY: 0,
+    maxDistance: 0,
+    isDown: false,
+  });
 
   // Three.js instances ref
   const threeRef = useRef<{
@@ -163,17 +176,17 @@ export function InteractiveEarthGlobe({
     targetRotationX: number | null;
   } | null>(null);
 
-  // Initialize Three.js Scene
+  // Initialize Three.js Scene with Real Earth Textures & Rayleigh Atmosphere
   useEffect(() => {
     const canvas = canvasRef.current;
     const container = containerRef.current;
     if (!canvas || !container) return;
 
-    const width = container.clientWidth || 600;
-    const height = container.clientHeight || 550;
+    const width = container.clientWidth || 700;
+    const height = container.clientHeight || 650;
 
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 100);
+    const camera = new THREE.PerspectiveCamera(42, width / height, 0.1, 100);
     camera.position.z = zoomLevel;
 
     const renderer = new THREE.WebGLRenderer({
@@ -192,42 +205,42 @@ export function InteractiveEarthGlobe({
     // Initial sphere rotation to point toward selectedLocation if available
     if (selectedLocation) {
       earthGroup.rotation.y = (-selectedLocation.longitude - 90) * (Math.PI / 180);
-      earthGroup.rotation.x = (selectedLocation.latitude) * (Math.PI / 180) * 0.4;
+      earthGroup.rotation.x = selectedLocation.latitude * (Math.PI / 180) * 0.35;
     }
 
-    // 1. Ambient & Directional Sun Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
+    // 1. Natural Ambient & Sunlight Lighting (Daylight Earth)
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.1);
     scene.add(ambientLight);
 
-    const sunLight = new THREE.DirectionalLight(0xffffff, 2.2);
-    sunLight.position.set(6, 3, 5);
+    const sunLight = new THREE.DirectionalLight(0xffffff, 2.4);
+    sunLight.position.set(5, 4, 4);
     scene.add(sunLight);
 
-    const rimLight = new THREE.DirectionalLight(0x0284c7, 0.8);
-    rimLight.position.set(-6, -2, -4);
-    scene.add(rimLight);
+    const softFillLight = new THREE.DirectionalLight(0x93c5fd, 0.5);
+    softFillLight.position.set(-5, -2, -3);
+    scene.add(softFillLight);
 
-    // 2. Earth Photorealistic Sphere
-    const earthRadius = 1.85;
+    // 2. Photorealistic Real Earth Sphere (NASA Blue Marble Texture)
+    const earthRadius = 2.15;
     const sphereGeometry = new THREE.SphereGeometry(earthRadius, 64, 64);
 
     const textureLoader = new THREE.TextureLoader();
-    const earthNightTexture = textureLoader.load('/textures/earth-night.jpg', () => {
+    // Load authentic NASA Blue Marble texture with natural blue oceans, green continents, and clouds
+    const earthTexture = textureLoader.load('/textures/earth-blue-marble.jpg', () => {
       renderer.render(scene, camera);
     });
 
     const earthMaterial = new THREE.MeshStandardMaterial({
-      map: earthNightTexture,
-      roughness: 0.65,
-      metalness: 0.1,
+      map: earthTexture,
+      roughness: 0.55,
+      metalness: 0.05,
     });
 
     const earthMesh = new THREE.Mesh(sphereGeometry, earthMaterial);
     earthGroup.add(earthMesh);
 
-    // 3. Volumetric Atmospheric Limb Glow (Fresnel Shader)
-    const atmosphereGeometry = new THREE.SphereGeometry(earthRadius * 1.045, 64, 64);
-    const resolvedColor = resolveAqiColor(aqiColor);
+    // 3. Natural Rayleigh Atmospheric Limb Glow (Soft Sky Blue - NEVER RED)
+    const atmosphereGeometry = new THREE.SphereGeometry(earthRadius * 1.035, 64, 64);
 
     const atmosphereMaterial = new THREE.ShaderMaterial({
       vertexShader: `
@@ -242,17 +255,14 @@ export function InteractiveEarthGlobe({
       fragmentShader: `
         varying vec3 vNormal;
         varying vec3 vPosition;
-        uniform vec3 glowColor;
         void main() {
           vec3 viewDirection = normalize(-vPosition);
           float fresnel = 1.0 - max(dot(vNormal, viewDirection), 0.0);
-          float intensity = pow(fresnel, 2.8) * 1.4;
-          gl_FragColor = vec4(glowColor, intensity * 0.75);
+          float intensity = pow(fresnel, 3.2) * 1.1;
+          // Natural Rayleigh atmospheric sky blue: rgb(56, 189, 248)
+          gl_FragColor = vec4(0.22, 0.74, 0.97, intensity * 0.5);
         }
       `,
-      uniforms: {
-        glowColor: { value: resolvedColor.rgb },
-      },
       blending: THREE.AdditiveBlending,
       side: THREE.BackSide,
       transparent: true,
@@ -261,27 +271,6 @@ export function InteractiveEarthGlobe({
 
     const atmosphereMesh = new THREE.Mesh(atmosphereGeometry, atmosphereMaterial);
     earthGroup.add(atmosphereMesh);
-
-    // 4. Subtle Latitude/Longitude Graticule Rings
-    const graticuleMaterial = new THREE.LineBasicMaterial({
-      color: 0x38bdf8,
-      transparent: true,
-      opacity: 0.08,
-    });
-
-    [-45, -20, 0, 20, 45].forEach((lat) => {
-      const phi = (lat * Math.PI) / 180;
-      const r = earthRadius * 1.002 * Math.cos(phi);
-      const y = earthRadius * 1.002 * Math.sin(phi);
-      const ringPoints: THREE.Vector3[] = [];
-      for (let i = 0; i <= 64; i++) {
-        const theta = (i / 64) * Math.PI * 2;
-        ringPoints.push(new THREE.Vector3(r * Math.cos(theta), y, r * Math.sin(theta)));
-      }
-      const ringGeom = new THREE.BufferGeometry().setFromPoints(ringPoints);
-      const ringLine = new THREE.Line(ringGeom, graticuleMaterial);
-      earthGroup.add(ringLine);
-    });
 
     threeRef.current = {
       scene,
@@ -328,15 +317,6 @@ export function InteractiveEarthGlobe({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Run once on mount to initialize WebGL context
 
-  // Sync Atmosphere Color with Active AQI Tier
-  useEffect(() => {
-    if (!threeRef.current?.atmosphereMesh) return;
-    const material = threeRef.current.atmosphereMesh.material as THREE.ShaderMaterial;
-    if (material.uniforms?.glowColor) {
-      material.uniforms.glowColor.value = resolveAqiColor(aqiColor).rgb;
-    }
-  }, [aqiColor]);
-
   // Sync Camera Zoom
   useEffect(() => {
     if (!threeRef.current) return;
@@ -369,8 +349,8 @@ export function InteractiveEarthGlobe({
             t.targetRotationX = null;
           }
         } else if (isRotating) {
-          // Slow continuous atmospheric rotation (~3 deg/sec)
-          t.earthGroup.rotation.y += deltaSec * 0.05;
+          // Gentle celestial rotation (~2.5 deg/sec)
+          t.earthGroup.rotation.y += deltaSec * 0.045;
         } else {
           // Damped momentum from drag release
           t.earthGroup.rotation.y += t.velocityX;
@@ -385,7 +365,7 @@ export function InteractiveEarthGlobe({
       if (canvas) {
         const width = canvas.clientWidth;
         const height = canvas.clientHeight;
-        const radius = 1.85;
+        const radius = 2.15;
 
         const updatedPins = GLOBE_REFERENCE_CITIES.map((city) => {
           const worldPos = latLonToVector3(city.latitude, city.longitude, radius);
@@ -394,13 +374,13 @@ export function InteractiveEarthGlobe({
           // Dot product with camera direction to determine visibility (front face vs hidden back)
           const camDir = t.camera.position.clone().sub(worldPos).normalize();
           const normal = worldPos.clone().normalize();
-          const isVisible = normal.dot(camDir) > 0.15;
+          const isVisible = normal.dot(camDir) > 0.18;
 
           const screenPos = worldPos.clone().project(t.camera);
           const screenX = (screenPos.x * 0.5 + 0.5) * width;
           const screenY = (-screenPos.y * 0.5 + 0.5) * height;
 
-          // Representative AQI value and color
+          // Representative AQI values and standard severity colors
           let cityAqi = 45;
           let colorHex = '#047857';
           if (city.name.includes('Delhi')) {
@@ -473,7 +453,7 @@ export function InteractiveEarthGlobe({
     }
   }, [selectedLocation, pivotToLocation]);
 
-  // Pointer Interaction Handlers (Raycasting & Dragging)
+  // Pointer Interaction Handlers (Safe Drag vs Click Disambiguation)
   const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
     const t = threeRef.current;
     if (!t) return;
@@ -484,6 +464,14 @@ export function InteractiveEarthGlobe({
     t.velocityY = 0;
     t.targetRotationX = null;
     t.targetRotationY = null;
+
+    dragTrackerRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      maxDistance: 0,
+      isDown: true,
+    };
+
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
   };
 
@@ -498,6 +486,12 @@ export function InteractiveEarthGlobe({
       t.previousMouseX = e.clientX;
       t.previousMouseY = e.clientY;
 
+      const dist = Math.hypot(
+        e.clientX - dragTrackerRef.current.startX,
+        e.clientY - dragTrackerRef.current.startY
+      );
+      dragTrackerRef.current.maxDistance = Math.max(dragTrackerRef.current.maxDistance, dist);
+
       t.velocityX = deltaX * 0.005;
       t.velocityY = deltaY * 0.005;
 
@@ -509,7 +503,7 @@ export function InteractiveEarthGlobe({
       return;
     }
 
-    // Raycast: Detect exact point on the 3D Earth
+    // Raycast: Detect point under pointer
     const rect = canvas.getBoundingClientRect();
     t.pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
     t.pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
@@ -519,7 +513,7 @@ export function InteractiveEarthGlobe({
 
     if (intersects.length > 0 && intersects[0].point) {
       const localPoint = t.earthGroup.worldToLocal(intersects[0].point.clone());
-      const { lat, lon } = vector3ToLatLon(localPoint, 1.85);
+      const { lat, lon } = vector3ToLatLon(localPoint);
 
       // Check proximity to existing reference cities
       const nearestCity = GLOBE_REFERENCE_CITIES.find(
@@ -545,7 +539,6 @@ export function InteractiveEarthGlobe({
           screenY: e.clientY - rect.top,
         });
       } else {
-        // Point anywhere on Earth coordinates!
         setHoveredPoint({
           name: `${lat.toFixed(1)}°${lat >= 0 ? 'N' : 'S'}, ${Math.abs(lon).toFixed(1)}°${lon >= 0 ? 'E' : 'W'}`,
           country: 'Global Grid Coordinate',
@@ -569,33 +562,35 @@ export function InteractiveEarthGlobe({
   const handlePointerUp = (e: React.PointerEvent<HTMLCanvasElement>) => {
     const t = threeRef.current;
     if (t) t.isDragging = false;
+    dragTrackerRef.current.isDown = false;
     try {
       (e.target as HTMLElement).releasePointerCapture(e.pointerId);
     } catch {}
   };
 
+  // Dedicated Click Handler that NEVER automatically refreshes or triggers a location reload
   const handleCanvasClick = () => {
+    // If the user was dragging to rotate (moved > 5px), ignore click completely!
+    if (dragTrackerRef.current.maxDistance > 5) {
+      return;
+    }
+
+    // If clicking a point, lock the inspection card in place without refreshing
     if (hoveredPoint) {
-      onSelectLocation({
-        id: Math.floor(Math.abs(hoveredPoint.latitude * 1000 + hoveredPoint.longitude * 100)),
-        name: hoveredPoint.name,
-        country: hoveredPoint.country,
-        countryCode: hoveredPoint.countryCode,
-        admin1: hoveredPoint.admin1,
-        latitude: hoveredPoint.latitude,
-        longitude: hoveredPoint.longitude,
-        timezone: 'UTC',
-      });
-      pivotToLocation(hoveredPoint.latitude, hoveredPoint.longitude);
+      setLockedPoint(hoveredPoint);
+    } else {
+      setLockedPoint(null);
     }
   };
+
+  const activeDisplayPoint = lockedPoint || hoveredPoint;
 
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-[500px] sm:h-[580px] lg:h-[640px] flex items-center justify-center overflow-visible select-none"
+      className="relative w-full h-[560px] sm:h-[650px] lg:h-[720px] flex items-center justify-center overflow-visible select-none"
     >
-      {/* Three.js WebGL Canvas */}
+      {/* Three.js WebGL Canvas with Real Earth Textures */}
       <canvas
         ref={canvasRef}
         onPointerDown={handlePointerDown}
@@ -603,7 +598,7 @@ export function InteractiveEarthGlobe({
         onPointerUp={handlePointerUp}
         onClick={handleCanvasClick}
         className="w-full h-full cursor-grab active:cursor-grabbing touch-none"
-        aria-label="Interactive 3D Earth Globe displaying global air quality telemetry. Click or drag to inspect any location."
+        aria-label="Interactive 3D Earth Globe. Drag to rotate freely. Click any location or pin to inspect."
       />
 
       {/* Floating 2D Projected Pins with AQI Bubbles */}
@@ -635,7 +630,7 @@ export function InteractiveEarthGlobe({
                 />
               </div>
 
-              {/* Numbered AQI Badge Bubble (Matches Image 3) */}
+              {/* Numbered AQI Badge Bubble */}
               <div
                 className="px-2 py-0.5 rounded-full text-[11px] font-mono font-black text-white shadow-lg border border-white/20 backdrop-blur-md flex items-center gap-1"
                 style={{ backgroundColor: `${pin.colorHex}EE` }}
@@ -647,53 +642,83 @@ export function InteractiveEarthGlobe({
         })}
       </div>
 
-      {/* Floating Interactive Tooltip Callout (Matches Jakarta Card in Image 3) */}
-      {hoveredPoint && (
+      {/* Floating Interactive Inspection Card (Safe: Never auto-refreshes on drag) */}
+      {activeDisplayPoint && (
         <div
-          className="absolute pointer-events-none z-30 transition-all duration-100 ease-out"
+          className="absolute z-30 transition-all duration-100 ease-out pointer-events-auto"
           style={{
-            left: `${Math.min(Math.max(hoveredPoint.screenX + 15, 20), dimensions.width - 240)}px`,
-            top: `${Math.min(Math.max(hoveredPoint.screenY - 80, 20), dimensions.height - 140)}px`,
+            left: `${Math.min(Math.max(activeDisplayPoint.screenX + 15, 20), dimensions.width - 250)}px`,
+            top: `${Math.min(Math.max(activeDisplayPoint.screenY - 90, 20), dimensions.height - 180)}px`,
           }}
         >
-          <div className="rounded-xl bg-[#091322]/95 backdrop-blur-xl border border-sky-500/40 p-3 shadow-2xl text-left min-w-[210px] max-w-[260px] animate-fadeIn">
+          <div className="rounded-xl bg-[#071322]/95 backdrop-blur-xl border border-sky-500/50 p-3.5 shadow-2xl text-left min-w-[220px] max-w-[270px] animate-fadeIn">
             <div className="flex items-center justify-between gap-2 border-b border-white/10 pb-1.5 mb-2">
               <span className="text-[11px] font-mono font-bold text-sky-400 truncate">
-                {hoveredPoint.name}
+                {activeDisplayPoint.name}
               </span>
-              <span className="text-[9px] font-mono bg-sky-950/80 text-sky-300 px-1.5 py-0.5 rounded border border-sky-800">
-                {hoveredPoint.countryCode}
-              </span>
+              <div className="flex items-center gap-1">
+                <span className="text-[9px] font-mono bg-sky-950 text-sky-300 px-1.5 py-0.5 rounded border border-sky-800">
+                  {activeDisplayPoint.countryCode}
+                </span>
+                {lockedPoint && (
+                  <button
+                    type="button"
+                    onClick={() => setLockedPoint(null)}
+                    className="text-slate-400 hover:text-white text-xs px-1 cursor-pointer"
+                    aria-label="Close inspection card"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
             </div>
 
             <div className="flex items-baseline gap-2 mb-1.5">
               <span
                 className="text-2xl font-black font-mono tracking-tight"
-                style={{ color: hoveredPoint.colorHex }}
+                style={{ color: activeDisplayPoint.colorHex }}
               >
-                {hoveredPoint.aqi}
+                {activeDisplayPoint.aqi}
               </span>
               <span className="text-[10px] font-semibold text-slate-300 leading-tight">
-                {hoveredPoint.category}
+                {activeDisplayPoint.category}
               </span>
             </div>
 
-            <div className="text-[10px] text-slate-400 font-mono flex items-center gap-2 mb-2">
-              <span>{hoveredPoint.weatherSummary}</span>
+            <div className="text-[10px] text-slate-400 font-mono flex items-center gap-2 mb-3">
+              <span>{activeDisplayPoint.weatherSummary}</span>
             </div>
 
-            <div className="text-[9px] font-mono text-teal-400 flex items-center justify-between border-t border-white/10 pt-1.5">
-              <span>Click to view station telemetry</span>
+            {/* Explicit Button to select location — Dragging/clicking around the globe never reloads! */}
+            <button
+              type="button"
+              onClick={() => {
+                onSelectLocation({
+                  id: Math.floor(Math.abs(activeDisplayPoint.latitude * 1000 + activeDisplayPoint.longitude * 100)),
+                  name: activeDisplayPoint.name,
+                  country: activeDisplayPoint.country,
+                  countryCode: activeDisplayPoint.countryCode,
+                  admin1: activeDisplayPoint.admin1,
+                  latitude: activeDisplayPoint.latitude,
+                  longitude: activeDisplayPoint.longitude,
+                  timezone: 'UTC',
+                });
+                pivotToLocation(activeDisplayPoint.latitude, activeDisplayPoint.longitude);
+                setLockedPoint(null);
+              }}
+              className="w-full py-1.5 px-3 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 text-[10px] font-mono font-bold tracking-wide transition-all shadow-md cursor-pointer flex items-center justify-center gap-1.5"
+            >
+              <span>Set as Active Location</span>
               <span>↵</span>
-            </div>
+            </button>
           </div>
         </div>
       )}
 
-      {/* Bottom Controls Bar: Mode Pills & Zoom (Matches Image 3) */}
+      {/* Bottom Controls Bar: Mode Pills & Zoom */}
       <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between z-20 pointer-events-auto">
         {/* 3D GLOBE / ROTATE MODE PILL */}
-        <div className="inline-flex items-center rounded-lg bg-slate-900/80 backdrop-blur-md border border-slate-700/60 p-1 shadow-lg text-[11px] font-mono">
+        <div className="inline-flex items-center rounded-lg bg-slate-900/85 backdrop-blur-md border border-slate-700/60 p-1 shadow-lg text-[11px] font-mono">
           <button
             type="button"
             onClick={() => setIsRotating(!isRotating)}
@@ -715,11 +740,11 @@ export function InteractiveEarthGlobe({
         </div>
 
         {/* ZOOM CONTROLS */}
-        <div className="flex items-center gap-1 bg-slate-900/80 backdrop-blur-md border border-slate-700/60 rounded-lg p-1 shadow-lg text-[11px] font-mono text-slate-300">
+        <div className="flex items-center gap-1 bg-slate-900/85 backdrop-blur-md border border-slate-700/60 rounded-lg p-1 shadow-lg text-[11px] font-mono text-slate-300">
           <span className="px-2 text-[10px] uppercase font-bold text-slate-400">Zoom</span>
           <button
             type="button"
-            onClick={() => setZoomLevel((z) => Math.max(3.5, z - 0.4))}
+            onClick={() => setZoomLevel((z) => Math.max(3.2, z - 0.4))}
             className="w-6 h-6 flex items-center justify-center rounded bg-slate-800/80 hover:bg-slate-700 text-white font-bold transition-colors cursor-pointer"
             aria-label="Zoom in"
           >
@@ -727,7 +752,7 @@ export function InteractiveEarthGlobe({
           </button>
           <button
             type="button"
-            onClick={() => setZoomLevel((z) => Math.min(8.0, z + 0.4))}
+            onClick={() => setZoomLevel((z) => Math.min(7.5, z + 0.4))}
             className="w-6 h-6 flex items-center justify-center rounded bg-slate-800/80 hover:bg-slate-700 text-white font-bold transition-colors cursor-pointer"
             aria-label="Zoom out"
           >
