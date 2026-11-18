@@ -52,6 +52,17 @@ export interface RawOpenMeteoAirQualityResponse {
     readonly nitrogen_dioxide?: number | null;
     readonly sulphur_dioxide?: number | null;
     readonly ozone?: number | null;
+    readonly us_aqi_pm2_5?: number | null;
+    readonly us_aqi_pm10?: number | null;
+    readonly us_aqi_carbon_monoxide?: number | null;
+    readonly us_aqi_nitrogen_dioxide?: number | null;
+    readonly us_aqi_sulphur_dioxide?: number | null;
+    readonly us_aqi_ozone?: number | null;
+    readonly european_aqi_pm2_5?: number | null;
+    readonly european_aqi_pm10?: number | null;
+    readonly european_aqi_nitrogen_dioxide?: number | null;
+    readonly european_aqi_sulphur_dioxide?: number | null;
+    readonly european_aqi_ozone?: number | null;
   };
   readonly current_units?: Record<string, string>;
   readonly hourly: {
@@ -132,13 +143,24 @@ export function normalizeAirQualityReport(
           whoRatio,
         };
       } else {
-        const level = getEaqiPollutantLevel(key, concentration);
-        const pollutantTier = level ? EAQI_TIERS[level - 1] : null;
+        const providerSubKey = `european_aqi_${key}` as keyof typeof current;
+        const providerSub = current[providerSubKey] as number | null | undefined;
+        const subIndex =
+          providerSub !== undefined && providerSub !== null && Number.isFinite(providerSub)
+            ? providerSub
+            : getEaqiPollutantLevel(key, concentration);
 
-        if (level && level > highestSubIndex) {
-          highestSubIndex = level;
+        const pollutantTier = subIndex !== null ? getEaqiTierFromValue(subIndex) : null;
+
+        if (subIndex !== null && subIndex > highestSubIndex) {
+          highestSubIndex = subIndex;
           dominantPollutant = meta.chemicalFormula;
         }
+
+        const note =
+          providerSub !== undefined && providerSub !== null
+            ? 'Modelled European EAQI sub-index (EEA regulatory window)'
+            : 'Calculated European EAQI breakpoint level';
 
         pollutants[key] = {
           key,
@@ -146,18 +168,42 @@ export function normalizeAirQualityReport(
           chemicalFormula: meta.chemicalFormula,
           concentration,
           unit,
-          subIndex: level,
+          subIndex,
           tier: pollutantTier,
           isEvaluatedInActiveStandard: true,
+          note,
           whoGuideline: meta.whoGuideline,
           whoRatio,
         };
       }
     } else {
-      // US EPA AQI: Evaluate ALL pollutants using official breakpoints
-      const { subIndex, averagingNote } = calculatePollutantEpaSubIndex(key, concentration);
-      let pollutantTier = null;
+      // US EPA AQI: Prioritize provider-supplied sub-index incorporating EPA regulatory rolling averages
+      const providerSubKey = `us_aqi_${key}` as keyof typeof current;
+      const providerSub = current[providerSubKey] as number | null | undefined;
 
+      let subIndex: number | null = null;
+      let averagingNote = '';
+
+      if (providerSub !== undefined && providerSub !== null && Number.isFinite(providerSub)) {
+        subIndex = providerSub;
+        if (key === 'pm2_5' || key === 'pm10') {
+          averagingNote = 'Modelled 24-hour rolling average (EPA standard window)';
+        } else if (key === 'ozone') {
+          averagingNote = 'Modelled max 1h / 8h rolling average (EPA standard window)';
+        } else if (key === 'carbon_monoxide') {
+          averagingNote = 'Modelled 8-hour rolling average (EPA standard window)';
+        } else if (key === 'sulphur_dioxide') {
+          averagingNote = 'Modelled max 1h / 24h rolling average (EPA standard window)';
+        } else {
+          averagingNote = '1-hour primary model concentration';
+        }
+      } else {
+        const calc = calculatePollutantEpaSubIndex(key, concentration);
+        subIndex = calc.subIndex;
+        averagingNote = `${calc.averagingNote} (instantaneous calc)`;
+      }
+
+      let pollutantTier = null;
       if (subIndex !== null) {
         pollutantTier = getEpaTierFromValue(subIndex);
         if (subIndex > highestSubIndex) {
@@ -224,7 +270,7 @@ export function normalizeAirQualityReport(
 
   const averagingPeriodNote =
     activeStandard === 'US_EPA'
-      ? 'The overall US EPA AQI reflects regulatory 24-hour running averages for particulate matter and 8-hour averages for ozone/CO. Instantaneous 1-hour sub-indices are shown in each pollutant telemetry card.'
+      ? 'The overall US EPA AQI reflects Open-Meteo modelled 24-hour rolling averages for particulate matter and 8-hour rolling averages for ozone/CO from CAMS grid simulations. This is an atmospheric model estimate, not an in-situ station NowCast.'
       : 'The European EAQI reflects 1-hour and 8-hour worst-case pollutant indices according to European Environment Agency (EEA) guidelines. Carbon monoxide is not evaluated under EAQI.';
 
   // CPCB Comparison Context for Indian Locations
@@ -259,9 +305,9 @@ export function normalizeAirQualityReport(
       equivalentCategory: cpcbCat,
       estimatedAqiRange: cpcbRange,
       stationContext:
-        'Modelled ~45km regional grid (CAMS Global IFS). Physical CAAQMS monitors (e.g. Anand Vihar, RK Puram) measure localized ground plumes which typically report higher concentrations during thermal inversions.',
+        'Modelled ~45km regional grid (CAMS Global IFS). Physical CAAQMS monitors (e.g. Sanathnagar, Zoo Park, Central University) measure localized ground plumes which typically report higher concentrations during thermal inversions. Live physical station observations are not provided via this open model API.',
       methodologyDifference:
-        'India CPCB NAQI permits up to 60 μg/m³ PM2.5 for "Satisfactory" (51–100), whereas US EPA classifies >35.4 μg/m³ as Unhealthy for Sensitive Groups (>100).',
+        'Single-pollutant PM2.5 benchmark: India CPCB NAQI permits up to 60 μg/m³ PM2.5 for "Satisfactory" (51–100), whereas US EPA classifies >35.4 μg/m³ as Unhealthy for Sensitive Groups (>100). Official composite CPCB AQI requires simultaneous 24h monitoring of ≥3 criteria pollutants and is not claimed here.',
     };
   }
 

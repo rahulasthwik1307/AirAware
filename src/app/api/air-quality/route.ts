@@ -35,6 +35,17 @@ export async function GET(request: NextRequest) {
       'nitrogen_dioxide',
       'sulphur_dioxide',
       'ozone',
+      'us_aqi_pm2_5',
+      'us_aqi_pm10',
+      'us_aqi_nitrogen_dioxide',
+      'us_aqi_ozone',
+      'us_aqi_sulphur_dioxide',
+      'us_aqi_carbon_monoxide',
+      'european_aqi_pm2_5',
+      'european_aqi_pm10',
+      'european_aqi_nitrogen_dioxide',
+      'european_aqi_ozone',
+      'european_aqi_sulphur_dioxide',
     ].join(',');
 
     const hourlyParams = [

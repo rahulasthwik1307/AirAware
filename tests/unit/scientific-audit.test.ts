@@ -80,6 +80,49 @@ describe('Scientific Trust & Domain Audit Verification', () => {
       expect(report.modelMetadata.spatialResolution).toContain('~45 km');
       expect(report.cpcbComparison?.stationContext).toContain('~45km regional grid (CAMS Global IFS)');
     });
+
+    it('prioritizes provider-supplied sub-indices incorporating regulatory rolling averages', () => {
+      const mockHyderabadRaw: RawOpenMeteoAirQualityResponse = {
+        latitude: 17.4,
+        longitude: 78.5,
+        current: {
+          time: '2026-11-18T16:30',
+          interval: 3600,
+          us_aqi: 124,
+          us_aqi_pm2_5: 124,
+          us_aqi_pm10: 45,
+          us_aqi_ozone: 115,
+          us_aqi_nitrogen_dioxide: 3,
+          us_aqi_sulphur_dioxide: 7,
+          us_aqi_carbon_monoxide: 3,
+          pm2_5: 47.7,
+          pm10: 52.6,
+          ozone: 142,
+          nitrogen_dioxide: 6.7,
+          sulphur_dioxide: 12.6,
+          carbon_monoxide: 336,
+        },
+        hourly: { time: [] },
+      };
+
+      const mockHyderabadLocation: GeoLocation = {
+        id: 1269843,
+        name: 'Hyderabad',
+        country: 'India',
+        countryCode: 'IN',
+        latitude: 17.384,
+        longitude: 78.456,
+        timezone: 'Asia/Kolkata',
+      };
+
+      const report = normalizeAirQualityReport(mockHyderabadRaw, mockHyderabadLocation, 'US_EPA');
+      expect(report.providerAqi).toBe(124);
+      expect(report.pollutants.pm2_5.subIndex).toBe(124); // Matches provider rolling average
+      expect(report.pollutants.ozone.subIndex).toBe(115); // Matches provider 8h rolling average
+      expect(report.pollutants.pm10.subIndex).toBe(45);
+      expect(report.pollutants.pm2_5.note).toContain('Modelled 24-hour rolling average');
+      expect(report.dominantPollutant).toBe('PM₂.₅');
+    });
   });
 
   describe('New Delhi EPA AQI & 24h Rolling Averaging Verification', () => {

@@ -39,10 +39,10 @@ export function ScientificGrounding({ report }: ScientificGroundingProps) {
           <div className="p-3 rounded-md bg-[var(--surface-card)] border border-[var(--border-subtle)]">
             <div className="flex items-center gap-2 mb-1.5">
               <span className="text-sm font-bold text-[var(--ink-primary)]">
-                🇮🇳 India CPCB NAQI Contextual Comparison
+                🇮🇳 India CPCB PM2.5 Regulatory Benchmark
               </span>
               <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-[var(--surface-subtle)] text-[var(--ink-primary)]">
-                EST. CPCB: {cpcbComparison.estimatedAqiRange} ({cpcbComparison.equivalentCategory})
+                CPCB PM2.5 BENCHMARK: {cpcbComparison.estimatedAqiRange} ({cpcbComparison.equivalentCategory})
               </span>
             </div>
             <p className="text-[11px] text-[var(--ink-secondary)]">
@@ -68,7 +68,7 @@ export function ScientificGrounding({ report }: ScientificGroundingProps) {
             <tbody className="divide-y divide-[var(--border-subtle)]">
               <tr>
                 <td className="p-2.5 font-bold text-[var(--ink-primary)]">US EPA AQI</td>
-                <td className="p-2.5">24-hour running / NowCast</td>
+                <td className="p-2.5">Modelled 24h/8h rolling average (CAMS)</td>
                 <td className="p-2.5">35.5 – 55.4 μg/m³ (AQI 101–150)</td>
                 <td className="p-2.5 text-[var(--aqi-sensitive)] font-bold">Unhealthy for Sensitive Groups</td>
               </tr>
