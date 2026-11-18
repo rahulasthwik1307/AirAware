@@ -949,7 +949,10 @@ Security is mandatory even though this is a local-first application.
 - Minimize profile information sent to AI.
 - Verify dependencies and remove unused packages.
 
-Important: in-memory rate limiting is process-local and does not provide robust distributed protection. Document this limitation and choose a suitable free-compatible solution.
+Important: In-memory rate limiting is process-local and does not provide robust distributed protection. The multi-tiered protection architecture consists of:
+1. **Application-Level Local Protection:** In-process sliding window (`localRateLimiter` in `src/lib/ai/rate-limiter.ts`) enforcing max 10 requests per 10 minutes per hashed client identifier, a strict 2KB payload ceiling, same-origin verification, and offline deterministic fallback.
+2. **Documented Cloudflare Free-Tier Edge Rule:** Cloudflare Free plan allows 1 custom rate-limiting rule. Matching fields are strictly limited to Path (`starts_with(http.request.uri.path, "/api/ai/")`) and Verified Bot (HTTP Method matching is NOT available on the Free plan). Counting is strictly by IP, with a 10-second counting period and a 10-second mitigation block (e.g. threshold of 3–5 requests per 10 seconds).
+3. **Operational Status Distinction:** The Cloudflare edge rule is documented as an architectural recommendation requiring manual dashboard deployment. It is NOT active until manually created and deployed by the account owner in the Cloudflare Dashboard. Untracked/undeployed edge rules must never be claimed as active.
 
 Do not add authentication simply to make the architecture appear more secure.
 
