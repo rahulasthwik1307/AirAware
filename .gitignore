@@ -50,6 +50,8 @@ shots
 # Chrome scratch temporary files / profiles
 .chrome-scratch-polished/
 .chrome-scratch-polished
+.chrome-audit-profile/
+.chrome-audit-profile
 
 # Agent configuration & skills
 .agents/
