@@ -56,6 +56,9 @@ function createMockReport(overrides?: Partial<AirQualityReport>): AirQualityRepo
     modelTimestamp: '2026-11-19 08:00',
     localTime: '2026-11-19 08:00',
     intervalSeconds: 3600,
+    dataSource: 'OPEN_METEO_CAMS',
+    isModelled: true,
+    averagingPeriodNote: 'Instantaneous 1-hour modelled concentration',
     isStale: false,
     activeStandard: 'US_EPA',
     standardMetadata: {

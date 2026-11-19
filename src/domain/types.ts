@@ -90,6 +90,11 @@ export interface ForecastPoint {
   readonly europeanAqi: number | null;
   readonly activeAqi: number | null;
   readonly tier: AqiTier | null;
+  readonly isCurrentHour?: boolean;
+  readonly pm25?: number | null;
+  readonly pm10?: number | null;
+  readonly temperature?: number | null;
+  readonly windSpeed?: number | null;
 }
 
 export interface CpcbComparisonContext {

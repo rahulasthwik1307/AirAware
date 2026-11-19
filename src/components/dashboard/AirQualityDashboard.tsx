@@ -9,6 +9,7 @@ import { LocationSearch } from './LocationSearch';
 import { AqiHeroCard } from './AqiHeroCard';
 import { PollutantGrid } from './PollutantGrid';
 import { ForecastTimeline } from './ForecastTimeline';
+import { AtmosphericWeatherCard } from './AtmosphericWeatherCard';
 import { ScientificGrounding } from './ScientificGrounding';
 import { ProvenanceFooter } from './ProvenanceFooter';
 
@@ -315,7 +316,13 @@ export function AirQualityDashboard() {
           <ForecastTimeline
             forecast={report.forecast}
             activeStandard={report.activeStandard}
+            modelMetadata={report.modelMetadata}
+            modelTimestamp={report.modelTimestamp}
+            localTime={report.localTime}
           />
+
+          {/* Atmospheric Surface Weather Context */}
+          <AtmosphericWeatherCard weather={weatherData} />
 
           {/* 5. Scientific Grounding & Multi-Standard Calibration */}
           <ScientificGrounding report={report} />

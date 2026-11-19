@@ -68,26 +68,26 @@ export function ScientificGrounding({ report }: ScientificGroundingProps) {
             <tbody className="divide-y divide-[var(--border-subtle)]">
               <tr>
                 <td className="p-2.5 font-bold text-[var(--ink-primary)]">US EPA AQI</td>
-                <td className="p-2.5">Modelled 24h/8h rolling average (CAMS)</td>
+                <td className="p-2.5">Preceding 24-hour rolling average (provider-modelled sub-index; not computed locally)</td>
                 <td className="p-2.5">35.5 – 55.4 μg/m³ (AQI 101–150)</td>
                 <td className="p-2.5 text-[var(--aqi-sensitive)] font-bold">Unhealthy for Sensitive Groups</td>
               </tr>
               <tr>
                 <td className="p-2.5 font-bold text-[var(--ink-primary)]">European EAQI</td>
-                <td className="p-2.5">1-hour / 24-hour worst vector</td>
+                <td className="p-2.5">Hourly concentration (EEA)</td>
                 <td className="p-2.5">25 – 50 μg/m³ (Poor) / 50 – 75 μg/m³ (Very Poor)</td>
                 <td className="p-2.5 text-[var(--aqi-unhealthy)] font-bold">Poor to Very Poor</td>
               </tr>
               <tr>
                 <td className="p-2.5 font-bold text-[var(--ink-primary)]">India CPCB NAQI</td>
-                <td className="p-2.5">24-hour arithmetic mean</td>
+                <td className="p-2.5">24-hour arithmetic mean at physical CAAQMS stations (reference benchmark only; stations not integrated)</td>
                 <td className="p-2.5">31 – 60 μg/m³ (AQI 51–100)</td>
                 <td className="p-2.5 text-[var(--aqi-moderate)] font-bold">Satisfactory</td>
               </tr>
               <tr>
                 <td className="p-2.5 font-bold text-[var(--ink-primary)]">WHO 2021 Guideline</td>
-                <td className="p-2.5">24-hour exposure target</td>
-                <td className="p-2.5">15 μg/m³ annual guideline threshold</td>
+                <td className="p-2.5">WHO 24-hour guideline level: 15 μg/m³ • WHO annual guideline level: 5 μg/m³ (Health-based reference)</td>
+                <td className="p-2.5">15 μg/m³ 24-hour reference level</td>
                 <td className="p-2.5 text-[var(--ink-secondary)]">Exceeded by {pm25Val ? `${(pm25Val / 15).toFixed(1)}x` : '—'}</td>
               </tr>
             </tbody>

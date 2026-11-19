@@ -251,6 +251,9 @@ export function normalizeAirQualityReport(
           : getEpaTierFromValue(activeAqi);
 
       const displayTime = timeStr.includes('T') ? timeStr.split('T')[1].slice(0, 5) : timeStr;
+      const isCurrentHour = i === startIndex || timeStr === currentTimeStr;
+      const pm25 = hourly.pm2_5 ? hourly.pm2_5[i] ?? null : null;
+      const pm10 = hourly.pm10 ? hourly.pm10[i] ?? null : null;
 
       forecast.push({
         time: timeStr,
@@ -259,6 +262,9 @@ export function normalizeAirQualityReport(
         europeanAqi,
         activeAqi,
         tier: pointTier,
+        isCurrentHour,
+        pm25,
+        pm10,
       });
     }
   }

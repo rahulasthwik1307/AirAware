@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useCallback, useSyncExternalStore } from 'react';
+import React, { useState, useMemo, useCallback, useSyncExternalStore, useRef, useEffect } from 'react';
 import { z } from 'zod';
 import { GeoLocation } from '@/domain/types';
 
@@ -55,6 +55,33 @@ export function SavedLocationsManager({
 
   const [localLocations, setLocalLocations] = useState<GeoLocation[] | null>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  // Close dropdown on outside click or Escape key
+  useEffect(() => {
+    if (!isOpen) return;
+
+    function handleClickOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        setIsOpen(false);
+        triggerRef.current?.focus();
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen]);
 
   const storedLocations = useMemo<GeoLocation[]>(() => {
     try {
@@ -157,13 +184,15 @@ export function SavedLocationsManager({
 
       {/* 2. Saved Cities Drawer / Dropdown Trigger */}
       {savedLocations.length > 0 && (
-        <div className="relative">
+        <div ref={dropdownRef} className="relative">
           <button
+            ref={triggerRef}
             type="button"
             onClick={() => setIsOpen((prev) => !prev)}
             aria-expanded={isOpen}
+            aria-haspopup="true"
             aria-controls="saved-locations-menu"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-semibold border border-[var(--border-subtle)] bg-[var(--surface-card)] text-[var(--ink-primary)] hover:bg-[var(--surface-subtle)] transition-all cursor-pointer shadow-xs"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-semibold border border-[var(--border-subtle)] bg-[var(--surface-card)] text-[var(--ink-primary)] hover:bg-[var(--surface-subtle)] transition-all cursor-pointer shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
           >
             <span>SAVED ({savedLocations.length})</span>
             <span className="text-[10px]" aria-hidden="true">
@@ -194,11 +223,19 @@ export function SavedLocationsManager({
                     <li
                       key={loc.id}
                       role="menuitem"
+                      tabIndex={0}
                       onClick={() => {
                         onSelectLocation(loc);
                         setIsOpen(false);
                       }}
-                      className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs cursor-pointer transition-colors ${
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          onSelectLocation(loc);
+                          setIsOpen(false);
+                        }
+                      }}
+                      className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] ${
                         isCurrent
                           ? 'bg-[var(--brand-surface)] text-[var(--brand-primary)] font-bold'
                           : 'text-[var(--ink-primary)] hover:bg-[var(--surface-subtle)]'
@@ -223,8 +260,9 @@ export function SavedLocationsManager({
                           <button
                             type="button"
                             title="Set as Home location"
+                            aria-label={`Set ${loc.name} as Home location`}
                             onClick={(e) => handleSetPrimary(e, loc.id)}
-                            className="p-1 text-[10px] text-[var(--ink-muted)] hover:text-[var(--brand-primary)]"
+                            className="p-1 text-[10px] text-[var(--ink-muted)] hover:text-[var(--brand-primary)] rounded focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--brand-primary)] cursor-pointer"
                           >
                             🏠
                           </button>
@@ -232,8 +270,9 @@ export function SavedLocationsManager({
                         <button
                           type="button"
                           title="Remove saved city"
+                          aria-label={`Remove ${loc.name} from saved locations`}
                           onClick={(e) => handleRemove(e, loc.id)}
-                          className="p-1 text-[10px] text-[var(--ink-muted)] hover:text-[var(--aqi-unhealthy)] font-bold"
+                          className="p-1 text-[10px] text-[var(--ink-muted)] hover:text-[var(--aqi-unhealthy)] font-bold rounded focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--aqi-unhealthy)] cursor-pointer"
                         >
                           ✕
                         </button>

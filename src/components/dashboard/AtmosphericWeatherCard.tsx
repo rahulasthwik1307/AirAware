@@ -14,7 +14,7 @@ export function AtmosphericWeatherCard({
 }: AtmosphericWeatherCardProps) {
   if (isLoading) {
     return (
-      <div className="w-full mt-3 p-3 rounded-lg bg-[var(--surface-subtle)] border border-[var(--border-subtle)] animate-pulse h-14" />
+      <div className="w-full mt-3 p-4 rounded-xl bg-[var(--surface-subtle)] border border-[var(--border-subtle)] animate-pulse h-20" />
     );
   }
 
@@ -23,49 +23,87 @@ export function AtmosphericWeatherCard({
   }
 
   return (
-    <div className="w-full mt-3 p-3 rounded-lg bg-[var(--surface-subtle)] border border-[var(--border-subtle)] text-xs">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        {/* Core Weather Vector Pills */}
-        <div className="flex items-center gap-4 text-[var(--ink-primary)]">
-          {/* Temperature */}
-          <div className="flex items-center gap-1.5 font-mono">
-            <span className="text-sm select-none" aria-hidden="true">🌡️</span>
-            <span className="font-bold text-sm tabular-nums">
-              {weather.temperature !== null ? `${weather.temperature.toFixed(1)}°C` : '—'}
+    <section
+      aria-labelledby="surface-weather-heading"
+      className="w-full mt-3 p-4 rounded-xl bg-[var(--surface-subtle)]/80 border border-[var(--border-subtle)] text-xs font-sans"
+    >
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[var(--border-subtle)] pb-2.5 mb-3">
+        <div>
+          <h3
+            id="surface-weather-heading"
+            className="text-xs font-mono font-bold uppercase tracking-wider text-[var(--ink-primary)] flex items-center gap-2"
+          >
+            <span>Surface Meteorology • Atmospheric Context</span>
+            <span className="text-[9px] font-normal text-[var(--ink-muted)] bg-[var(--surface-card)] px-2 py-0.5 rounded border border-[var(--border-subtle)]">
+              Open-Meteo Feed
             </span>
-          </div>
+          </h3>
+          <p className="text-[11px] text-[var(--ink-secondary)] mt-0.5">
+            Modelled surface parameters at ground level.
+          </p>
+        </div>
 
-          {/* Humidity */}
-          <div className="flex items-center gap-1.5 font-mono">
-            <span className="text-sm select-none" aria-hidden="true">💧</span>
-            <span className="font-bold tabular-nums">
-              {weather.humidity !== null ? `${weather.humidity}%` : '—'}
-            </span>
-            <span className="text-[10px] text-[var(--ink-muted)]">Humidity</span>
-          </div>
+        <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded border border-[var(--border-subtle)] bg-[var(--surface-card)] text-[var(--ink-secondary)] self-start sm:self-auto">
+          Surface Observations
+        </span>
+      </div>
 
-          {/* Wind Speed & Direction */}
-          <div className="flex items-center gap-1.5 font-mono">
-            <span className="text-sm select-none" aria-hidden="true">💨</span>
-            <span className="font-bold tabular-nums">
-              {weather.windSpeed !== null ? `${weather.windSpeed.toFixed(1)} km/h` : '—'}
+      {/* Core Independent Weather Variables */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {/* Temperature at 2m */}
+        <div className="flex items-center gap-2.5 p-2.5 rounded-lg bg-[var(--surface-card)] border border-[var(--border-subtle)]">
+          <span className="text-xl select-none" aria-hidden="true">🌡️</span>
+          <div>
+            <span className="text-[10px] font-mono font-bold text-[var(--ink-muted)] uppercase block">
+              Temperature (2m)
             </span>
-            <span className="text-[10px] font-bold text-[var(--brand-primary)] bg-[var(--surface-card)] px-1.5 py-0.2 rounded border border-[var(--border-subtle)]">
-              {weather.windDirectionCardinal}
+            <span className="text-sm font-mono font-bold tabular-nums text-[var(--ink-primary)]">
+              {weather.temperature !== null ? `${weather.temperature.toFixed(1)}°C` : 'Not Reported'}
             </span>
           </div>
         </div>
 
-        {/* Modelled Surface Meteorology Callout */}
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded border border-slate-300 bg-slate-100 text-slate-700">
-            Modelled Surface Feed
-          </span>
-          <span className="hidden md:inline text-[11px] text-[var(--ink-secondary)]">
-            2m temperature &amp; humidity, 10m wind speed
-          </span>
+        {/* Relative Humidity at 2m */}
+        <div className="flex items-center gap-2.5 p-2.5 rounded-lg bg-[var(--surface-card)] border border-[var(--border-subtle)]">
+          <span className="text-xl select-none" aria-hidden="true">💧</span>
+          <div>
+            <span className="text-[10px] font-mono font-bold text-[var(--ink-muted)] uppercase block">
+              Relative Humidity (2m)
+            </span>
+            <span className="text-sm font-mono font-bold tabular-nums text-[var(--ink-primary)]">
+              {weather.humidity !== null ? `${weather.humidity}%` : 'Not Reported'}
+            </span>
+          </div>
+        </div>
+
+        {/* Wind Speed and Direction at 10m */}
+        <div className="flex items-center gap-2.5 p-2.5 rounded-lg bg-[var(--surface-card)] border border-[var(--border-subtle)]">
+          <span className="text-xl select-none" aria-hidden="true">💨</span>
+          <div>
+            <span className="text-[10px] font-mono font-bold text-[var(--ink-muted)] uppercase block">
+              Surface Wind (10m)
+            </span>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-sm font-mono font-bold tabular-nums text-[var(--ink-primary)]">
+                {weather.windSpeed !== null ? `${weather.windSpeed.toFixed(1)} km/h` : 'Not Reported'}
+              </span>
+              <span className="text-[10px] font-mono font-bold text-[var(--brand-primary)] bg-[var(--brand-surface)] px-1.5 py-0.2 rounded border border-[var(--brand-primary)]/30">
+                {weather.windDirectionCardinal}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* Clearly Separated Educational Explanation */}
+      <div className="mt-3 pt-2.5 border-t border-[var(--border-subtle)]/60 text-[11px] leading-relaxed text-[var(--ink-muted)]">
+        <strong className="font-mono text-[10px] uppercase text-[var(--ink-secondary)] block mb-0.5">
+          General Atmospheric Science (Educational Reference)
+        </strong>
+        <p>
+          Surface meteorological parameters reflect horizontal air flow at 10 metres and temperature/humidity at 2 metres. While calm surface winds and cold weather can coincide with shallow thermal temperature inversions that concentrate local smoke and vehicle exhaust, confirming vertical thermal inversions or planetary boundary-layer mixing height requires vertical upper-air atmospheric soundings (such as meteorological balloons or lidar) that are not captured in ground surface feeds.
+        </p>
+      </div>
+    </section>
   );
 }
