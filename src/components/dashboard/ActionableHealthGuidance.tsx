@@ -32,29 +32,29 @@ export function ActionableHealthGuidance({
           {
             icon: '😷',
             title: 'Mask & Respiratory',
-            recommendation: 'Air quality is pristine. No mask or respiratory protection is needed for any demographic.',
-            badge: 'Unrestricted',
+            recommendation: 'Ambient concentrations are within clean air thresholds. Routine outdoor mask use is not indicated for the general population based on current modelled levels.',
+            badge: 'Not Indicated',
             badgeType: 'good',
           },
           {
             icon: '🪟',
             title: 'Indoor Ventilation',
-            recommendation: 'Optimal time to open windows and refresh indoor air. Passive natural ventilation encouraged.',
-            badge: 'Open Windows',
+            recommendation: 'Modelled ambient conditions are favorable for opening windows and refreshing indoor air.',
+            badge: 'Favorable',
             badgeType: 'good',
           },
           {
             icon: '🏃',
             title: 'Outdoor Exercise',
-            recommendation: 'Perfect atmospheric conditions for running, cycling, and prolonged high-intensity sports.',
-            badge: 'Ideal Activity',
+            recommendation: 'Modelled conditions are favorable for outdoor recreation. Be mindful that local air quality can vary near busy roadways or combustion sources.',
+            badge: 'Favorable',
             badgeType: 'good',
           },
           {
             icon: '👶',
             title: 'Sensitive Groups',
-            recommendation: 'Children, older adults, and individuals with respiratory conditions can engage normally outdoors.',
-            badge: 'Zero Risk',
+            recommendation: 'Most individuals can engage in outdoor activities. Individuals with asthma or unusual respiratory sensitivity should continue monitoring personal comfort and follow their action plan.',
+            badge: 'Standard Precaution',
             badgeType: 'good',
           },
         ];
@@ -63,28 +63,28 @@ export function ActionableHealthGuidance({
           {
             icon: '😷',
             title: 'Mask & Respiratory',
-            recommendation: 'Not required for general public. Extremely sensitive individuals should carry quick-relief inhalers.',
-            badge: 'Optional',
+            recommendation: 'Routine mask use is not required for the general public. Unusually sensitive individuals in dense traffic corridors may choose to carry respiratory protection.',
+            badge: 'Personal Choice',
             badgeType: 'moderate',
           },
           {
             icon: '🪟',
             title: 'Indoor Ventilation',
-            recommendation: 'Safe to ventilate indoors during midday hours when morning thermal inversions have dissipated.',
-            badge: 'Ventilate Midday',
+            recommendation: 'Indoor ventilation is generally acceptable. In high-traffic urban areas, opening windows midday may be preferable to morning rush hours.',
+            badge: 'Acceptable',
             badgeType: 'moderate',
           },
           {
             icon: '🏃',
             title: 'Outdoor Exercise',
-            recommendation: 'Outdoor sports are safe. Sensitive athletes should watch for slight throat irritation or coughing.',
-            badge: 'Safe with Caution',
+            recommendation: 'Outdoor recreation is generally acceptable for most people. Sensitive individuals may consider reducing prolonged or strenuous outdoor exertion.',
+            badge: 'Moderate Exertion',
             badgeType: 'moderate',
           },
           {
             icon: '👶',
             title: 'Sensitive Groups',
-            recommendation: 'Individuals with severe asthma or cardiovascular sensitivities should monitor local symptom onset.',
+            recommendation: 'Individuals with severe asthma or cardiovascular sensitivities should monitor local symptoms and keep quick-relief medication accessible.',
             badge: 'Monitor Symptoms',
             badgeType: 'moderate',
           },
@@ -220,7 +220,7 @@ export function ActionableHealthGuidance({
     <div className={`w-full mt-4 pt-4 border-t ${isDark ? 'border-slate-800/80' : 'border-slate-200/80'}`}>
       <div className="flex items-center justify-between mb-2.5">
         <span className={`text-[11px] font-bold tracking-wider uppercase font-mono ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
-          Actionable Health Guidance // Real-Time Protocols
+          Actionable Health Guidance • Modelled Advisory Protocols
         </span>
         {dominantPollutant && (
           <span className={`text-[10px] font-mono ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
@@ -262,6 +262,10 @@ export function ActionableHealthGuidance({
           </div>
         ))}
       </div>
+
+      <p className={`text-[10px] font-mono mt-3 leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+        Notice: Modelled advisory protocols provide generalized public guidance and do not guarantee personal safety. Individuals with pre-existing cardiopulmonary conditions should consult healthcare professionals.
+      </p>
     </div>
   );
 }

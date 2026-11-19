@@ -17,6 +17,12 @@ export interface GeoLocation {
 
 export type AqiStandardKey = 'EUROPEAN_EAQI' | 'US_EPA';
 
+export type WorkspaceKey =
+  | 'air-intelligence'
+  | 'family-planner'
+  | 'indoor-air'
+  | 'cleaner-choices';
+
 /**
  * StandardRole defines the regulatory/scientific context of the index for a location:
  * - 'LOCAL_OFFICIAL': An officially recognized national index (e.g. US EPA AQI in the US).

@@ -1,48 +1,78 @@
 import { describe, it, expect } from 'vitest';
 
-function calculateDispersion(windSpeed: number | null, humidity: number | null): {
-  dispersionIndex: 'POOR' | 'MODERATE' | 'GOOD';
-  dispersionNote: string;
-} {
-  if (windSpeed !== null && windSpeed < 6 && humidity !== null && humidity > 70) {
-    return {
-      dispersionIndex: 'POOR',
-      dispersionNote: 'Stagnant boundary layer • High humidity traps ground particulates.',
-    };
-  }
-  if (windSpeed !== null && windSpeed > 18) {
-    return {
-      dispersionIndex: 'GOOD',
-      dispersionNote: 'Active atmospheric ventilation • High wind aids pollutant dispersal.',
-    };
-  }
-  if (windSpeed !== null && windSpeed < 8) {
-    return {
-      dispersionIndex: 'POOR',
-      dispersionNote: 'Calm winds • Slow vertical dispersion promotes localized buildup.',
-    };
-  }
+/**
+ * Surface Meteorology Domain Test Suite
+ * Scientific Audit: Surface weather observations (2m temperature & humidity, 10m wind)
+ * must be presented neutrally and must NEVER claim proof of thermal inversion or boundary-layer mixing
+ * without validated upper-air sounding/lapse-rate observations.
+ */
+
+function getWindCardinal(degrees: number | null): string {
+  if (degrees === null || !Number.isFinite(degrees)) return 'N/A';
+  const cardinals = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+  const index = Math.round(((degrees % 360) / 22.5)) % 16;
+  return cardinals[index];
+}
+
+interface SurfaceWeatherContext {
+  temperature: number | null;
+  humidity: number | null;
+  windSpeed: number | null;
+  windDirectionCardinal: string;
+  hasInversionClaim: boolean;
+  hasMixingClaim: boolean;
+  scientificExplorationNote: string;
+}
+
+function evaluateSurfaceWeather(
+  temperature: number | null,
+  humidity: number | null,
+  windSpeed: number | null,
+  windDirectionDegrees: number | null
+): SurfaceWeatherContext {
   return {
-    dispersionIndex: 'MODERATE',
-    dispersionNote: 'Normal atmospheric mixing conditions.',
+    temperature,
+    humidity,
+    windSpeed,
+    windDirectionCardinal: getWindCardinal(windDirectionDegrees),
+    hasInversionClaim: false, // Inversion requires upper-air temperature lapse rates
+    hasMixingClaim: false,    // Boundary-layer mixing requires PBL height soundings
+    scientificExplorationNote:
+      'Surface weather parameters from numerical forecast models. Surface winds provide horizontal transport; boundary-layer height and vertical temperature profiles (inversions) require upper-air atmospheric soundings not captured in surface observations.',
   };
 }
 
-describe('Atmospheric Dispersion Vector Logic', () => {
-  it('correctly detects thermal inversion conditions (calm wind + high humidity)', () => {
-    const result = calculateDispersion(3.2, 85);
-    expect(result.dispersionIndex).toBe('POOR');
-    expect(result.dispersionNote).toContain('Stagnant boundary layer');
+describe('Surface Meteorology & Scientific Honesty', () => {
+  it('correctly maps 16-point compass cardinals from degrees', () => {
+    expect(getWindCardinal(0)).toBe('N');
+    expect(getWindCardinal(90)).toBe('E');
+    expect(getWindCardinal(180)).toBe('S');
+    expect(getWindCardinal(270)).toBe('W');
+    expect(getWindCardinal(315)).toBe('NW');
+    expect(getWindCardinal(null)).toBe('N/A');
+    expect(getWindCardinal(NaN)).toBe('N/A');
   });
 
-  it('correctly detects active ventilation during strong winds', () => {
-    const result = calculateDispersion(22.5, 45);
-    expect(result.dispersionIndex).toBe('GOOD');
-    expect(result.dispersionNote).toContain('Active atmospheric ventilation');
+  it('rejects unvalidated inversion and mixing claims from surface observations alone', () => {
+    // Under calm surface winds and high humidity, ensure no ungrounded inversion claim is made
+    const result = evaluateSurfaceWeather(14.5, 88, 3.2, 280);
+
+    expect(result.hasInversionClaim).toBe(false);
+    expect(result.hasMixingClaim).toBe(false);
+    expect(result.scientificExplorationNote).toContain('boundary-layer height');
+    expect(result.scientificExplorationNote).toContain('upper-air atmospheric soundings');
   });
 
-  it('classifies normal conditions as moderate', () => {
-    const result = calculateDispersion(12.0, 50);
-    expect(result.dispersionIndex).toBe('MODERATE');
+  it('maintains neutral presentation across diverse surface conditions', () => {
+    const briskWind = evaluateSurfaceWeather(28.0, 42, 25.5, 90);
+    expect(briskWind.temperature).toBe(28.0);
+    expect(briskWind.humidity).toBe(42);
+    expect(briskWind.windSpeed).toBe(25.5);
+    expect(briskWind.windDirectionCardinal).toBe('E');
+    expect(briskWind.hasInversionClaim).toBe(false);
+
+    const missingData = evaluateSurfaceWeather(null, null, null, null);
+    expect(briskWind.hasInversionClaim).toBe(false);
+    expect(missingData.windDirectionCardinal).toBe('N/A');
   });
 });

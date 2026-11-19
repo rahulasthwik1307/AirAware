@@ -22,18 +22,6 @@ export function AtmosphericWeatherCard({
     return null;
   }
 
-  const getDispersionBadgeStyle = (dispersion: WeatherData['dispersionIndex']) => {
-    switch (dispersion) {
-      case 'GOOD':
-        return 'text-[var(--aqi-good)] bg-[var(--aqi-good-bg)] border-[var(--aqi-good-border)]';
-      case 'POOR':
-        return 'text-[var(--aqi-unhealthy)] bg-[var(--aqi-unhealthy-bg)] border-[var(--aqi-unhealthy-border)]';
-      case 'MODERATE':
-      default:
-        return 'text-[var(--aqi-moderate)] bg-[var(--aqi-moderate-bg)] border-[var(--aqi-moderate-border)]';
-    }
-  };
-
   return (
     <div className="w-full mt-3 p-3 rounded-lg bg-[var(--surface-subtle)] border border-[var(--border-subtle)] text-xs">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -68,17 +56,13 @@ export function AtmosphericWeatherCard({
           </div>
         </div>
 
-        {/* Dispersion Condition Callout */}
+        {/* Modelled Surface Meteorology Callout */}
         <div className="flex items-center gap-2">
-          <span
-            className={`text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${getDispersionBadgeStyle(
-              weather.dispersionIndex
-            )}`}
-          >
-            Dispersion: {weather.dispersionIndex}
+          <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded border border-slate-300 bg-slate-100 text-slate-700">
+            Modelled Surface Feed
           </span>
           <span className="hidden md:inline text-[11px] text-[var(--ink-secondary)]">
-            {weather.dispersionNote}
+            2m temperature &amp; humidity, 10m wind speed
           </span>
         </div>
       </div>

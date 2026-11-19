@@ -13,8 +13,6 @@ export interface WeatherData {
   readonly windSpeed: number | null;
   readonly windDirection: number | null;
   readonly windDirectionCardinal: string;
-  readonly dispersionIndex: 'POOR' | 'MODERATE' | 'GOOD';
-  readonly dispersionNote: string;
 }
 
 function getWindCardinal(degrees: number | null): string {
@@ -68,29 +66,12 @@ export async function GET(request: NextRequest) {
     const windDirection = typeof cur.wind_direction_10m === 'number' ? cur.wind_direction_10m : null;
     const cardinal = getWindCardinal(windDirection);
 
-    // Deterministic Dispersion Analysis
-    let dispersionIndex: 'POOR' | 'MODERATE' | 'GOOD' = 'MODERATE';
-    let dispersionNote = 'Normal atmospheric mixing conditions.';
-
-    if (windSpeed !== null && windSpeed < 6 && humidity !== null && humidity > 70) {
-      dispersionIndex = 'POOR';
-      dispersionNote = 'Stagnant boundary layer • High humidity traps ground particulates.';
-    } else if (windSpeed !== null && windSpeed > 18) {
-      dispersionIndex = 'GOOD';
-      dispersionNote = 'Active atmospheric ventilation • High wind aids pollutant dispersal.';
-    } else if (windSpeed !== null && windSpeed < 8) {
-      dispersionIndex = 'POOR';
-      dispersionNote = 'Calm winds • Slow vertical dispersion promotes localized buildup.';
-    }
-
     const payload: WeatherData = {
       temperature: temp,
       humidity,
       windSpeed,
       windDirection,
       windDirectionCardinal: cardinal,
-      dispersionIndex,
-      dispersionNote,
     };
 
     return NextResponse.json(payload, {

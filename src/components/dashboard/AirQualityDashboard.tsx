@@ -24,6 +24,17 @@ const GeoLocationSchema = z.object({
   isPrimary: z.boolean().optional(),
 });
 
+const DEFAULT_LOCATION: GeoLocation = {
+  id: 1273294,
+  name: 'New Delhi',
+  country: 'India',
+  countryCode: 'IN',
+  admin1: 'Delhi',
+  latitude: 28.6139,
+  longitude: 77.209,
+  timezone: 'Asia/Kolkata',
+};
+
 const STORAGE_KEY = 'airaware_last_location';
 
 function subscribeToStorage(callback: () => void) {
@@ -71,7 +82,8 @@ export function AirQualityDashboard() {
   }, [storedJson]);
 
   const [overrideLocation, setOverrideLocation] = useState<GeoLocation | null>(null);
-  const selectedLocation = overrideLocation ?? initialLocation;
+  const selectedLocation = overrideLocation ?? initialLocation ?? DEFAULT_LOCATION;
+  const isDefaultInitial = !overrideLocation && !initialLocation;
 
   const [activeStandardOverride, setActiveStandardOverride] = useState<AqiStandardKey | undefined>(undefined);
   const [rawAirQuality, setRawAirQuality] = useState<RawOpenMeteoAirQualityResponse | null>(null);
@@ -125,6 +137,8 @@ export function AirQualityDashboard() {
           loc.timezone || 'auto'
         )}`;
 
+        console.log('LOAD_DATA_FETCHING:', aqiUrl);
+
         // Parallel non-waterfall data fetching
         const [aqiRes, weatherRes] = await Promise.all([
           fetch(aqiUrl, { signal: abortController.signal }),
@@ -137,6 +151,7 @@ export function AirQualityDashboard() {
         }
 
         const rawData: RawOpenMeteoAirQualityResponse = await aqiRes.json();
+        console.log('LOAD_DATA_SUCCESS, current:', rawData?.current?.time);
         let wData: WeatherData | null = null;
         if (weatherRes && weatherRes.ok) {
           wData = await weatherRes.json().catch(() => null);
@@ -162,7 +177,7 @@ export function AirQualityDashboard() {
         }
       } catch (err: any) {
         if (!abortController.signal.aborted) {
-          setError(err.message || 'Unable to retrieve environmental telemetry for this coordinate.');
+          setError(err.message || 'Unable to retrieve modelled air-quality data for this coordinate.');
           setRawAirQuality(null);
           setWeatherData(null);
         }
@@ -205,11 +220,12 @@ export function AirQualityDashboard() {
         onSelectLocation={handleSelectLocation}
         selectedLocation={selectedLocation}
         isLoading={isLoading}
+        isDefaultLocation={isDefaultInitial}
       />
 
-      {/* Loading Skeletons: Only display on initial load before any telemetry report exists */}
+      {/* Loading Skeletons: Only display on initial load before any report exists */}
       {isLoading && !report && (
-        <div aria-busy="true" aria-label="Acquiring atmospheric telemetry..." className="space-y-4">
+        <div aria-busy="true" aria-label="Acquiring modelled air-quality data..." className="space-y-4">
           <div className="h-56 sm:h-64 rounded-2xl bg-[var(--surface-subtle)] border border-[var(--border-subtle)] animate-pulse" />
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
             {[...Array(6)].map((_, i) => (
@@ -233,7 +249,7 @@ export function AirQualityDashboard() {
             ⚠️
           </span>
           <h3 className="text-sm font-bold font-mono text-[var(--aqi-unhealthy)] mt-2 uppercase tracking-wide">
-            Atmospheric Telemetry Offline
+            Atmospheric Forecast Offline
           </h3>
           <p className="text-xs text-[var(--ink-secondary)] mt-1.5 max-w-md mx-auto">
             {error}
@@ -243,7 +259,7 @@ export function AirQualityDashboard() {
             onClick={handleRetry}
             className="mt-3.5 px-4 py-2 rounded-lg bg-[var(--brand-primary)] text-white text-xs font-mono font-bold shadow-xs hover:bg-[var(--brand-hover)] transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
           >
-            Reconnect Sensor Feed
+            Retry Atmospheric Feed
           </button>
         </div>
       )}
@@ -264,25 +280,26 @@ export function AirQualityDashboard() {
             Global Environmental Intelligence
           </h3>
           <p className="mt-2 text-xs sm:text-sm text-[var(--ink-secondary)] max-w-xl mx-auto leading-relaxed">
-            Real-time atmospheric telemetry across 6 criteria pollutants, 24-hour predictive
-            modelling, interactive 3D Earth projection, and transparent public science standards.
+            Current modelled environmental estimates across 6 criteria pollutants, 24-hour predictive
+            surface meteorology, interactive 3D planetary atmospheric model view, and transparent public science standards.
           </p>
           <p className="mt-4 text-xs font-mono font-bold text-[var(--brand-primary)] uppercase tracking-wider">
-            Enter a city name above or select a preset to initialize telemetry.
+            Enter a city name above or select a preset to explore modelled air-quality data.
           </p>
         </section>
       )}
 
-      {/* Main Environmental Intelligence Content (Remains smoothly mounted during telemetry transitions) */}
+      {/* Main Environmental Intelligence Content (Remains smoothly mounted during data transitions) */}
       {report && (
         <div className="space-y-7 animate-fadeIn">
-          {/* 2. Signature Asymmetric Hero: Primary Telemetry + Interactive Earth Globe */}
+          {/* 2. Signature Asymmetric Hero: Primary Atmospheric Intelligence + Interactive Earth Globe */}
           <AqiHeroCard
             report={report}
             weather={weatherData}
             onSwitchStandard={handleSwitchStandard}
             onSelectLocation={handleSelectLocation}
             isLoading={isLoading}
+            isDefaultLocation={isDefaultInitial}
           />
 
           {/* 3. Six Criteria Pollutant Telemetry Cards */}

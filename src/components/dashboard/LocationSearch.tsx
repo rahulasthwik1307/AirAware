@@ -8,6 +8,7 @@ interface LocationSearchProps {
   readonly onSelectLocation: (location: GeoLocation) => void;
   readonly selectedLocation: GeoLocation | null;
   readonly isLoading?: boolean;
+  readonly isDefaultLocation?: boolean;
 }
 
 const QUICK_PICK_CITIES: readonly GeoLocation[] = [
@@ -67,6 +68,7 @@ export function LocationSearch({
   onSelectLocation,
   selectedLocation,
   isLoading = false,
+  isDefaultLocation = false,
 }: LocationSearchProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [suggestions, setSuggestions] = useState<readonly GeoLocation[]>([]);
@@ -94,7 +96,7 @@ export function LocationSearch({
 
     const timeoutId = setTimeout(async () => {
       setIsSearching(true);
-      setStatusMessage(`Searching telemetry for ${trimmed}...`);
+      setStatusMessage(`Searching locations for ${trimmed}...`);
 
       try {
         const res = await fetch(
@@ -273,6 +275,9 @@ export function LocationSearch({
             {selectedLocation && (
               <span className="text-[11px] font-mono text-[var(--ink-muted)]">
                 ({selectedLocation.latitude.toFixed(2)}°N, {selectedLocation.longitude.toFixed(2)}°E)
+                {isDefaultLocation && (
+                  <span className="ml-1 text-amber-700 font-semibold">• Default starting reference (Not your detected location)</span>
+                )}
               </span>
             )}
           </div>
@@ -385,7 +390,7 @@ export function LocationSearch({
           </button>
         </div>
 
-        {/* Global Quick-Pick City Telemetry Pills */}
+        {/* Global Quick-Pick Reference Cities */}
         <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
           <span className="text-[11px] font-mono text-[var(--ink-muted)] uppercase tracking-wider mr-1">
             Presets:
