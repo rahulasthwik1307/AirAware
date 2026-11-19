@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { AirQualityReport, AqiStandardKey, GeoLocation } from '@/domain/types';
-import { ActionableHealthGuidance } from './ActionableHealthGuidance';
 import { WeatherData } from '@/app/api/weather/route';
 import { GLOBE_REFERENCE_CITIES } from '../globe/world-landmass';
 
@@ -193,15 +192,15 @@ export function AqiHeroCard({
               </div>
             </div>
 
-            {/* Card 1: Main Statistics Card (High Contrast Light Modernism) */}
-            <div className="rounded-2xl bg-white/90 backdrop-blur-xl border border-slate-200/90 p-5 shadow-xs hover:shadow-md hover:border-slate-300 transition-all space-y-3">
+            {/* Unified Atmospheric Intelligence Card (Precision Scientific Modernism) */}
+            <div className="rounded-2xl bg-white/95 backdrop-blur-xl border border-slate-200/90 p-5 sm:p-6 shadow-xs hover:shadow-md hover:border-slate-300 transition-all space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-mono font-bold tracking-wider uppercase text-slate-500">
                   Main Statistics
                 </span>
                 {tier && (
                   <span
-                    className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider border shadow-xs"
+                    className="px-3 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-wider border shadow-xs"
                     style={{
                       backgroundColor: `${tier.colorToken}15`,
                       borderColor: `${tier.colorToken}50`,
@@ -213,82 +212,77 @@ export function AqiHeroCard({
                 )}
               </div>
 
-              <div className="flex items-baseline gap-3">
-                <span
-                  className="text-5xl sm:text-6xl font-black font-mono tracking-tight tabular-nums"
-                  style={{ color: tier?.colorToken || '#059669' }}
-                >
-                  {hasAqi ? providerAqi : '--'}
-                </span>
-                <span className="text-xs font-mono text-slate-500 font-semibold tabular-nums">
-                  / {activeStandard === 'EUROPEAN_EAQI'
-                    ? '0–100+ Scale (EAQI)'
-                    : '0–500 Scale (US EPA)'}
-                </span>
+              <div>
+                <div className="flex items-baseline gap-3">
+                  <span
+                    className="text-5xl sm:text-6xl font-black font-mono tracking-tight tabular-nums"
+                    style={{ color: tier?.colorToken || '#059669' }}
+                  >
+                    {hasAqi ? providerAqi : '--'}
+                  </span>
+                  <span className="text-xs font-mono text-slate-500 font-semibold tabular-nums">
+                    / {activeStandard === 'EUROPEAN_EAQI'
+                      ? '0–100+ Scale (EAQI)'
+                      : '0–500 Scale (US EPA)'}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed mt-2 font-sans">
+                  {tier?.description || 'Modelled atmospheric composition based on Copernicus Atmosphere Monitoring Service (CAMS) forecasts.'}
+                </p>
               </div>
 
-              <div className="flex items-center justify-between text-xs font-mono text-slate-600 pt-2 border-t border-slate-100">
+              {/* Surface Meteorological Context & Ground-level Ribbon */}
+              <div className="pt-3 border-t border-slate-100 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-mono font-bold tracking-wider uppercase text-slate-500">
+                    Surface Meteorological Context
+                  </span>
+                  <span className="px-2 py-0.5 rounded text-[9px] font-mono font-bold border bg-slate-100 text-slate-700 border-slate-300">
+                    Modelled Surface Data (2m / 10m)
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] font-mono">
+                  <div className="bg-slate-50 p-2 rounded-lg border border-slate-200/80 text-center">
+                    <span className="text-slate-500 block text-[9px] font-bold">DOMINANT</span>
+                    <span className="text-slate-800 font-bold text-xs uppercase truncate">
+                      {dominantPollutant ? dominantPollutant.toUpperCase() : 'PM2.5'}
+                    </span>
+                  </div>
+                  <div className="bg-slate-50 p-2 rounded-lg border border-slate-200/80 text-center">
+                    <span className="text-slate-500 block text-[9px] font-bold">TEMP (2m)</span>
+                    <span className="text-slate-800 font-bold text-xs tabular-nums">
+                      {weather?.temperature !== null && weather?.temperature !== undefined ? `${weather.temperature.toFixed(1)}°C` : '--'}
+                    </span>
+                  </div>
+                  <div className="bg-slate-50 p-2 rounded-lg border border-slate-200/80 text-center">
+                    <span className="text-slate-500 block text-[9px] font-bold">HUMIDITY (2m)</span>
+                    <span className="text-slate-800 font-bold text-xs tabular-nums">
+                      {weather?.humidity !== null && weather?.humidity !== undefined ? `${weather.humidity}%` : '--'}
+                    </span>
+                  </div>
+                  <div className="bg-slate-50 p-2 rounded-lg border border-slate-200/80 text-center">
+                    <span className="text-slate-500 block text-[9px] font-bold">WIND (10m)</span>
+                    <span className="text-slate-800 font-bold text-xs truncate tabular-nums">
+                      {weather?.windDirectionCardinal || 'N'} {weather?.windSpeed !== null && weather?.windSpeed !== undefined ? `${weather.windSpeed.toFixed(1)} km/h` : '--'}
+                    </span>
+                  </div>
+                </div>
+
+                <p className="text-[10px] text-slate-500 leading-relaxed pt-1 font-sans">
+                  Surface weather parameters from numerical forecast models. Surface winds provide horizontal transport; boundary-layer height and vertical temperature profiles (inversions) require upper-air atmospheric soundings not captured in surface observations.
+                </p>
+              </div>
+
+              {/* Modelled Grid Coordinate Anchor */}
+              <div className="flex items-center justify-between text-[11px] font-mono text-slate-500 pt-2 border-t border-slate-100">
                 <span>
-                  Dominant: <strong className="text-slate-900 uppercase">{dominantPollutant ? dominantPollutant.toUpperCase() : 'PM2.5'}</strong>
+                  Grid Coordinate: <strong className="text-slate-700 tabular-nums">{coordinates.latitude.toFixed(3)}°N, {coordinates.longitude.toFixed(3)}°E</strong>
                 </span>
-                <span>
-                  Wind:{' '}
-                  <strong className="text-slate-900 tabular-nums">
-                    {weather?.windSpeed !== null && weather?.windSpeed !== undefined ? `${weather.windSpeed} km/h` : 'Calm'}
-                  </strong>
+                <span className="text-slate-500 text-[10px]">
+                  Resolution: {report.modelMetadata?.spatialResolution || '0.4° (~45 km)'}
                 </span>
               </div>
-
-              <p className="text-xs text-slate-600 leading-relaxed">
-                {tier?.description || 'Modelled atmospheric composition based on Copernicus Atmosphere Monitoring Service (CAMS) forecasts.'}
-              </p>
-            </div>
-
-            {/* Card 2: Surface Meteorological Context */}
-            <div className="rounded-2xl bg-white/90 backdrop-blur-xl border border-slate-200/90 p-5 shadow-xs hover:shadow-md hover:border-slate-300 transition-all space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-mono font-bold tracking-wider uppercase text-slate-500">
-                  Surface Meteorological Context
-                </span>
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold border shadow-2xs bg-slate-100 text-slate-700 border-slate-300">
-                  Modelled Surface Data (2m / 10m)
-                </span>
-              </div>
-
-              <div className="grid grid-cols-3 gap-2 text-[11px] font-mono">
-                <div className="bg-slate-50/80 p-2.5 rounded-xl border border-slate-200/70 text-center shadow-2xs">
-                  <span className="text-slate-500 block text-[9px] font-bold">TEMP (2m)</span>
-                  <span className="text-slate-800 font-bold text-sm tabular-nums">
-                    {weather?.temperature !== null && weather?.temperature !== undefined ? `${weather.temperature.toFixed(1)}°C` : '--'}
-                  </span>
-                </div>
-                <div className="bg-slate-50/80 p-2.5 rounded-xl border border-slate-200/70 text-center shadow-2xs">
-                  <span className="text-slate-500 block text-[9px] font-bold">HUMIDITY (2m)</span>
-                  <span className="text-slate-800 font-bold text-sm tabular-nums">
-                    {weather?.humidity !== null && weather?.humidity !== undefined ? `${weather.humidity}%` : '--'}
-                  </span>
-                </div>
-                <div className="bg-slate-50/80 p-2.5 rounded-xl border border-slate-200/70 text-center shadow-2xs">
-                  <span className="text-slate-500 block text-[9px] font-bold">WIND (10m)</span>
-                  <span className="text-slate-800 font-bold text-sm truncate tabular-nums">
-                    {weather?.windDirectionCardinal || 'N'} {weather?.windSpeed !== null && weather?.windSpeed !== undefined ? `${weather.windSpeed.toFixed(1)} km/h` : '--'}
-                  </span>
-                </div>
-              </div>
-
-              <p className="text-[11px] text-slate-600 leading-relaxed border-t border-slate-100 pt-2 font-sans">
-                Surface weather parameters from numerical forecast models. Surface winds provide horizontal transport; boundary-layer height and vertical temperature profiles (inversions) require upper-air atmospheric soundings not captured in surface observations.
-              </p>
-            </div>
-
-            {/* Modelled Grid Coordinate Anchor */}
-            <div className="flex items-center justify-between text-[11px] font-mono text-slate-500 pt-1 border-t border-slate-200/70">
-              <span>
-                Grid Coordinate: <strong className="text-slate-700 tabular-nums">{coordinates.latitude.toFixed(3)}°N, {coordinates.longitude.toFixed(3)}°E</strong>
-              </span>
-              <span className="text-slate-500 text-[10px]">
-                Resolution: {report.modelMetadata?.spatialResolution || '0.4° (~45 km)'}
-              </span>
             </div>
           </div>
 
@@ -446,26 +440,55 @@ export function AqiHeroCard({
           </div>
         </div>
 
-        {/* Continuous Linear Atmospheric Spectrum Bar */}
-        <div className="mt-8 pt-5 border-t border-slate-200/80">
-          <div className="flex items-center justify-between text-[10px] font-mono text-slate-500 uppercase mb-2">
-            <span>
+        {/* Calibrated Precision Atmospheric Spectrum Bar */}
+        <div className="mt-6 pt-5 border-t border-slate-200/80">
+          <div className="flex items-center justify-between text-[11px] font-mono text-slate-500 uppercase mb-2">
+            <span className="font-semibold">
               Index Spectrum Range ({activeStandard === 'EUROPEAN_EAQI' ? 'European EAQI (0–100+ Scale)' : 'US EPA AQI (0–500 Scale)'})
             </span>
-            <span className="text-slate-700 font-bold tabular-nums">
+            <span className="text-slate-800 font-bold tabular-nums">
               Value: {hasAqi && Number.isFinite(providerAqi) ? `${providerAqi} (${tier?.label || 'Evaluated'})` : 'N/A'}
             </span>
           </div>
 
-          <div className="relative h-2 w-full rounded-full bg-gradient-to-r from-[#059669] via-[#D97706] via-70% to-[#7C3AED] overflow-visible">
+          {/* Segmented Gradient Bar with Dynamic Active Needle */}
+          <div className="relative pt-4 pb-1">
             {hasAqi && Number.isFinite(providerAqi) && providerAqi >= 0 && (
               <div
-                className="absolute top-0 -translate-x-1/2 flex flex-col items-center"
+                className="absolute top-0 -translate-x-1/2 flex flex-col items-center transition-all duration-300 pointer-events-none"
                 style={{ left: `${spectrumPercent}%` }}
               >
-                <div className="w-3.5 h-3.5 bg-white border-2 border-slate-800 rounded-full shadow-md -mt-0.75" />
+                <span
+                  className="px-2 py-0.5 rounded text-[9px] font-mono font-bold text-white shadow-xs mb-1 whitespace-nowrap"
+                  style={{ backgroundColor: aqiColor }}
+                >
+                  ▼ {providerAqi} • {tier?.label || 'Active'}
+                </span>
+                <div className="w-3.5 h-3.5 bg-white border-2 rounded-full shadow-md" style={{ borderColor: aqiColor }} />
               </div>
             )}
+
+            <div className="h-3 w-full rounded-full overflow-hidden flex shadow-inner bg-slate-200">
+              {activeStandard === 'EUROPEAN_EAQI' ? (
+                <>
+                  <div className="flex-1 bg-[#059669]" title="Good (0–20)" />
+                  <div className="flex-1 bg-[#10B981]" title="Fair (20–40)" />
+                  <div className="flex-1 bg-[#D97706]" title="Moderate (40–60)" />
+                  <div className="flex-1 bg-[#EA580C]" title="Poor (60–80)" />
+                  <div className="flex-1 bg-[#DC2626]" title="Very Poor (80–100)" />
+                  <div className="flex-1 bg-[#7C3AED]" title="Extremely Poor (100+)" />
+                </>
+              ) : (
+                <>
+                  <div className="w-[10%] bg-[#059669]" title="Good (0–50)" />
+                  <div className="w-[10%] bg-[#D97706]" title="Moderate (51–100)" />
+                  <div className="w-[10%] bg-[#EA580C]" title="Sensitive (101–150)" />
+                  <div className="w-[10%] bg-[#DC2626]" title="Unhealthy (151–200)" />
+                  <div className="w-[20%] bg-[#9333EA]" title="Very Unhealthy (201–300)" />
+                  <div className="w-[40%] bg-[#7F1D1D]" title="Hazardous (301–500)" />
+                </>
+              )}
+            </div>
           </div>
 
           {activeStandard === 'EUROPEAN_EAQI' ? (
@@ -488,20 +511,13 @@ export function AqiHeroCard({
             </div>
           )}
 
-          <div className="text-[10px] font-mono text-slate-400 mt-1">
-            {activeStandard === 'EUROPEAN_EAQI'
-              ? 'European Air Quality Index (0–100+ continuous scale based on EEA 2024 concentration thresholds; evaluated across 5 pollutants, CO excluded).'
-              : 'US EPA Air Quality Index (0–500 continuous scale across 6 criteria pollutants; EPA-454/B-18-007).'}
+          <div className="text-[10px] font-mono text-slate-500 mt-1.5 flex items-center justify-between">
+            <span>
+              {activeStandard === 'EUROPEAN_EAQI'
+                ? 'European Air Quality Index (0–100+ continuous scale based on EEA 2024 concentration thresholds; evaluated across 5 pollutants, CO excluded).'
+                : 'US EPA Air Quality Index (0–500 continuous scale across 6 criteria pollutants; EPA-454/B-18-007).'}
+            </span>
           </div>
-        </div>
-
-        {/* Actionable Health Guidance Grid (Light Theme Variant) */}
-        <div className="mt-6">
-          <ActionableHealthGuidance
-            tier={tier}
-            dominantPollutant={dominantPollutant}
-            variant="light"
-          />
         </div>
 
         <p className="text-[11px] text-slate-500 mt-4 leading-relaxed border-t border-slate-200/80 pt-3">

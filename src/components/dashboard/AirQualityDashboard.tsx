@@ -2,11 +2,12 @@
 
 import React, { useState, useEffect, useMemo, useCallback, useRef, useSyncExternalStore } from 'react';
 import { z } from 'zod';
-import { AqiStandardKey, GeoLocation } from '@/domain/types';
+import { AqiStandardKey, GeoLocation, WorkspaceKey } from '@/domain/types';
 import { normalizeAirQualityReport, RawOpenMeteoAirQualityResponse } from '@/domain/aqi/normalizer';
 import { WeatherData } from '@/app/api/weather/route';
 import { LocationSearch } from './LocationSearch';
 import { AqiHeroCard } from './AqiHeroCard';
+import { ActionableHealthGuidance } from './ActionableHealthGuidance';
 import { PollutantGrid } from './PollutantGrid';
 import { ForecastTimeline } from './ForecastTimeline';
 import { AtmosphericWeatherCard } from './AtmosphericWeatherCard';
@@ -63,7 +64,11 @@ interface CacheEntry {
 
 const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes client cache
 
-export function AirQualityDashboard() {
+interface AirQualityDashboardProps {
+  readonly onSelectWorkspace?: (workspace: WorkspaceKey) => void;
+}
+
+export function AirQualityDashboard({ onSelectWorkspace }: AirQualityDashboardProps = {}) {
   // Read cached location using React's official useSyncExternalStore (zero SSR mismatch)
   const storedJson = useSyncExternalStore(
     subscribeToStorage,
@@ -292,8 +297,8 @@ export function AirQualityDashboard() {
 
       {/* Main Environmental Intelligence Content (Remains smoothly mounted during data transitions) */}
       {report && (
-        <div className="space-y-7 animate-fadeIn">
-          {/* 2. Signature Asymmetric Hero: Primary Atmospheric Intelligence + Interactive Earth Globe */}
+        <div className="space-y-8 animate-fadeIn">
+          {/* 1. Signature Asymmetric Hero: Primary Atmospheric Intelligence + Interactive Earth Globe */}
           <AqiHeroCard
             report={report}
             weather={weatherData}
@@ -303,16 +308,15 @@ export function AirQualityDashboard() {
             isDefaultLocation={isDefaultInitial}
           />
 
-          {/* 3. Six Criteria Pollutant Telemetry Cards */}
-          <PollutantGrid
-            pollutants={report.pollutants}
-            activeStandard={report.activeStandard}
-            modelTimestamp={report.modelTimestamp}
-            localTime={report.localTime}
+          {/* 2. Actionable Health Guidance: Daily Family Protective Protocols */}
+          <ActionableHealthGuidance
+            tier={report.tier}
             dominantPollutant={report.dominantPollutant}
+            variant="light"
+            onSelectWorkspace={onSelectWorkspace}
           />
 
-          {/* 4. 24-Hour Telemetry Forecast with Interactive Hourly Inspection */}
+          {/* 3. 24-Hour Telemetry Forecast with Interactive Hourly Inspection */}
           <ForecastTimeline
             forecast={report.forecast}
             activeStandard={report.activeStandard}
@@ -321,13 +325,22 @@ export function AirQualityDashboard() {
             localTime={report.localTime}
           />
 
-          {/* Atmospheric Surface Weather Context */}
+          {/* 4. Atmospheric Surface Weather Context */}
           <AtmosphericWeatherCard weather={weatherData} />
 
-          {/* 5. Scientific Grounding & Multi-Standard Calibration */}
+          {/* 5. Six Criteria Pollutant Telemetry Cards */}
+          <PollutantGrid
+            pollutants={report.pollutants}
+            activeStandard={report.activeStandard}
+            modelTimestamp={report.modelTimestamp}
+            localTime={report.localTime}
+            dominantPollutant={report.dominantPollutant}
+          />
+
+          {/* 6. Scientific Grounding & Multi-Standard Calibration */}
           <ScientificGrounding report={report} />
 
-          {/* 6. Source Attribution & Data Provenance */}
+          {/* 7. Source Attribution & Data Provenance */}
           <ProvenanceFooter report={report} />
         </div>
       )}

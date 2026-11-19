@@ -100,19 +100,45 @@ export function saveHouseholdState(state: HouseholdStorageState): boolean {
 }
 
 /**
+ * Checks whether a nickname is unique within the household (case-insensitive and trimmed).
+ */
+export function isNicknameUnique(
+  members: readonly HouseholdMember[],
+  nickname: string,
+  excludeMemberId?: string
+): boolean {
+  const normalized = nickname.trim().toLowerCase();
+  if (!normalized) return false;
+  return !members.some(
+    (m) => m.id !== excludeMemberId && m.nickname.trim().toLowerCase() === normalized
+  );
+}
+
+/**
  * Adds a new member to the household (max 4 members).
+ * Enforces nickname uniqueness.
  */
 export function addHouseholdMember(
   state: HouseholdStorageState,
   memberInput: Omit<HouseholdMember, 'id' | 'createdAt'>
-): { readonly state: HouseholdStorageState; readonly newMemberId: string | null } {
+): { readonly state: HouseholdStorageState; readonly newMemberId: string | null; readonly error?: string } {
   if (state.members.length >= 4) {
-    return { state, newMemberId: null };
+    return { state, newMemberId: null, error: 'Maximum 4 household members reached' };
+  }
+
+  const trimmedNickname = memberInput.nickname.trim();
+  if (!trimmedNickname) {
+    return { state, newMemberId: null, error: 'Nickname cannot be empty' };
+  }
+
+  if (!isNicknameUnique(state.members, trimmedNickname)) {
+    return { state, newMemberId: null, error: `A family member named "${trimmedNickname}" already exists` };
   }
 
   const id = `mem_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
   const newMember: HouseholdMember = {
     ...memberInput,
+    nickname: trimmedNickname,
     id,
     createdAt: new Date().toISOString(),
   };
@@ -131,6 +157,7 @@ export function addHouseholdMember(
 
 /**
  * Updates an existing household member.
+ * Enforces nickname uniqueness when nickname is updated.
  */
 export function updateHouseholdMember(
   state: HouseholdStorageState,
@@ -141,10 +168,23 @@ export function updateHouseholdMember(
   if (memberIndex === -1) return state;
 
   const current = state.members[memberIndex];
+  let updatedNickname = current.nickname;
+
+  if (updates.nickname !== undefined) {
+    const trimmed = updates.nickname.trim();
+    if (!trimmed) {
+      return state;
+    }
+    if (!isNicknameUnique(state.members, trimmed, memberId)) {
+      return state;
+    }
+    updatedNickname = trimmed;
+  }
+
   const updatedMember: HouseholdMember = {
     ...current,
     ...updates,
-    nickname: updates.nickname !== undefined ? updates.nickname.trim() : current.nickname,
+    nickname: updatedNickname,
   };
 
   const updatedMembers = [...state.members];

@@ -151,7 +151,7 @@ export function generateMemberRecommendations(params: {
           type: 'INDOOR_ALTERNATIVE',
           title: `Indoor Exercise Option for ${schedule.activityName}`,
           practicalAction:
-            'Consider indoor fitness training, stretching, or gym workouts with closed windows and active air filtration during elevated pollution episodes.',
+            `Consider moving ${schedule.activityName} indoors to an air-filtered space, home workout area, or indoor facility during elevated particulate periods.`,
           scientificReason:
             member.sensitivityTier === 'PEDIATRIC'
               ? 'Developing pediatric airways experience higher relative inhalation rates during intense outdoor exertion.'

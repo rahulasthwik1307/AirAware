@@ -82,100 +82,105 @@ export function ScientificGrounding({ report }: ScientificGroundingProps) {
   return (
     <section
       aria-labelledby="scientific-grounding-heading"
-      className="rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-subtle)] p-4 sm:p-5 text-xs text-[var(--ink-secondary)]"
+      className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-subtle)]/70 p-4 sm:p-5 text-xs text-[var(--ink-secondary)] shadow-xs"
     >
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[var(--border-subtle)] pb-3 mb-3">
-        <div>
-          <h2
-            id="scientific-grounding-heading"
-            className="text-xs font-mono font-bold uppercase tracking-wider text-[var(--ink-primary)]"
-          >
-            Scientific Grounding // Multi-Standard &amp; Sensor Calibration
-          </h2>
-          <p className="text-[11px] text-[var(--ink-muted)]">
-            Transparent comparison of regulatory averaging intervals, national standards, and CAMS grid physics.
-          </p>
-        </div>
-        <span className="text-[10px] font-mono font-bold text-[var(--brand-primary)] bg-[var(--surface-card)] px-2 py-0.5 rounded border border-[var(--border-subtle)] self-start sm:self-auto">
-          OPEN SCIENCE AUDIT
-        </span>
-      </div>
-
-      <div className="space-y-3 leading-relaxed">
-        {/* Specific Indian CPCB Context when viewing Indian Locations */}
-        {cpcbComparison && (
-          <div className="p-3 rounded-md bg-[var(--surface-card)] border border-[var(--border-subtle)]">
-            <div className="flex items-center gap-2 mb-1.5">
-              <span className="text-sm font-bold text-[var(--ink-primary)]">
-                🇮🇳 India CPCB PM2.5 Regulatory Benchmark
+      <details className="group">
+        <summary className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 cursor-pointer list-none select-none">
+          <div>
+            <h2
+              id="scientific-grounding-heading"
+              className="text-xs font-mono font-bold uppercase tracking-wider text-[var(--ink-primary)] flex items-center gap-2"
+            >
+              <span>🔬 Scientific Grounding // Multi-Standard &amp; Sensor Calibration</span>
+              <span aria-hidden="true" className="text-[10px] text-[var(--ink-muted)] group-open:rotate-180 transition-transform duration-200">
+                ▼
               </span>
-              <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-[var(--surface-subtle)] text-[var(--ink-primary)]">
-                CPCB PM2.5 BENCHMARK: {cpcbComparison.estimatedAqiRange} ({cpcbComparison.equivalentCategory})
-              </span>
-            </div>
-            <p className="text-[11px] text-[var(--ink-secondary)]">
-              {cpcbComparison.methodologyDifference}
-            </p>
-            <p className="text-[11px] text-[var(--ink-muted)] mt-1.5 font-mono">
-              Ground Station Reality: {cpcbComparison.stationContext}
+            </h2>
+            <p className="text-[11px] text-[var(--ink-muted)] mt-0.5">
+              Transparent comparison of regulatory averaging intervals, national standards, and CAMS grid physics.
             </p>
           </div>
-        )}
+          <span className="text-[10px] font-mono font-bold text-[var(--brand-primary)] bg-[var(--surface-card)] px-2.5 py-1 rounded-md border border-[var(--border-subtle)] self-start sm:self-auto shadow-2xs group-open:bg-[var(--brand-surface)] transition-colors">
+            OPEN SCIENCE AUDIT ▾
+          </span>
+        </summary>
 
-        {/* Multi-standard Cross-Comparison Table */}
-        <div className="overflow-x-auto rounded-md border border-[var(--border-subtle)] bg-[var(--surface-card)]">
-          <table className="w-full text-left text-[11px] border-collapse font-mono">
-            <thead>
-              <tr className="border-b border-[var(--border-subtle)] bg-[var(--surface-subtle)] text-[10px] uppercase text-[var(--ink-muted)]">
-                <th className="p-2.5">Standard / Agency</th>
-                <th className="p-2.5">Averaging Period</th>
-                <th className="p-2.5">PM2.5 Breakpoint for Current Value ({pm25Val ?? '—'} μg/m³)</th>
-                <th className="p-2.5">Health Classification</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[var(--border-subtle)]">
-              <tr>
-                <td className="p-2.5 font-bold text-[var(--ink-primary)]">US EPA AQI</td>
-                <td className="p-2.5">Preceding 24-hour rolling average (provider-modelled sub-index; not computed locally)</td>
-                <td className="p-2.5">{epaBreakpoint}</td>
-                <td className={`p-2.5 font-bold ${epaColor}`}>{epaClass}</td>
-              </tr>
-              <tr>
-                <td className="p-2.5 font-bold text-[var(--ink-primary)]">European EAQI</td>
-                <td className="p-2.5">Hourly concentration (EEA)</td>
-                <td className="p-2.5">{eaqiBreakpoint}</td>
-                <td className={`p-2.5 font-bold ${eaqiColor}`}>{eaqiClass}</td>
-              </tr>
-              <tr>
-                <td className="p-2.5 font-bold text-[var(--ink-primary)]">India CPCB NAQI</td>
-                <td className="p-2.5">
-                  24-hour arithmetic mean at physical CAAQMS stations (single-pollutant PM2.5 reference benchmark only; not an official composite CPCB NAQI calculation; CAAQMS physical stations are not integrated)
-                </td>
-                <td className="p-2.5">
-                  {cpcbClassification.aqiRange !== 'N/A'
-                    ? `${cpcbClassification.concentrationRange} (AQI ${cpcbClassification.aqiRange})`
-                    : cpcbClassification.concentrationRange}
-                </td>
-                <td className="p-2.5 font-bold" style={{ color: cpcbClassification.colorToken }}>
-                  {cpcbClassification.category}
-                </td>
-              </tr>
-              <tr>
-                <td className="p-2.5 font-bold text-[var(--ink-primary)]">WHO 2021 Guideline</td>
-                <td className="p-2.5">WHO 24-hour guideline level: 15 μg/m³ • WHO annual guideline level: 5 μg/m³ (Health-based reference)</td>
-                <td className="p-2.5">15 μg/m³ (24-hour reference level) • 5 μg/m³ (annual reference level)</td>
-                <td className="p-2.5 text-[var(--ink-secondary)]">Advisory reference level (incompatible averaging period; 1-hour model data cannot be evaluated for direct compliance)</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <div className="space-y-3 leading-relaxed mt-3.5 pt-3 border-t border-[var(--border-subtle)]/80">
+          {/* Specific Indian CPCB Context when viewing Indian Locations */}
+          {cpcbComparison && (
+            <div className="p-3.5 rounded-xl bg-[var(--surface-card)] border border-[var(--border-subtle)] shadow-2xs">
+              <div className="flex items-center gap-2 mb-1.5">
+                <span className="text-sm font-bold text-[var(--ink-primary)]">
+                  🇮🇳 India CPCB PM2.5 Regulatory Benchmark
+                </span>
+                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-[var(--surface-subtle)] text-[var(--ink-primary)] border border-[var(--border-subtle)]">
+                  CPCB PM2.5 BENCHMARK: {cpcbComparison.estimatedAqiRange} ({cpcbComparison.equivalentCategory})
+                </span>
+              </div>
+              <p className="text-[11px] text-[var(--ink-secondary)]">
+                {cpcbComparison.methodologyDifference}
+              </p>
+              <p className="text-[11px] text-[var(--ink-muted)] mt-1.5 font-mono">
+                Ground Station Reality: {cpcbComparison.stationContext}
+              </p>
+            </div>
+          )}
 
-        {/* Spatial Resolution & Scientific Model Physics */}
-        <div className="text-[11px] text-[var(--ink-muted)] flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1 font-mono">
-          <span>MODEL PHYSICS: {report.modelMetadata.domainName} ({report.modelMetadata.spatialResolution})</span>
-          <span>CADENCE: {report.modelMetadata.temporalResolution} • {report.modelMetadata.updateCadence}</span>
+          {/* Multi-standard Cross-Comparison Table */}
+          <div className="overflow-x-auto rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-card)] shadow-2xs">
+            <table className="w-full text-left text-[11px] border-collapse font-mono">
+              <thead>
+                <tr className="border-b border-[var(--border-subtle)] bg-[var(--surface-subtle)] text-[10px] uppercase text-[var(--ink-muted)]">
+                  <th className="p-3">Standard / Agency</th>
+                  <th className="p-3">Averaging Period</th>
+                  <th className="p-3">PM2.5 Breakpoint for Current Value ({pm25Val ?? '—'} μg/m³)</th>
+                  <th className="p-3">Health Classification</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[var(--border-subtle)]">
+                <tr>
+                  <td className="p-3 font-bold text-[var(--ink-primary)]">US EPA AQI</td>
+                  <td className="p-3">Preceding 24-hour rolling average (provider-modelled sub-index; not computed locally)</td>
+                  <td className="p-3">{epaBreakpoint}</td>
+                  <td className={`p-3 font-bold ${epaColor}`}>{epaClass}</td>
+                </tr>
+                <tr>
+                  <td className="p-3 font-bold text-[var(--ink-primary)]">European EAQI</td>
+                  <td className="p-3">Hourly concentration (EEA)</td>
+                  <td className="p-3">{eaqiBreakpoint}</td>
+                  <td className={`p-3 font-bold ${eaqiColor}`}>{eaqiClass}</td>
+                </tr>
+                <tr>
+                  <td className="p-3 font-bold text-[var(--ink-primary)]">India CPCB NAQI</td>
+                  <td className="p-3">
+                    24-hour arithmetic mean at physical CAAQMS stations (single-pollutant PM2.5 reference benchmark only; not an official composite CPCB NAQI calculation; CAAQMS physical stations are not integrated)
+                  </td>
+                  <td className="p-3">
+                    {cpcbClassification.aqiRange !== 'N/A'
+                      ? `${cpcbClassification.concentrationRange} (AQI ${cpcbClassification.aqiRange})`
+                      : cpcbClassification.concentrationRange}
+                  </td>
+                  <td className="p-3 font-bold" style={{ color: cpcbClassification.colorToken }}>
+                    {cpcbClassification.category}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="p-3 font-bold text-[var(--ink-primary)]">WHO 2021 Guideline</td>
+                  <td className="p-3">WHO 24-hour guideline level: 15 μg/m³ • WHO annual guideline level: 5 μg/m³ (Health-based reference)</td>
+                  <td className="p-3">15 μg/m³ (24-hour reference level) • 5 μg/m³ (annual reference level)</td>
+                  <td className="p-3 text-[var(--ink-secondary)]">Advisory reference level (incompatible averaging period; 1-hour model data cannot be evaluated for direct compliance)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          {/* Spatial Resolution & Scientific Model Physics */}
+          <div className="text-[11px] text-[var(--ink-muted)] flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1 font-mono">
+            <span>MODEL PHYSICS: {report.modelMetadata.domainName} ({report.modelMetadata.spatialResolution})</span>
+            <span>CADENCE: {report.modelMetadata.temporalResolution} • {report.modelMetadata.updateCadence}</span>
+          </div>
         </div>
-      </div>
+      </details>
     </section>
   );
 }

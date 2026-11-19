@@ -20,7 +20,7 @@ export function ImpactSummaryBadge({
 
   return (
     <div className={`flex flex-wrap items-center gap-2 ${compact ? 'text-xs' : 'text-xs mt-2'}`}>
-      {/* Dimension A: Personal Ambient Exposure Difference (ΔC) */}
+      {/* Dimension A: Modelled Ambient Concentration Difference (ΔC) */}
       {deltaC && (
         <div
           className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-mono font-medium border ${

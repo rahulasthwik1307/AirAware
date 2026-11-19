@@ -37,7 +37,7 @@ const WORKSPACE_DATA: Record<Exclude<WorkspaceKey, 'air-intelligence'>, Workspac
       },
       {
         title: 'The Actionable Routine Loop',
-        description: 'Adopt, edit, complete, and dismiss practical habits with defensible ambient exposure difference (+ΔC) tracking.',
+        description: 'Adopt, edit, complete, and dismiss practical habits with defensible modelled ambient concentration difference (+ΔC) tracking.',
       },
     ],
   },

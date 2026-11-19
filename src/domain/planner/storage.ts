@@ -95,9 +95,9 @@ export function adoptRecommendation(
   customWindow?: TimeWindow,
   userNotes?: string
 ): { readonly state: ActivePlanStorageState; readonly actionId: string | null; readonly isDuplicate: boolean } {
-  // Check for existing active adoption of this recommendation
+  // Check for existing active or completed adoption of this recommendation
   const existing = state.actions.find(
-    (a) => a.recommendationId === recommendation.id && a.status === 'ADOPTED'
+    (a) => a.recommendationId === recommendation.id && (a.status === 'ADOPTED' || a.status === 'COMPLETED')
   );
 
   if (existing) {

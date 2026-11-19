@@ -1,7 +1,9 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
+
+const emptySubscribe = () => () => {};
 import { ActiveActionItem, TimeWindow } from '@/domain/planner/types';
 
 interface EditActionModalProps {
@@ -134,11 +136,7 @@ export function EditActionModal({
   onClose,
   onSave,
 }: EditActionModalProps) {
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  const isMounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

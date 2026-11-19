@@ -34,7 +34,7 @@ export function AirAwareShell() {
             <PersonalizationBanner onOpenSetup={setActiveWorkspace} />
 
             {/* Live Global Air Intelligence Dashboard */}
-            <AirQualityDashboard />
+            <AirQualityDashboard onSelectWorkspace={setActiveWorkspace} />
           </>
         ) : activeWorkspace === 'family-planner' ? (
           /* Production Phase 3 Family Daily Planner Workspace */
@@ -49,14 +49,57 @@ export function AirAwareShell() {
       </main>
 
       {/* Application Footer */}
-      <footer className="mt-auto border-t border-[var(--border-subtle)] bg-[var(--surface-card)] py-6">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 sm:flex-row sm:px-6 lg:px-8">
-          <p className="text-xs text-[var(--ink-muted)]">
-            AirAware Global Environmental Intelligence • PromptWars Challenge 06
-          </p>
-          <p className="text-xs text-[var(--ink-muted)]">
-            Strict ₹0 Budget Architecture • Powered by Open-Meteo &amp; Copernicus CAMS
-          </p>
+      <footer className="mt-auto border-t border-[var(--border-subtle)] bg-[var(--surface-card)] py-6 text-xs text-[var(--ink-secondary)]">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 space-y-4">
+          {/* Emergency Alert Banner */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-3 rounded-xl border border-rose-200 bg-rose-50/70 text-rose-950 font-sans shadow-2xs">
+            <div className="flex items-center gap-2">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-rose-600 text-white text-[11px] font-bold">!</span>
+              <p className="font-semibold text-xs text-rose-900">
+                Experiencing acute shortness of breath, severe wheezing, or chest tightness?
+              </p>
+            </div>
+            <span className="text-[11px] font-mono font-bold text-rose-800 bg-white/80 px-2.5 py-1 rounded border border-rose-300 self-start sm:self-auto shrink-0">
+              Seek medical care • Emergency: 112
+            </span>
+          </div>
+
+          {/* Quick Action Navigation & Platform Attribution */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[11px] font-mono font-bold text-[var(--ink-muted)] uppercase tracking-wider">
+                Quick Actions:
+              </span>
+              <button
+                type="button"
+                onClick={() => setActiveWorkspace('air-intelligence')}
+                className="px-2.5 py-1 text-[11px] font-medium rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-subtle)] hover:bg-[var(--surface-card)] hover:text-[var(--brand-primary)] cursor-pointer transition-colors"
+              >
+                🌅 Forecast &amp; Smog Windows
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveWorkspace('indoor-air')}
+                className="px-2.5 py-1 text-[11px] font-medium rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-subtle)] hover:bg-[var(--surface-card)] hover:text-[var(--brand-primary)] cursor-pointer transition-colors"
+              >
+                🏠 Indoor Air Hacks
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveWorkspace('family-planner')}
+                className="px-2.5 py-1 text-[11px] font-medium rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-subtle)] hover:bg-[var(--surface-card)] hover:text-[var(--brand-primary)] cursor-pointer transition-colors"
+              >
+                🛡️ Family Daily Routines
+              </button>
+            </div>
+
+            <div className="text-[11px] text-[var(--ink-muted)] font-mono sm:text-right">
+              <p>Copernicus CAMS &amp; Open-Meteo Environmental Synthesis</p>
+              <p className="text-[10px] text-[var(--ink-muted)]/80 mt-0.5">
+                Local-first privacy: your health data stays on this device
+              </p>
+            </div>
+          </div>
         </div>
       </footer>
 
