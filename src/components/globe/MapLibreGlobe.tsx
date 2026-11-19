@@ -231,7 +231,7 @@ export function MapLibreGlobe({
   const [isGlobe, setIsGlobe] = useState(true);
   const [activeStyle, setActiveStyle] = useState<GlobeMapStyleKey>('satellite');
   const [userPaused, setUserPaused] = useState(false);
-  const [currentZoom, setCurrentZoom] = useState(2.0);
+  const [currentZoom, setCurrentZoom] = useState(2.06);
   const [cursorCoords, setCursorCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [inspectData, setInspectData] = useState<LocationInspectData | null>(null);
 
@@ -256,7 +256,7 @@ export function MapLibreGlobe({
       container: mapContainerRef.current,
       style: TILE_STYLES[activeStyle],
       center: [initialLng, initialLat],
-      zoom: 2.0,
+      zoom: 2.06,
       pitch: 0,
       bearing: 0,
       attributionControl: false,
@@ -663,16 +663,16 @@ export function MapLibreGlobe({
       className="relative w-full h-[540px] sm:h-[620px] lg:h-[680px] rounded-3xl overflow-hidden border border-slate-800/90 shadow-[0_20px_50px_-12px_rgba(15,23,42,0.5)] bg-[#0F172A] select-none transition-all"
     >
       {/* 3D Atmospheric Celestial Aura / Orbital Ring Glow */}
-      <div className="absolute inset-0 pointer-events-none flex items-center justify-center -translate-y-2.5 sm:-translate-y-3">
+      <div className="absolute inset-0 pointer-events-none flex items-center justify-center -translate-y-0.5 sm:-translate-y-1">
         <div
-          className="w-[410px] h-[410px] sm:w-[470px] sm:h-[470px] rounded-full blur-3xl pointer-events-none bg-radial from-transparent via-teal-500/10 to-transparent"
+          className="w-[430px] h-[430px] sm:w-[490px] sm:h-[490px] rounded-full blur-3xl pointer-events-none bg-radial from-transparent via-teal-500/10 to-transparent"
         />
       </div>
 
       {/* MapLibre WebGL Canvas Container — Natural size (w-full h-full), slight upward centering */}
       <div
         ref={mapContainerRef}
-        className="w-full h-full -translate-y-2.5 sm:-translate-y-3 cursor-grab active:cursor-grabbing"
+        className="w-full h-full -translate-y-0.5 sm:-translate-y-1 cursor-grab"
       />
 
       {/* Floating Top Controls: Projection, Layer, and Compass */}
@@ -864,7 +864,7 @@ export function MapLibreGlobe({
           <button
             type="button"
             onClick={() => handleSelectInspectLocation(inspectData)}
-            className="w-full py-1.5 px-2 rounded-lg bg-gradient-to-r from-sky-600 to-sky-500 hover:from-sky-500 hover:to-sky-400 active:scale-[0.98] text-white font-mono font-bold text-[10px] tracking-wide transition-all shadow-xs hover:shadow-md cursor-pointer flex items-center justify-center gap-1"
+            className="w-full py-1.5 px-2 rounded-lg bg-linear-to-r from-sky-600 to-sky-500 hover:from-sky-500 hover:to-sky-400 active:scale-[0.98] text-white font-mono font-bold text-[10px] tracking-wide transition-all shadow-xs hover:shadow-md cursor-pointer flex items-center justify-center gap-1"
           >
             <span>🎯 Focus &amp; Select Location</span>
             <span className="text-[9px]">↵</span>
