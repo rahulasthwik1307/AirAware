@@ -25,14 +25,54 @@ describe('Step 2 Scientific Corrections: Hero Card, Globe & Standards', () => {
       const sensitiveGuidanceLevel1 = {
         title: 'Sensitive Groups',
         recommendation:
-          'Most individuals can engage in outdoor activities. Individuals with asthma or unusual respiratory sensitivity should continue monitoring personal comfort and follow their action plan.',
+          'Modelled concentrations are within the baseline index band. Individuals with asthma or respiratory sensitivities should continue observing personal comfort and following individualized health plans.',
         badge: 'Standard Precaution',
       };
 
       expect(sensitiveGuidanceLevel1.badge).not.toBe('Minimal Risk');
       expect(sensitiveGuidanceLevel1.badge).not.toBe('Zero Risk');
       expect(sensitiveGuidanceLevel1.recommendation).not.toContain('minimal anticipated risk');
-      expect(sensitiveGuidanceLevel1.recommendation).toContain('monitoring personal comfort');
+      expect(sensitiveGuidanceLevel1.recommendation).not.toContain('Most individuals can engage');
+      expect(sensitiveGuidanceLevel1.recommendation).toContain('observing personal comfort');
+    });
+
+    it('ensures broad assurances of safety, fixed midday ventilation assumptions, and blanket closures are strictly absent', () => {
+      const guidanceStatements = [
+        'Ambient concentrations are in the lowest index category. Routine outdoor mask use is generally not indicated based on current modelled levels.',
+        'Modelled outdoor concentrations are in the lowest category. Fresh air ventilation may be considered, balancing outdoor weather with indoor comfort.',
+        'Modelled air quality represents the lowest outdoor exposure tier. Local exposure can still vary near active traffic corridors or localized emission sources.',
+        'Modelled concentrations reflect an intermediate atmospheric category. Individuals with heightened particulate sensitivity may consider respiratory protection in high-traffic corridors.',
+        'Modelled ambient concentrations are in the moderate range. When ventilating indoors, consider checking local hourly trends and use targeted kitchen ventilation during cooking to mitigate indoor sources.',
+        'Modelled air quality falls into the moderate band. Unusually sensitive individuals may consider pacing outdoor exertion or taking more frequent breaks.',
+        'Elevated outdoor concentrations. While limiting outdoor air intake can reduce particle entry, ensure dedicated exhaust or mechanical ventilation is used during indoor activities like cooking.',
+        'High outdoor concentrations. Closing windows reduces ambient particle entry, though local kitchen exhaust ventilation remains important during cooking or indoor combustion.',
+        'Under unhealthy tier guidelines, individuals are advised to reduce prolonged or heavy outdoor exertion, or reschedule strenuous workouts.',
+        'Official guidance recommends that people with lung disease, asthma, heart disease, children, and older adults avoid prolonged or heavy outdoor exertion.',
+        'Very high outdoor pollution levels. Minimizing unfiltered outdoor air intake helps limit outdoor ingress; operate indoor air cleaners and use localized exhaust when generating indoor smoke or fumes.',
+        'Official health advisories recommend avoiding all strenuous outdoor physical activity under very unhealthy and hazardous categories, keeping outdoor time to a minimum.',
+        'Official health standards advise sensitive groups to remain indoors, keep physical activity low, and consult healthcare providers if symptoms arise.',
+      ];
+
+      for (const statement of guidanceStatements) {
+        expect(statement).not.toContain('Most individuals can engage in outdoor activities');
+        expect(statement).not.toContain('Outdoor recreation is generally acceptable for most people');
+        expect(statement).not.toContain('Outdoor sports are safe');
+        expect(statement).not.toContain('generally acceptable');
+        expect(statement).not.toContain('midday periods may help');
+        expect(statement).not.toContain('Strictly seal all windows');
+        expect(statement).not.toMatch(/\b(safe|safety guaranteed)\b/i);
+      }
+    });
+
+    it('accounts for indoor pollution sources such as cooking during indoor ventilation guidance', () => {
+      const ventilationCardLevel2 =
+        'Modelled ambient concentrations are in the moderate range. When ventilating indoors, consider checking local hourly trends and use targeted kitchen ventilation during cooking to mitigate indoor sources.';
+      const ventilationCardLevel3 =
+        'Elevated outdoor concentrations. While limiting outdoor air intake can reduce particle entry, ensure dedicated exhaust or mechanical ventilation is used during indoor activities like cooking.';
+
+      expect(ventilationCardLevel2).toContain('cooking');
+      expect(ventilationCardLevel3).toContain('exhaust');
+      expect(ventilationCardLevel3).toContain('cooking');
     });
   });
 

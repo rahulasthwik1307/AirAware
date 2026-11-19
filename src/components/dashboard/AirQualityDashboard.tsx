@@ -306,6 +306,9 @@ export function AirQualityDashboard() {
           <PollutantGrid
             pollutants={report.pollutants}
             activeStandard={report.activeStandard}
+            modelTimestamp={report.modelTimestamp}
+            localTime={report.localTime}
+            dominantPollutant={report.dominantPollutant}
           />
 
           {/* 4. 24-Hour Telemetry Forecast with Interactive Hourly Inspection */}

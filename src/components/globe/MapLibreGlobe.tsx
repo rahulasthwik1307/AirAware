@@ -5,6 +5,7 @@ import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { GeoLocation } from '@/domain/types';
 import { GLOBE_REFERENCE_CITIES } from './world-landmass';
+import { resolveGlobePlace } from './globe-place-resolver';
 
 interface MapLibreGlobeProps {
   readonly selectedLocation: GeoLocation | null;
@@ -230,7 +231,7 @@ export function MapLibreGlobe({
   const [isGlobe, setIsGlobe] = useState(true);
   const [activeStyle, setActiveStyle] = useState<GlobeMapStyleKey>('satellite');
   const [userPaused, setUserPaused] = useState(false);
-  const [currentZoom, setCurrentZoom] = useState(2.2);
+  const [currentZoom, setCurrentZoom] = useState(1.85);
   const [cursorCoords, setCursorCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [inspectData, setInspectData] = useState<LocationInspectData | null>(null);
 
@@ -248,18 +249,24 @@ export function MapLibreGlobe({
 
     maplibregl.setWorkerUrl('/maplibre-gl-worker.mjs');
 
-    const initialLng = selectedLocation ? selectedLocation.longitude : 78.4867;
-    const initialLat = selectedLocation ? selectedLocation.latitude : 17.385;
+    const initialLng = 20.0;
+    const initialLat = 5.0;
 
     const map = new maplibregl.Map({
       container: mapContainerRef.current,
       style: TILE_STYLES[activeStyle],
       center: [initialLng, initialLat],
-      zoom: 2.0,
-      pitch: 20,
+      zoom: 1.85,
+      pitch: 0,
       bearing: 0,
       attributionControl: false,
     });
+
+    try {
+      map.setPadding({ top: 0, bottom: 0, left: 0, right: 0 });
+    } catch {
+      // In SSR or test mocks where canvas is mocked
+    }
 
     mapRef.current = map;
 
@@ -299,16 +306,23 @@ export function MapLibreGlobe({
     map.on('rotatestart', () => setUserPaused(true));
     map.on('wheel', () => setUserPaused(true));
 
-    // Click anywhere on Earth: Inspect and Pin
+    // Click anywhere on Earth: Inspect and Pin with Geographic Place Intelligence
     map.on('click', async (e) => {
       const lat = Number(e.lngLat.lat.toFixed(4));
       const lng = Number(e.lngLat.lng.toFixed(4));
 
-      let locName = `${Math.abs(lat).toFixed(2)}°${lat >= 0 ? 'N' : 'S'}, ${Math.abs(lng).toFixed(2)}°${lng >= 0 ? 'E' : 'W'}`;
-      let country = 'Global Grid';
-      let countryCode = 'GRID';
+      // Query MapLibre rendered features under pointer for place labels
+      let renderedFeatures: Array<{ properties?: Record<string, unknown> }> = [];
+      try {
+        renderedFeatures = map.queryRenderedFeatures(e.point);
+      } catch {
+        renderedFeatures = [];
+      }
 
-      // Find nearest reference city if within ~180km
+      // Resolve human-readable place name (never Global Grid Coordinate)
+      const place = resolveGlobePlace(lat, lng, renderedFeatures);
+
+      // Check if near any reference sample city for illustrative demo estimates
       const nearCity = GLOBE_REFERENCE_CITIES.find(
         (c) => Math.hypot(c.latitude - lat, c.longitude - lng) < 1.8
       );
@@ -319,12 +333,9 @@ export function MapLibreGlobe({
       let tempVal = 22;
       let humidVal = 55;
       let windVal = 10;
-      let tip = 'Modelled atmospheric grid point. Safe for standard outdoor activity.';
+      let tip = `${place.name} atmospheric index. Safe for standard outdoor activities.`;
 
       if (nearCity) {
-        locName = nearCity.name;
-        country = nearCity.country;
-        countryCode = nearCity.countryCode;
         const matched = Object.entries(CITY_SAMPLE_ESTIMATES).find(([name]) => nearCity.name.includes(name));
         if (matched) {
           const t = matched[1];
@@ -336,12 +347,20 @@ export function MapLibreGlobe({
           windVal = t.wind;
           tip = t.smogTip;
         }
+      } else if (place.isMarine) {
+        aqiVal = 25;
+        tierStr = 'Good';
+        tierClr = '#10B981';
+        tempVal = 20;
+        humidVal = 80;
+        windVal = 18;
+        tip = `Clean oceanic air mass over the ${place.name}. Baseline marine dispersion.`;
       }
 
       setInspectData({
-        name: locName,
-        country,
-        countryCode,
+        name: place.name,
+        country: place.country,
+        countryCode: place.countryCode,
         latitude: lat,
         longitude: lng,
         aqi: aqiVal,
@@ -431,7 +450,11 @@ export function MapLibreGlobe({
   }, [isRotating]);
 
   // Smooth Camera FlyTo when selectedLocation changes (No Page Reload)
-  const prevLocRef = useRef<string | null>(null);
+  const prevLocRef = useRef<string | null>(
+    selectedLocation
+      ? `${selectedLocation.latitude.toFixed(2)}_${selectedLocation.longitude.toFixed(2)}`
+      : null
+  );
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !selectedLocation) return;
@@ -442,6 +465,8 @@ export function MapLibreGlobe({
       map.flyTo({
         center: [selectedLocation.longitude, selectedLocation.latitude],
         zoom: Math.max(map.getZoom(), 4.2),
+        pitch: 0,
+        padding: { top: 0, bottom: 0, left: 0, right: 0 },
         duration: 1800,
         essential: true,
       });
@@ -582,8 +607,9 @@ export function MapLibreGlobe({
     setUserPaused(true);
     map.flyTo({
       center: [selectedLocation.longitude, selectedLocation.latitude],
-      zoom: Math.max(map.getZoom(), 4.8),
-      pitch: 30,
+      zoom: Math.max(map.getZoom(), 4.5),
+      pitch: 0,
+      padding: { top: 0, bottom: 0, left: 0, right: 0 },
       essential: true,
       duration: 2000,
     });
@@ -619,18 +645,17 @@ export function MapLibreGlobe({
     if (map) {
       map.flyTo({
         center: [data.longitude, data.latitude],
-        zoom: Math.max(map.getZoom(), 4.5),
+        zoom: Math.max(map.getZoom(), 4.2),
+        pitch: 0,
+        padding: { top: 0, bottom: 0, left: 0, right: 0 },
         duration: 1600,
       });
     }
   }, [onSelectLocation]);
 
-  const isGridPoint = inspectData ? (inspectData.countryCode === 'GRID' || inspectData.name.includes('°')) : false;
-  const inspectTitle = inspectData ? (isGridPoint ? 'Global Grid Coordinate' : inspectData.name) : '';
+  const inspectTitle = inspectData ? inspectData.name : '';
   const inspectSubtitle = inspectData
-    ? isGridPoint
-      ? `${Math.abs(inspectData.latitude).toFixed(2)}°${inspectData.latitude >= 0 ? 'N' : 'S'}, ${Math.abs(inspectData.longitude).toFixed(2)}°${inspectData.longitude >= 0 ? 'E' : 'W'} • Numerical Model`
-      : `${inspectData.country} • ${Math.abs(inspectData.latitude).toFixed(2)}°N, ${Math.abs(inspectData.longitude).toFixed(2)}°E`
+    ? `${inspectData.country && inspectData.country !== inspectData.name && inspectData.country !== 'International Waters' ? `${inspectData.country} • ` : ''}${Math.abs(inspectData.latitude).toFixed(2)}°${inspectData.latitude >= 0 ? 'N' : 'S'}, ${Math.abs(inspectData.longitude).toFixed(2)}°${inspectData.longitude >= 0 ? 'E' : 'W'}`
     : '';
 
   return (
@@ -638,14 +663,17 @@ export function MapLibreGlobe({
       className="relative w-full h-[540px] sm:h-[620px] lg:h-[680px] rounded-3xl overflow-hidden border border-slate-800/90 shadow-[0_20px_50px_-12px_rgba(15,23,42,0.5)] bg-[#0F172A] select-none transition-all"
     >
       {/* 3D Atmospheric Celestial Aura / Orbital Ring Glow */}
-      <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+      <div className="absolute inset-0 pointer-events-none flex items-center justify-center -translate-y-2.5 sm:-translate-y-3">
         <div
-          className="w-[500px] h-[500px] sm:w-[580px] sm:h-[580px] rounded-full blur-3xl pointer-events-none bg-radial from-transparent via-teal-500/10 to-transparent"
+          className="w-[360px] h-[360px] sm:w-[410px] sm:h-[410px] rounded-full blur-3xl pointer-events-none bg-radial from-transparent via-teal-500/10 to-transparent"
         />
       </div>
 
-      {/* MapLibre WebGL Canvas Container */}
-      <div ref={mapContainerRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
+      {/* MapLibre WebGL Canvas Container — Natural size (w-full h-full), slight upward centering */}
+      <div
+        ref={mapContainerRef}
+        className="w-full h-full -translate-y-2.5 sm:-translate-y-3 cursor-grab active:cursor-grabbing"
+      />
 
       {/* Floating Top Controls: Projection, Layer, and Compass */}
       <div className="absolute top-4 inset-x-4 flex items-center justify-between z-20 pointer-events-none">
@@ -734,31 +762,38 @@ export function MapLibreGlobe({
         </div>
       </div>
 
-      {/* Floating Interactive Environmental Intelligence Card */}
+      {/* Floating Interactive Environmental Intelligence Card — Ultra-Compact & Attractive HUD */}
       {inspectData && (
         <div
           role="dialog"
           aria-label="Environmental Intelligence Preview"
-          className="absolute top-16 right-4 sm:right-6 max-w-[295px] w-full p-3.5 rounded-2xl backdrop-blur-xl shadow-[0_20px_50px_-10px_rgba(0,0,0,0.8)] z-30 animate-fadeIn pointer-events-auto transition-all bg-slate-900/95 border border-slate-700/80 text-white"
+          className="absolute top-14 right-3 sm:right-5 max-w-[230px] w-full p-2.5 rounded-2xl backdrop-blur-xl shadow-[0_16px_36px_-6px_rgba(0,0,0,0.85)] z-30 animate-fadeIn pointer-events-auto transition-all bg-slate-900/95 border border-slate-700/80 text-white select-none"
         >
-          {/* Header */}
-          <div className="flex items-start justify-between gap-1.5 border-b border-slate-800 pb-2 mb-2">
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="relative flex h-2.5 w-2.5 shrink-0">
+          {/* Header Row: City / Place Name, Coordinates & Close */}
+          <div className="flex items-center justify-between gap-1.5 pb-1 mb-1 border-b border-slate-800/80">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="relative flex h-2 w-2 shrink-0">
                 <span
                   className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
                   style={{ backgroundColor: inspectData.tierColor }}
                 />
                 <span
-                  className="relative inline-flex rounded-full h-2.5 w-2.5 border border-white shadow-2xs"
+                  className="relative inline-flex rounded-full h-2 w-2 border border-white/90 shadow-2xs"
                   style={{ backgroundColor: inspectData.tierColor }}
                 />
               </span>
               <div className="min-w-0">
-                <h4 className="font-extrabold text-[12.5px] font-sans leading-tight truncate text-white">
-                  {inspectTitle}
-                </h4>
-                <span className="text-[9.5px] font-mono leading-tight block truncate mt-0.5 text-slate-400">
+                <div className="flex items-center gap-1">
+                  <h4 className="font-extrabold text-[12px] font-sans leading-tight truncate text-white">
+                    {inspectTitle}
+                  </h4>
+                  {inspectData.isReferenceSample && (
+                    <span className="shrink-0 px-1 py-0.2 rounded text-[7.5px] font-mono font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                      Sample
+                    </span>
+                  )}
+                </div>
+                <span className="text-[8.5px] font-mono leading-tight block truncate text-slate-400">
                   {inspectSubtitle}
                 </span>
               </div>
@@ -766,90 +801,73 @@ export function MapLibreGlobe({
             <button
               type="button"
               onClick={() => setInspectData(null)}
-              className="w-5 h-5 rounded-full flex items-center justify-center transition-colors text-xs font-bold leading-none cursor-pointer shrink-0 text-slate-400 hover:text-white hover:bg-white/10"
+              className="w-4 h-4 rounded-full flex items-center justify-center transition-colors text-xs font-bold leading-none cursor-pointer shrink-0 text-slate-400 hover:text-white hover:bg-white/10"
               aria-label="Close preview"
             >
               ×
             </button>
           </div>
 
-          {/* Reference Sample Badge (Honesty requirement) */}
-          {inspectData.isReferenceSample && (
-            <div className="mb-2">
-              <span className="inline-block px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
-                Global Reference Sample (Demo / Illustrative)
-              </span>
-            </div>
-          )}
-
-          {/* Prominently Highlighted: AQI & Health Tier Centerpiece */}
-          <div className="flex items-center justify-between px-2.5 py-1.5 rounded-xl border mb-2 shadow-2xs bg-slate-800/70 border-slate-700/60">
-            <div className="flex items-baseline gap-1.5">
+          {/* Consolidated Telemetry Cockpit (AQI Centerpiece + Micro-Weather in 1 Row) */}
+          <div className="flex items-center justify-between gap-1.5 p-1.5 rounded-xl border border-slate-700/60 bg-slate-800/60 mb-1.5">
+            {/* Left: Highlighted AQI Centerpiece */}
+            <div className="flex items-center gap-1.5">
               <span
-                className="text-3xl font-black font-mono tracking-tight tabular-nums"
+                className="text-2xl font-black font-mono tracking-tight tabular-nums leading-none"
                 style={{ color: inspectData.tierColor }}
               >
                 {inspectData.aqi}
               </span>
               <div className="flex flex-col">
-                <span className="text-[10px] font-mono font-bold leading-none text-slate-200">
-                  AQI
+                <span
+                  className="px-1.5 py-0.2 rounded text-[7.5px] font-mono font-extrabold uppercase tracking-wider border leading-tight"
+                  style={{
+                    backgroundColor: `${inspectData.tierColor}20`,
+                    borderColor: `${inspectData.tierColor}60`,
+                    color: inspectData.tierColor,
+                  }}
+                >
+                  {inspectData.tier}
                 </span>
-                <span className="text-[8px] font-mono uppercase tracking-wider text-slate-400">
-                  US EPA
+                <span className="text-[7px] font-mono uppercase tracking-wider text-slate-400 mt-0.5">
+                  US EPA AQI
                 </span>
               </div>
             </div>
-            <span
-              className="px-2.5 py-0.5 rounded-full text-[9.5px] font-mono font-extrabold uppercase tracking-wider border shadow-2xs"
-              style={{
-                backgroundColor: `${inspectData.tierColor}20`,
-                borderColor: `${inspectData.tierColor}60`,
-                color: inspectData.tierColor,
-              }}
-            >
-              {inspectData.tier}
-            </span>
-          </div>
 
-          {/* Micro Weather Metrics Row */}
-          <div className="grid grid-cols-3 gap-1 py-1.5 px-1.5 rounded-xl text-center mb-2 border bg-slate-800/50 border-slate-700/50 text-white">
-            <div className="flex flex-col items-center">
-              <span className="text-[8.5px] font-mono font-bold uppercase tracking-wider flex items-center gap-0.5 text-slate-400">
-                <span>🌡️</span> TEMP
-              </span>
-              <span className="text-[11px] font-mono font-black mt-0.5 tabular-nums">{inspectData.temperature}°C</span>
-            </div>
-            <div className="flex flex-col items-center border-x border-slate-700/50 px-0.5">
-              <span className="text-[8.5px] font-mono font-bold uppercase tracking-wider flex items-center gap-0.5 text-slate-400">
-                <span>💧</span> HUMID
-              </span>
-              <span className="text-[11px] font-mono font-black mt-0.5 tabular-nums">{inspectData.humidity}%</span>
-            </div>
-            <div className="flex flex-col items-center">
-              <span className="text-[8.5px] font-mono font-bold uppercase tracking-wider flex items-center gap-0.5 text-slate-400">
-                <span>💨</span> WIND
-              </span>
-              <span className="text-[11px] font-mono font-black mt-0.5 tabular-nums">{inspectData.windSpeed}k</span>
+            {/* Right: Micro Weather Telemetry Strip */}
+            <div className="flex items-center gap-1.5 border-l border-slate-700/60 pl-2 text-[9px] font-mono">
+              <div className="flex flex-col items-center">
+                <span className="text-[6.5px] text-slate-400 uppercase leading-none">TEMP</span>
+                <span className="font-bold text-white tabular-nums">{inspectData.temperature}°C</span>
+              </div>
+              <div className="flex flex-col items-center">
+                <span className="text-[6.5px] text-slate-400 uppercase leading-none">HUM</span>
+                <span className="font-bold text-white tabular-nums">{inspectData.humidity}%</span>
+              </div>
+              <div className="flex flex-col items-center">
+                <span className="text-[6.5px] text-slate-400 uppercase leading-none">WIND</span>
+                <span className="font-bold text-white tabular-nums">{inspectData.windSpeed}k</span>
+              </div>
             </div>
           </div>
 
-          {/* Actionable Health Insight */}
-          <div className="flex items-start gap-1.5 p-2 rounded-xl text-[10.5px] leading-tight mb-2.5 border shadow-2xs bg-sky-950/40 border-sky-500/30 text-sky-200">
-            <span className="text-xs shrink-0 select-none mt-0.5" aria-hidden="true">
+          {/* Actionable Health Insight (Compact 1-Line) */}
+          <div className="flex items-center gap-1 px-1.5 py-1 rounded-lg text-[8.5px] leading-tight mb-1.5 border bg-sky-950/30 border-sky-500/25 text-sky-200">
+            <span className="text-[9.5px] shrink-0" aria-hidden="true">
               🛡️
             </span>
-            <p className="font-medium line-clamp-2">{inspectData.healthAction}</p>
+            <p className="font-medium truncate">{inspectData.healthAction}</p>
           </div>
 
-          {/* Primary Action Button */}
+          {/* Action Trigger Button */}
           <button
             type="button"
             onClick={() => handleSelectInspectLocation(inspectData)}
-            className="w-full py-1.5 px-3 rounded-xl bg-gradient-to-r from-sky-600 to-sky-500 hover:from-sky-500 hover:to-sky-400 active:scale-[0.98] text-white font-mono font-bold text-[11px] tracking-wide transition-all shadow-xs hover:shadow-md cursor-pointer flex items-center justify-center gap-1.5"
+            className="w-full py-1.5 px-2 rounded-lg bg-gradient-to-r from-sky-600 to-sky-500 hover:from-sky-500 hover:to-sky-400 active:scale-[0.98] text-white font-mono font-bold text-[10px] tracking-wide transition-all shadow-xs hover:shadow-md cursor-pointer flex items-center justify-center gap-1"
           >
             <span>🎯 Focus &amp; Select Location</span>
-            <span className="text-xs">↵</span>
+            <span className="text-[9px]">↵</span>
           </button>
         </div>
       )}

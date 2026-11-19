@@ -77,8 +77,8 @@ export const EAQI_TIERS: readonly AqiTier[] = [
     colorToken: 'var(--aqi-good)',
     bgToken: 'var(--aqi-good-bg)',
     borderToken: 'var(--aqi-good-border)',
-    description: 'Air quality is fair. Acceptable for the general public.',
-    healthAdvisory: 'Sensitivities: usually safe for outdoor exercise.',
+    description: 'Air quality is fair under European standards.',
+    healthAdvisory: 'Individuals with sensitivities may consider pacing outdoor exertion.',
   },
   {
     level: 3,
