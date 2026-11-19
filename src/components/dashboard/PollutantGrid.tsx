@@ -274,44 +274,9 @@ export function PollutantGrid({
                     </span>
                   </div>
 
-                  {hasConcentration ? (
-                    <div className="mt-1 space-y-1">
-                      <div className="flex items-center justify-between text-[9px] text-[var(--ink-muted)]">
-                        <span>Current (1-h) vs {edu.who2021Guidelines.shortTerm.period} ref:</span>
-                        <span className="font-semibold tabular-nums text-[var(--ink-primary)]">
-                          {item.concentration} / {edu.who2021Guidelines.shortTerm.value} {edu.standardUnit}
-                        </span>
-                      </div>
-                      <div
-                        className="w-full bg-[var(--surface-subtle)] h-1 rounded-full overflow-hidden"
-                        role="progressbar"
-                        aria-label={`WHO guideline reference comparison for ${edu.fullName}`}
-                        aria-valuenow={Math.min(100, Math.round((item.concentration! / edu.who2021Guidelines.shortTerm.value) * 100))}
-                        aria-valuemin={0}
-                        aria-valuemax={100}
-                      >
-                        <div
-                          className="h-full rounded-full transition-all duration-500"
-                          style={{
-                            width: `${Math.min(100, Math.max(5, (item.concentration! / (edu.who2021Guidelines.shortTerm.value * 2.5)) * 100))}%`,
-                            backgroundColor:
-                              item.concentration! > edu.who2021Guidelines.shortTerm.value * 2
-                                ? 'var(--aqi-unhealthy)'
-                                : item.concentration! > edu.who2021Guidelines.shortTerm.value
-                                ? 'var(--aqi-moderate)'
-                                : 'var(--aqi-good)',
-                          }}
-                        />
-                      </div>
-                      <p className="text-[9px] text-[var(--ink-muted)] leading-tight pt-0.5">
-                        Health-based advisory reference level, not a legal limit or guarantee of safety. Modelled 1-hour values cannot be directly equated with 24-hour or annual chronic guideline levels.
-                      </p>
-                    </div>
-                  ) : (
-                    <p className="text-[9px] text-[var(--ink-muted)] italic pt-0.5">
-                      Benchmark comparison unavailable (data not reported).
-                    </p>
-                  )}
+                  <p className="text-[9px] text-[var(--ink-muted)] leading-tight pt-0.5">
+                    Advisory reference levels only; not a legal limit or guarantee of safety. Modelled 1-hour values cannot be directly equated with 24-hour or annual chronic guideline levels due to incompatible averaging periods; no direct pass/fail equivalence is calculated.
+                  </p>
                 </div>
               </div>
 

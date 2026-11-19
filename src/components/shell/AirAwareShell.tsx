@@ -8,6 +8,7 @@ import { PersonalizationBanner } from './PersonalizationBanner';
 import { CopilotDrawerShell } from './CopilotDrawerShell';
 import { UpcomingWorkspacePlaceholder } from './UpcomingWorkspacePlaceholder';
 import { AirQualityDashboard } from '@/components/dashboard/AirQualityDashboard';
+import { FamilyPlannerWorkspace } from '@/components/planner/FamilyPlannerWorkspace';
 
 export function AirAwareShell() {
   const [activeWorkspace, setActiveWorkspace] = useState<WorkspaceKey>('air-intelligence');
@@ -35,6 +36,9 @@ export function AirAwareShell() {
             {/* Live Global Air Intelligence Dashboard */}
             <AirQualityDashboard />
           </>
+        ) : activeWorkspace === 'family-planner' ? (
+          /* Production Phase 3 Family Daily Planner Workspace */
+          <FamilyPlannerWorkspace />
         ) : (
           /* Non-broken upcoming workspace placeholder */
           <UpcomingWorkspacePlaceholder

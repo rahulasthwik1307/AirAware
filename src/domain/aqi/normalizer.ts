@@ -34,6 +34,7 @@ import {
   calculatePollutantEpaSubIndex,
   getEpaTierFromValue,
 } from './epa-aqi';
+import { classifyCpcbPm25 } from './cpcb-benchmark';
 import { POLLUTANT_METADATA } from './unit-converters';
 
 export interface RawOpenMeteoAirQualityResponse {
@@ -282,38 +283,14 @@ export function normalizeAirQualityReport(
   // CPCB Comparison Context for Indian Locations
   let cpcbComparison: CpcbComparisonContext | null = null;
   if (location.countryCode.toUpperCase() === 'IN') {
-    const pm25Val = current.pm2_5;
-    let cpcbCat = 'Moderate';
-    let cpcbRange = '101–200';
-    if (pm25Val !== null && pm25Val !== undefined) {
-      if (pm25Val <= 30) {
-        cpcbCat = 'Good';
-        cpcbRange = '0–50';
-      } else if (pm25Val <= 60) {
-        cpcbCat = 'Satisfactory';
-        cpcbRange = '51–100';
-      } else if (pm25Val <= 90) {
-        cpcbCat = 'Moderate';
-        cpcbRange = '101–200';
-      } else if (pm25Val <= 120) {
-        cpcbCat = 'Poor';
-        cpcbRange = '201–300';
-      } else if (pm25Val <= 250) {
-        cpcbCat = 'Very Poor';
-        cpcbRange = '301–400';
-      } else {
-        cpcbCat = 'Severe';
-        cpcbRange = '401–500';
-      }
-    }
+    const cpcbResult = classifyCpcbPm25(current.pm2_5);
 
     cpcbComparison = {
-      equivalentCategory: cpcbCat,
-      estimatedAqiRange: cpcbRange,
+      equivalentCategory: cpcbResult.category,
+      estimatedAqiRange: cpcbResult.aqiRange,
       stationContext:
         'Modelled ~45km regional grid (CAMS Global IFS). Physical CAAQMS monitors (e.g. Sanathnagar, Zoo Park, Central University) measure localized ground plumes which typically report higher concentrations during thermal inversions. Live physical station observations are not provided via this open model API.',
-      methodologyDifference:
-        'Single-pollutant PM2.5 benchmark: India CPCB NAQI permits up to 60 μg/m³ PM2.5 for "Satisfactory" (51–100), whereas US EPA classifies >35.4 μg/m³ as Unhealthy for Sensitive Groups (>100). Official composite CPCB AQI requires simultaneous 24h monitoring of ≥3 criteria pollutants and is not claimed here.',
+      methodologyDifference: cpcbResult.methodologyNote,
     };
   }
 
@@ -344,3 +321,5 @@ export function normalizeAirQualityReport(
     modelMetadata,
   };
 }
+
+export { normalizeAirQualityReport as normalizeAirQualityData };
