@@ -17,24 +17,26 @@ interface CopilotDrawerShellProps {
 
 const WORKSPACE_PROMPT_CHIPS: Record<WorkspaceKey, readonly string[]> = {
   'indoor-air': [
-    'When should I open my windows today?',
-    'Does HEPA filtration capture gas stove fumes?',
-    'What does CADR mean for my room size?',
+    'Can indoor plants like Snake Plant and Areca Palm reduce indoor smog?',
+    'What CADR purifier capacity is needed for my room size?',
+    'When should I open my windows today during winter inversions?',
     'How does a Corsi-Rosenthal box fan compare to commercial units?',
   ],
   'family-planner': [
-    'When is the lowest pollution window for children outdoor play today?',
-    'Is cycling or public transit cleaner for commuting today?',
-    'Why does morning smog trap particulate matter near the ground?',
+    'Can my child play outside this evening in Delhi?',
+    'Is it safe for senior citizens to take a morning walk today?',
+    'How should working professionals plan their commute during morning smog?',
+    'Why does morning thermal inversion trap toxic particulate near ground?',
   ],
   'air-intelligence': [
-    'Why is PM2.5 elevated while Ozone is low?',
-    'What does an AQI above 150 mean for healthy adults?',
-    'How does wind speed influence regional smog dispersion?',
+    'What does India CPCB NAQI "Very Poor" mean for vulnerable families?',
+    'Why does cold winter weather trap vehicle tailpipe exhaust near the ground?',
+    'What is the difference between PM2.5 soot and Ozone?',
   ],
   'cleaner-choices': [
-    'What everyday switch reduces toxic exposure fastest?',
-    'How much CO2 does taking electric rail save compared to solo driving?',
+    'Why does electric metro save 80% emissions over solo car driving?',
+    'How does combining weekend errand trips prevent cold-start smog spikes?',
+    'What is the scientific distinction between personal exposure and carbon footprint?',
   ],
 };
 

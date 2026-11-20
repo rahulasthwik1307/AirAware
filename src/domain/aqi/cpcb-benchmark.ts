@@ -1,18 +1,16 @@
 /**
- * India CPCB NAQI PM2.5 Regulatory Benchmark Resolver
+ * India CPCB NAQI Regulatory Engine
+ * Official Central Pollution Control Board (CPCB) National Air Quality Index (NAQI)
+ * breakpoints and single-pollutant PM2.5 benchmark resolver for the Indian subcontinent.
  *
- * Official CPCB National Air Quality Index (NAQI) Breakpoints for PM2.5 (24-hour arithmetic average):
- * - Good: 0–30 μg/m³ (AQI 0–50)
- * - Satisfactory: 31–60 μg/m³ (AQI 51–100)
- * - Moderate: 61–90 μg/m³ (AQI 101–200)
- * - Poor: 91–120 μg/m³ (AQI 201–300)
- * - Very Poor: 121–250 μg/m³ (AQI 301–400)
- * - Severe: > 250 μg/m³ (AQI 401–500)
- *
- * Rules:
- * - Single-pollutant reference comparison only; not an official composite CPCB NAQI calculation.
- * - Does not claim in-situ CAAQMS ground stations are integrated.
- * - Values <= 30 μg/m³ are classified as Good; values 31–60 μg/m³ are classified as Satisfactory.
+ * Official CPCB Breakpoints (24-hour arithmetic average in µg/m³):
+ * Category      | AQI Range | PM2.5 (µg/m³) | PM10 (µg/m³)
+ * Good          | 0–50      | 0–30          | 0–50
+ * Satisfactory  | 51–100    | 31–60         | 51–100
+ * Moderate      | 101–200   | 61–90         | 101–250
+ * Poor          | 201–300   | 91–120        | 251–350
+ * Very Poor     | 301–400   | 121–250       | 351–430
+ * Severe        | 401–500   | > 250         | > 430
  */
 
 export type CpcbCategory =
@@ -67,7 +65,7 @@ export function classifyCpcbPm25(
       category: 'Satisfactory',
       aqiRange: '51–100',
       concentrationRange: '31–60 μg/m³',
-      colorToken: 'var(--aqi-good)',
+      colorToken: '#84cc16',
       methodologyNote:
         'Single-pollutant PM2.5 benchmark: Current concentration falls within India CPCB NAQI "Satisfactory" range (31–60 μg/m³, AQI 51–100). For comparison, US EPA classifies >35.4 μg/m³ as Unhealthy for Sensitive Groups (>100). Official composite CPCB AQI requires ≥3 pollutants at physical CAAQMS stations and is not claimed here.',
     };

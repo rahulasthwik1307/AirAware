@@ -24,7 +24,7 @@ export function CleanAirSizer({
   onUpdatePurifier,
   onAskCopilot,
 }: CleanAirSizerProps) {
-  const [activeTab, setActiveTab] = useState<'commercial' | 'cr-box'>('commercial');
+  const [activeTab, setActiveTab] = useState<'commercial' | 'cr-box' | 'botanical'>('commercial');
 
   const effectiveCadr = activeTab === 'cr-box' ? 380 : selectedCadrM3h;
   const calc = calculateCadrAch(floorAreaM2, ceilingHeightM, targetAch, effectiveCadr);
@@ -98,7 +98,7 @@ export function CleanAirSizer({
             </p>
           </div>
 
-          {/* Segmented Tab: Purifier vs DIY Box Fan */}
+          {/* Segmented Tab: Purifier vs DIY Box Fan vs Indoor Plants */}
           <div className="inline-flex items-center rounded-xl bg-slate-100 p-0.5 border border-slate-200 shrink-0" role="tablist">
             <button
               type="button"
@@ -127,6 +127,20 @@ export function CleanAirSizer({
             >
               <span>📦</span>
               <span>DIY Box Fan</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === 'botanical'}
+              onClick={() => setActiveTab('botanical')}
+              className={`flex items-center gap-1 px-2.5 py-1 text-xs font-mono font-bold rounded-lg transition-all cursor-pointer ${
+                activeTab === 'botanical'
+                  ? 'bg-white text-emerald-800 shadow-2xs border border-emerald-200/70'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <span>🌿</span>
+              <span>Plants</span>
             </button>
           </div>
         </div>
@@ -322,7 +336,7 @@ export function CleanAirSizer({
             </div>
           </div>
         </div>
-      ) : (
+      ) : activeTab === 'cr-box' ? (
         /* Corsi-Rosenthal Box DIY Blueprint View */
         <div className="rounded-xl border border-sky-200 bg-sky-50/60 p-3 space-y-1.5">
           <div className="flex items-center justify-between">
@@ -351,6 +365,56 @@ export function CleanAirSizer({
               <strong className="text-emerald-700 text-xs">4× Surface</strong>
             </div>
           </div>
+        </div>
+      ) : (
+        /* Botanical Smog Defense (NASA Clean Air Indoor Plants) */
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-emerald-950 font-sans flex items-center gap-1.5">
+              <span>🌿</span>
+              <span>NASA Clean Air Botanical Defense</span>
+            </span>
+            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-white text-emerald-800 border border-emerald-200">
+              Indian Household Sorbents
+            </span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+            <div className="bg-white p-2 rounded-xl border border-emerald-100 shadow-2xs space-y-0.5">
+              <div className="flex items-center gap-1 font-bold text-slate-900 text-[11px]">
+                <span>🪴</span> Snake Plant
+              </div>
+              <p className="text-[9.5px] text-slate-500 leading-tight">
+                Releases night oxygen (CAM); absorbs formaldehyde. Best for bedrooms.
+              </p>
+            </div>
+            <div className="bg-white p-2 rounded-xl border border-emerald-100 shadow-2xs space-y-0.5">
+              <div className="flex items-center gap-1 font-bold text-slate-900 text-[11px]">
+                <span>🌴</span> Areca Palm
+              </div>
+              <p className="text-[9.5px] text-slate-500 leading-tight">
+                Transpires ~1L moisture/day; humidifies dry smog air. Removes toluene.
+              </p>
+            </div>
+            <div className="bg-white p-2 rounded-xl border border-emerald-100 shadow-2xs space-y-0.5">
+              <div className="flex items-center gap-1 font-bold text-slate-900 text-[11px]">
+                <span>🍃</span> Money Plant
+              </div>
+              <p className="text-[9.5px] text-slate-500 leading-tight">
+                Low-light tolerant; absorbs VOCs &amp; synthetic fumes in study rooms.
+              </p>
+            </div>
+            <div className="bg-white p-2 rounded-xl border border-emerald-100 shadow-2xs space-y-0.5">
+              <div className="flex items-center gap-1 font-bold text-slate-900 text-[11px]">
+                <span>🌱</span> Spider Plant
+              </div>
+              <p className="text-[9.5px] text-slate-500 leading-tight">
+                Fast-growing; eliminates CO &amp; nitrogen dioxide from stove exhaust.
+              </p>
+            </div>
+          </div>
+          <p className="text-[10px] text-emerald-900 italic">
+            *Botanical sorbents reduce gaseous VOCs &amp; enrich oxygen; mechanical HEPA handles particulate PM2.5 soot.
+          </p>
         </div>
       )}
     </section>

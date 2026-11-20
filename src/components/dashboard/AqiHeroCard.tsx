@@ -144,19 +144,6 @@ export function AqiHeroCard({
                   <button
                     type="button"
                     role="radio"
-                    aria-checked={activeStandard === 'EUROPEAN_EAQI'}
-                    onClick={() => onSwitchStandard('EUROPEAN_EAQI')}
-                    className={`px-2.5 py-0.5 rounded-lg transition-all cursor-pointer ${
-                      activeStandard === 'EUROPEAN_EAQI'
-                        ? 'bg-sky-600 text-white shadow-xs font-black'
-                        : 'text-slate-600 hover:text-slate-900'
-                    }`}
-                  >
-                    EAQI
-                  </button>
-                  <button
-                    type="button"
-                    role="radio"
                     aria-checked={activeStandard === 'US_EPA'}
                     onClick={() => onSwitchStandard('US_EPA')}
                     className={`px-2.5 py-0.5 rounded-lg transition-all cursor-pointer ${
@@ -166,6 +153,19 @@ export function AqiHeroCard({
                     }`}
                   >
                     US EPA
+                  </button>
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={activeStandard === 'EUROPEAN_EAQI'}
+                    onClick={() => onSwitchStandard('EUROPEAN_EAQI')}
+                    className={`px-2.5 py-0.5 rounded-lg transition-all cursor-pointer ${
+                      activeStandard === 'EUROPEAN_EAQI'
+                        ? 'bg-sky-600 text-white shadow-xs font-black'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    EAQI
                   </button>
                 </div>
               </div>
@@ -190,6 +190,29 @@ export function AqiHeroCard({
                   </span>
                 )}
               </div>
+
+              {/* India CPCB NAQI Benchmark Highlight Banner */}
+              {report.cpcbComparison && (
+                <div className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-emerald-50/90 border border-emerald-200/90 shadow-2xs">
+                  <div className="flex items-center gap-2">
+                    <span className="text-base" aria-hidden="true">🇮🇳</span>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-800">
+                        India CPCB NAQI:
+                      </span>
+                      <strong className="text-xs font-bold text-emerald-950">
+                        {report.cpcbComparison.equivalentCategory}
+                      </strong>
+                      <span className="text-[11px] font-mono text-emerald-700">
+                        (AQI {report.cpcbComparison.estimatedAqiRange})
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-[9.5px] font-mono font-bold px-2 py-0.5 rounded bg-white text-emerald-800 border border-emerald-200 shrink-0">
+                    CAMS PM₂.₅ Model
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Unified Atmospheric Intelligence Card (Precision Scientific Modernism) */}
@@ -292,7 +315,7 @@ export function AqiHeroCard({
             <div className="w-full flex items-center justify-between px-2 mb-2">
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-mono font-bold tracking-widest text-slate-500 uppercase">
-                  Global Environmental Intelligence • 3D Atmospheric Model View
+                  Indo-Gangetic Airshed Dispersion • 3D Atmospheric Model View
                 </span>
                 <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
               </div>
