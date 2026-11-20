@@ -10,6 +10,7 @@ import { UpcomingWorkspacePlaceholder } from './UpcomingWorkspacePlaceholder';
 import { AirQualityDashboard } from '@/components/dashboard/AirQualityDashboard';
 import { FamilyPlannerWorkspace } from '@/components/planner/FamilyPlannerWorkspace';
 import { IndoorAirWorkspace } from '@/components/indoor/IndoorAirWorkspace';
+import { CleanerChoicesWorkspace } from '@/components/choices/CleanerChoicesWorkspace';
 
 export function AirAwareShell() {
   const [activeWorkspace, setActiveWorkspace] = useState<WorkspaceKey>('air-intelligence');
@@ -57,8 +58,11 @@ export function AirAwareShell() {
         ) : activeWorkspace === 'indoor-air' ? (
           /* Production Phase 4 Indoor Air Intelligence Workspace */
           <IndoorAirWorkspace onOpenCopilotWithContext={handleOpenCopilotWithContext} />
+        ) : activeWorkspace === 'cleaner-choices' ? (
+          /* Production Phase 6 Cleaner Choices & Impact Workspace */
+          <CleanerChoicesWorkspace onAskCopilot={handleOpenCopilotWithContext} />
         ) : (
-          /* Non-broken upcoming workspace placeholder (Phase 6) */
+          /* Non-broken upcoming workspace placeholder */
           <UpcomingWorkspacePlaceholder
             workspace={activeWorkspace}
             onReturnToLive={() => setActiveWorkspace('air-intelligence')}
@@ -108,6 +112,13 @@ export function AirAwareShell() {
                 className="px-2.5 py-1 text-[11px] font-medium rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-subtle)] hover:bg-[var(--surface-card)] hover:text-[var(--brand-primary)] cursor-pointer transition-colors"
               >
                 🛡️ Family Daily Routines
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveWorkspace('cleaner-choices')}
+                className="px-2.5 py-1 text-[11px] font-medium rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-subtle)] hover:bg-[var(--surface-card)] hover:text-[var(--brand-primary)] cursor-pointer transition-colors"
+              >
+                🌱 Cleaner Choices
               </button>
             </div>
 

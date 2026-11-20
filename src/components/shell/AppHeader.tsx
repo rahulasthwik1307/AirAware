@@ -20,7 +20,7 @@ const WORKSPACE_TABS: readonly WorkspaceTab[] = [
   { key: 'air-intelligence', label: 'Air Intelligence', icon: '🌍' },
   { key: 'family-planner', label: 'Family Planner', icon: '📅' },
   { key: 'indoor-air', label: 'Indoor Air', icon: '🏡' },
-  { key: 'cleaner-choices', label: 'Choices & Impact', icon: '🌱', badge: 'Phase 6' },
+  { key: 'cleaner-choices', label: 'Choices & Impact', icon: '🌱' },
 ];
 
 export function AppHeader({
@@ -99,9 +99,6 @@ export function AppHeader({
               🤖
             </span>
             <span className="hidden sm:inline">Ask Copilot</span>
-            <span className="text-[10px] font-mono text-[var(--ink-muted)] border border-[var(--border-subtle)] bg-white px-1 py-0.2 rounded hidden lg:inline">
-              Preview
-            </span>
           </button>
         </div>
       </div>
