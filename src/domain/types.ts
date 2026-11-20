@@ -21,7 +21,8 @@ export type WorkspaceKey =
   | 'air-intelligence'
   | 'family-planner'
   | 'indoor-air'
-  | 'cleaner-choices';
+  | 'cleaner-choices'
+  | 'community-alerts';
 
 /**
  * StandardRole defines the regulatory/scientific context of the index for a location:

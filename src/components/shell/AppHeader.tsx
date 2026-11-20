@@ -7,6 +7,8 @@ interface AppHeaderProps {
   readonly activeWorkspace: WorkspaceKey;
   readonly onSelectWorkspace: (workspace: WorkspaceKey) => void;
   readonly onOpenCopilot: () => void;
+  readonly unreadAlertCount?: number;
+  readonly onOpenNotifications?: () => void;
 }
 
 interface WorkspaceTab {
@@ -21,12 +23,15 @@ const WORKSPACE_TABS: readonly WorkspaceTab[] = [
   { key: 'family-planner', label: 'Family Planner', icon: '📅' },
   { key: 'indoor-air', label: 'Indoor Air', icon: '🏡' },
   { key: 'cleaner-choices', label: 'Choices & Impact', icon: '🌱' },
+  { key: 'community-alerts', label: 'Community', icon: '📢' },
 ];
 
 export function AppHeader({
   activeWorkspace,
   onSelectWorkspace,
   onOpenCopilot,
+  unreadAlertCount = 0,
+  onOpenNotifications,
 }: AppHeaderProps) {
   return (
     <header className="sticky top-0 z-40 w-full border-b border-[var(--border-subtle)] bg-[var(--surface-card)]/95 backdrop-blur-md">
@@ -87,8 +92,29 @@ export function AppHeader({
           })}
         </nav>
 
-        {/* Global Copilot Drawer Trigger */}
+        {/* Action Triggers: Notification Bell & Copilot */}
         <div className="flex items-center gap-2">
+          {/* Universal Notification Bell */}
+          {onOpenNotifications && (
+            <button
+              type="button"
+              onClick={onOpenNotifications}
+              className="relative p-2 rounded-xl bg-[var(--surface-subtle)] hover:bg-[var(--surface-card)] text-[var(--ink-primary)] hover:text-[var(--brand-primary)] border border-[var(--border-subtle)] transition-all cursor-pointer shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
+              aria-label={`View notifications (${unreadAlertCount} unread)`}
+              title="Open Notifications"
+            >
+              <span className="text-base select-none" aria-hidden="true">
+                🔔
+              </span>
+              {unreadAlertCount > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-rose-600 text-white font-mono text-[9px] font-bold shadow-xs animate-pulse">
+                  {unreadAlertCount}
+                </span>
+              )}
+            </button>
+          )}
+
+          {/* Global Copilot Drawer Trigger */}
           <button
             type="button"
             onClick={onOpenCopilot}

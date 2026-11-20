@@ -78,6 +78,7 @@ export const WorkspaceEnum = z.enum([
   'family-planner',
   'indoor-air',
   'cleaner-choices',
+  'community-alerts',
 ]);
 export type WorkspaceContext = z.infer<typeof WorkspaceEnum>;
 

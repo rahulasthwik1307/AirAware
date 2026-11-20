@@ -83,6 +83,27 @@ const WORKSPACE_DATA: Record<Exclude<WorkspaceKey, 'air-intelligence'>, Workspac
       },
     ],
   },
+  'community-alerts': {
+    title: 'Community Air Intelligence & Alerts',
+    phaseLabel: 'Phase 7 Production Experience',
+    icon: '📢',
+    summary:
+      'Verified atmospheric telemetry alerts, local citizen incident reporting, diurnal ventilation windows, and residential society clean air bulletins.',
+    features: [
+      {
+        title: 'Verified Telemetry & Regulatory Alerts',
+        description: 'Triggered by live CPCB NAQI and CAQM GRAP stage thresholds with zero fabricated measurements.',
+      },
+      {
+        title: 'Citizen Incident Journal with CPCB Pre-fill',
+        description: 'Document visible emissions locally and export formatted CPCB Sameer complaint dossiers.',
+      },
+      {
+        title: 'RWA & Society Bulletin Dispatcher',
+        description: 'One-click residential clean air action bulletins for apartment notice boards and WhatsApp groups.',
+      },
+    ],
+  },
 };
 
 export function UpcomingWorkspacePlaceholder({

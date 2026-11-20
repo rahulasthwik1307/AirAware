@@ -38,6 +38,12 @@ const WORKSPACE_PROMPT_CHIPS: Record<WorkspaceKey, readonly string[]> = {
     'How does combining weekend errand trips prevent cold-start smog spikes?',
     'What is the scientific distinction between personal exposure and carbon footprint?',
   ],
+  'community-alerts': [
+    'What are the mandatory restrictions under CAQM GRAP Stage IV?',
+    'When does the daily thermal inversion breakup window occur today?',
+    'How do I file an illegal garbage burning complaint on CPCB Sameer?',
+    'What clean air advisory should our RWA share with apartment residents?',
+  ],
 };
 
 const WORKSPACE_LABELS: Record<WorkspaceKey, string> = {
@@ -45,6 +51,7 @@ const WORKSPACE_LABELS: Record<WorkspaceKey, string> = {
   'family-planner': 'Family Daily Planner',
   'indoor-air': 'Indoor Air Intelligence',
   'cleaner-choices': 'Cleaner Choices & Impact',
+  'community-alerts': 'Community & Alerts',
 };
 
 export function CopilotDrawerShell({

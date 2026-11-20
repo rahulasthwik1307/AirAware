@@ -11,12 +11,19 @@ import { AirQualityDashboard } from '@/components/dashboard/AirQualityDashboard'
 import { FamilyPlannerWorkspace } from '@/components/planner/FamilyPlannerWorkspace';
 import { IndoorAirWorkspace } from '@/components/indoor/IndoorAirWorkspace';
 import { CleanerChoicesWorkspace } from '@/components/choices/CleanerChoicesWorkspace';
+import { CommunityAlertsWorkspace } from '@/components/community/CommunityAlertsWorkspace';
+import { NotificationDrawer } from '@/components/community/NotificationDrawer';
+import { useCommunityAlerts } from '@/domain/community/useCommunityAlerts';
 
 export function AirAwareShell() {
   const [activeWorkspace, setActiveWorkspace] = useState<WorkspaceKey>('air-intelligence');
   const [isCopilotOpen, setIsCopilotOpen] = useState(false);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [copilotInitialPrompt, setCopilotInitialPrompt] = useState<string | null>(null);
   const [copilotRoomContext, setCopilotRoomContext] = useState<string | null>(null);
+
+  // Community Alerts hook for header notification bell & global drawer
+  const { alerts, unreadCount, markAlertRead, markAllAlertsRead } = useCommunityAlerts();
 
   const handleOpenCopilotWithContext = (prompt?: string, roomName?: string) => {
     setCopilotInitialPrompt(prompt || null);
@@ -37,6 +44,8 @@ export function AirAwareShell() {
         activeWorkspace={activeWorkspace}
         onSelectWorkspace={setActiveWorkspace}
         onOpenCopilot={() => setIsCopilotOpen(true)}
+        unreadAlertCount={unreadCount}
+        onOpenNotifications={() => setIsNotificationOpen(true)}
       />
 
       {/* Main Content Area */}
@@ -56,6 +65,12 @@ export function AirAwareShell() {
         ) : activeWorkspace === 'cleaner-choices' ? (
           /* Production Phase 6 Cleaner Choices & Impact Workspace */
           <CleanerChoicesWorkspace onAskCopilot={handleOpenCopilotWithContext} />
+        ) : activeWorkspace === 'community-alerts' ? (
+          /* Production Phase 7 Community Air Intelligence & Alerts Workspace */
+          <CommunityAlertsWorkspace
+            onSelectWorkspace={setActiveWorkspace}
+            onAskCopilot={handleOpenCopilotWithContext}
+          />
         ) : (
           /* Non-broken upcoming workspace placeholder */
           <UpcomingWorkspacePlaceholder
@@ -115,6 +130,13 @@ export function AirAwareShell() {
               >
                 🌱 Cleaner Choices
               </button>
+              <button
+                type="button"
+                onClick={() => setActiveWorkspace('community-alerts')}
+                className="px-2.5 py-1 text-[11px] font-medium rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-subtle)] hover:bg-[var(--surface-card)] hover:text-[var(--brand-primary)] cursor-pointer transition-colors"
+              >
+                📢 Community &amp; Alerts
+              </button>
             </div>
 
             <div className="text-[11px] text-[var(--ink-muted)] font-mono sm:text-right">
@@ -131,6 +153,17 @@ export function AirAwareShell() {
       <MobileBottomNav
         activeWorkspace={activeWorkspace}
         onSelectWorkspace={setActiveWorkspace}
+      />
+
+      {/* Universal In-App Notification Drawer Shell */}
+      <NotificationDrawer
+        isOpen={isNotificationOpen}
+        onClose={() => setIsNotificationOpen(false)}
+        alerts={alerts}
+        unreadCount={unreadCount}
+        onMarkRead={markAlertRead}
+        onMarkAllRead={markAllAlertsRead}
+        onNavigateWorkspace={setActiveWorkspace}
       />
 
       {/* Global AI Copilot Slide-Over Drawer Shell */}

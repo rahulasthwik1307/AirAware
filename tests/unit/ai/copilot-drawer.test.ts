@@ -76,12 +76,13 @@ describe('Copilot Request & Workspace Context Schema', () => {
     expect(() => CopilotRequestSchema.parse(raw)).toThrow();
   });
 
-  it('validates all 4 workspace enums', () => {
+  it('validates all 5 workspace enums', () => {
     expect(WorkspaceEnum.options).toEqual([
       'air-intelligence',
       'family-planner',
       'indoor-air',
       'cleaner-choices',
+      'community-alerts',
     ]);
   });
 });

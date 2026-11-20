@@ -19,6 +19,7 @@ const NAV_ITEMS: readonly NavItem[] = [
   { key: 'family-planner', label: 'Family Plan', icon: '📅' },
   { key: 'indoor-air', label: 'Indoor Air', icon: '🏡' },
   { key: 'cleaner-choices', label: 'Choices', icon: '🌱' },
+  { key: 'community-alerts', label: 'Community', icon: '📢' },
 ];
 
 export function MobileBottomNav({
