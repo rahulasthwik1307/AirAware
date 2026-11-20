@@ -18,8 +18,8 @@ interface WorkspaceTab {
 
 const WORKSPACE_TABS: readonly WorkspaceTab[] = [
   { key: 'air-intelligence', label: 'Air Intelligence', icon: '🌍' },
-  { key: 'family-planner', label: 'Family Planner', icon: '📅', badge: 'Phase 3' },
-  { key: 'indoor-air', label: 'Indoor Air', icon: '🏡', badge: 'Phase 4' },
+  { key: 'family-planner', label: 'Family Planner', icon: '📅' },
+  { key: 'indoor-air', label: 'Indoor Air', icon: '🏡' },
   { key: 'cleaner-choices', label: 'Choices & Impact', icon: '🌱', badge: 'Phase 6' },
 ];
 

@@ -50,6 +50,7 @@ export async function POST(req: Request) {
     const headers: Record<string, string> = {
       'Cache-Control': 'private, no-cache, no-store, max-age=0, must-revalidate',
       Pragma: 'no-cache',
+      'X-AirAware-Response-Source': result.isDeterministicFallback ? 'deterministic' : 'cloudflare-ai',
     };
 
     if (aiCache.isDailyQuotaExhausted()) {

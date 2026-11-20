@@ -74,31 +74,71 @@ const ARCHETYPE_ICONS: Record<string, string> = {
 
 const ARCHETYPE_COLORS: Record<
   string,
-  { laneBadge: string; blockBg: string; blockBorder: string; blockText: string }
+  { laneBadge: string; blockBg: string; blockBorder: string; blockText: string; accentColor: string }
 > = {
   CHILD_STUDENT: {
     laneBadge: 'bg-sky-500/10 text-sky-700 dark:text-sky-300 border-sky-500/20',
-    blockBg: 'bg-sky-50 dark:bg-sky-950/40',
-    blockBorder: 'border-sky-300 dark:border-sky-700',
-    blockText: 'text-sky-900 dark:text-sky-100',
+    blockBg: 'bg-sky-50/90 dark:bg-sky-950/60',
+    blockBorder: 'border-sky-400 dark:border-sky-600',
+    blockText: 'text-sky-950 dark:text-sky-100',
+    accentColor: '#0284c7',
   },
   WORKING_COMMUTER: {
     laneBadge: 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20',
-    blockBg: 'bg-amber-50 dark:bg-amber-950/40',
-    blockBorder: 'border-amber-300 dark:border-amber-700',
-    blockText: 'text-amber-900 dark:text-amber-100',
+    blockBg: 'bg-amber-50/90 dark:bg-amber-950/60',
+    blockBorder: 'border-amber-400 dark:border-amber-600',
+    blockText: 'text-amber-950 dark:text-amber-100',
+    accentColor: '#d97706',
   },
   SENIOR_VULNERABLE: {
     laneBadge: 'bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-500/20',
-    blockBg: 'bg-purple-50 dark:bg-purple-950/40',
-    blockBorder: 'border-purple-300 dark:border-purple-700',
-    blockText: 'text-purple-900 dark:text-purple-100',
+    blockBg: 'bg-purple-50/90 dark:bg-purple-950/60',
+    blockBorder: 'border-purple-400 dark:border-purple-600',
+    blockText: 'text-purple-950 dark:text-purple-100',
+    accentColor: '#7c3aed',
   },
   OUTDOOR_ENTHUSIAST: {
-    laneBadge: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20',
-    blockBg: 'bg-emerald-50 dark:bg-emerald-950/40',
-    blockBorder: 'border-emerald-300 dark:border-emerald-700',
-    blockText: 'text-emerald-900 dark:text-emerald-100',
+    laneBadge: 'bg-teal-500/10 text-teal-700 dark:text-teal-300 border-teal-500/20',
+    blockBg: 'bg-teal-50/90 dark:bg-teal-950/60',
+    blockBorder: 'border-teal-400 dark:border-teal-600',
+    blockText: 'text-teal-950 dark:text-teal-100',
+    accentColor: '#0d9488',
+  },
+};
+
+const ACTIVITY_STYLE_MAP: Record<
+  string,
+  { blockBg: string; blockBorder: string; blockText: string }
+> = {
+  OUTDOOR_EXERCISE: {
+    blockBg: 'bg-rose-50/95 dark:bg-rose-950/70',
+    blockBorder: 'border-rose-400 dark:border-rose-600',
+    blockText: 'text-rose-950 dark:text-rose-100',
+  },
+  COMMUTE: {
+    blockBg: 'bg-amber-50/95 dark:bg-amber-950/70',
+    blockBorder: 'border-amber-400 dark:border-amber-600',
+    blockText: 'text-amber-950 dark:text-amber-100',
+  },
+  SCHOOL_TRAVEL: {
+    blockBg: 'bg-sky-50/95 dark:bg-sky-950/70',
+    blockBorder: 'border-sky-400 dark:border-sky-600',
+    blockText: 'text-sky-950 dark:text-sky-100',
+  },
+  VENTILATION: {
+    blockBg: 'bg-teal-50/95 dark:bg-teal-950/70',
+    blockBorder: 'border-teal-400 dark:border-teal-600',
+    blockText: 'text-teal-950 dark:text-teal-100',
+  },
+  ERRAND: {
+    blockBg: 'bg-indigo-50/95 dark:bg-indigo-950/70',
+    blockBorder: 'border-indigo-400 dark:border-indigo-600',
+    blockText: 'text-indigo-950 dark:text-indigo-100',
+  },
+  INDOOR_CHORE: {
+    blockBg: 'bg-slate-50/95 dark:bg-slate-900/70',
+    blockBorder: 'border-slate-400 dark:border-slate-600',
+    blockText: 'text-slate-950 dark:text-slate-100',
   },
 };
 
@@ -315,30 +355,41 @@ export function ScheduleTimeline({
         {/* ============================================================ */}
         <div className="hidden md:block space-y-3">
           {/* Timeline Container */}
-          <div className="relative rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-subtle)] overflow-hidden">
-            {/* Top: 24-Hour Time Axis Header */}
+          <div className="relative rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-subtle)] overflow-hidden shadow-xs">
+            {/* Top: 24-Hour Time Axis Header with 1-Hour Precision & 3-Hour Major Labels */}
             <div className="flex items-center border-b border-[var(--border-subtle)] bg-[var(--surface-card)]">
               {/* Member Column Header Spacer */}
-              <div className="w-44 shrink-0 px-3 py-2 border-r border-[var(--border-subtle)]">
-                <span className="text-[11px] font-mono font-bold text-[var(--ink-secondary)]">
+              <div className="w-48 shrink-0 px-3.5 py-2.5 border-r border-[var(--border-subtle)] bg-[var(--surface-card)]">
+                <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-[var(--ink-secondary)]">
                   Family Member
                 </span>
               </div>
 
-              {/* 24h Axis Labels (00:00 to 24:00) */}
-              <div className="flex-1 relative h-7">
-                {timeTicks.map((hour) => {
+              {/* 24h Axis Labels with 1-Hour Precision */}
+              <div className="flex-1 relative h-8 select-none">
+                {Array.from({ length: 25 }, (_, hour) => {
                   const leftPercent = (hour / 24) * 100;
+                  const isMajor = hour % 3 === 0;
                   return (
                     <div
                       key={hour}
                       className="absolute top-0 bottom-0 flex flex-col justify-between -translate-x-1/2"
                       style={{ left: `${leftPercent}%` }}
                     >
-                      <span className="text-[10px] font-mono text-[var(--ink-muted)] select-none pt-1">
-                        {hour.toString().padStart(2, '0')}:00
-                      </span>
-                      <div className="w-px h-1.5 bg-[var(--border-strong)] mx-auto" />
+                      {isMajor ? (
+                        <span className="text-[10px] font-mono font-bold text-[var(--ink-primary)] select-none pt-1">
+                          {hour.toString().padStart(2, '0')}:00
+                        </span>
+                      ) : (
+                        <span className="text-[8px] font-mono text-[var(--ink-muted)] opacity-60 select-none pt-1.5 hidden xl:inline">
+                          {hour.toString().padStart(2, '0')}
+                        </span>
+                      )}
+                      <div
+                        className={`w-px mx-auto ${
+                          isMajor ? 'h-2 bg-[var(--border-strong)]' : 'h-1 bg-[var(--border-subtle)] opacity-70'
+                        }`}
+                      />
                     </div>
                   );
                 })}
@@ -346,14 +397,14 @@ export function ScheduleTimeline({
             </div>
 
             {/* Dynamic Forecast Intensity Gradient Strip */}
-            <div className="flex items-center border-b border-[var(--border-subtle)] bg-[var(--surface-card)]/50">
-              <div className="w-44 shrink-0 px-3 py-1 border-r border-[var(--border-subtle)]">
-                <span className="text-[10px] font-mono text-[var(--ink-muted)]">
+            <div className="flex items-center border-b border-[var(--border-subtle)] bg-[var(--surface-card)]/60">
+              <div className="w-48 shrink-0 px-3.5 py-1.5 border-r border-[var(--border-subtle)]">
+                <span className="text-[10px] font-mono font-semibold text-[var(--ink-muted)]">
                   Hourly Forecast (PM₂.₅)
                 </span>
               </div>
 
-              <div className="flex-1 relative h-6 flex">
+              <div className="flex-1 relative h-7 flex">
                 {validPoints.map((point, index) => {
                   const pm25 = point.pm25 ?? 0;
                   // Dynamic relative intensity from 0 to 1 across the day's forecast cycle
@@ -364,16 +415,20 @@ export function ScheduleTimeline({
                   return (
                     <div
                       key={point.time || index}
-                      className={`flex-1 h-full border-r border-black/5 dark:border-white/5 flex items-center justify-center text-[9px] font-mono transition-colors group relative cursor-help ${
+                      className={`flex-1 h-full border-r ${
+                        index % 3 === 2
+                          ? 'border-black/15 dark:border-white/15'
+                          : 'border-black/5 dark:border-white/5'
+                      } flex items-center justify-center text-[10px] font-mono transition-colors group relative cursor-help ${
                         isHigh
-                          ? 'bg-amber-500/25 text-amber-900 dark:text-amber-200'
+                          ? 'bg-amber-500/25 text-amber-950 dark:text-amber-200 font-semibold'
                           : isLow
-                          ? 'bg-emerald-500/25 text-emerald-900 dark:text-emerald-200'
+                          ? 'bg-emerald-500/25 text-emerald-950 dark:text-emerald-200 font-semibold'
                           : 'bg-slate-500/10 text-[var(--ink-muted)]'
                       }`}
                       title={`${index.toString().padStart(2, '0')}:00 — ${pm25} μg/m³ PM₂.₅`}
                     >
-                      <span className="select-none scale-90 opacity-70">
+                      <span className="select-none scale-90">
                         {Math.round(pm25)}
                       </span>
                       {/* Tooltip on Hover */}
@@ -388,9 +443,9 @@ export function ScheduleTimeline({
               </div>
             </div>
 
-            {/* Swimlanes for Each Household Member */}
+            {/* Swimlanes for Each Household Member with Synchronized Diurnal Smog Horizon */}
             <div className="divide-y divide-[var(--border-subtle)]">
-              {targetMembers.map((member) => {
+              {targetMembers.map((member, memberIdx) => {
                 const colors =
                   ARCHETYPE_COLORS[member.archetype] || ARCHETYPE_COLORS.CHILD_STUDENT;
                 const icon = ARCHETYPE_ICONS[member.archetype] || '👤';
@@ -398,21 +453,21 @@ export function ScheduleTimeline({
                 return (
                   <div
                     key={member.id}
-                    className="flex items-stretch min-h-[68px] sm:min-h-[72px] hover:bg-black/[0.01] dark:hover:bg-white/[0.01] transition-colors"
+                    className="flex items-stretch min-h-[74px] sm:min-h-[80px] hover:bg-black/[0.015] dark:hover:bg-white/[0.015] transition-colors relative"
                   >
                     {/* Left Member Identity Lane Header */}
-                    <div className="w-44 shrink-0 p-3 border-r border-[var(--border-subtle)] bg-[var(--surface-card)] flex flex-col justify-center">
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <span className="text-sm select-none" aria-hidden="true">
+                    <div className="w-48 shrink-0 p-3.5 border-r border-[var(--border-subtle)] bg-[var(--surface-card)] flex flex-col justify-center z-10">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-base select-none shrink-0" aria-hidden="true">
                           {icon}
                         </span>
                         <span className="text-xs font-bold text-[var(--ink-primary)] truncate">
                           {member.nickname}
                         </span>
                       </div>
-                      <div className="flex items-center gap-1.5 mt-1">
+                      <div className="flex items-center gap-1.5 mt-1.5">
                         <span
-                          className={`text-[9px] font-mono px-1.5 py-0.2 rounded border ${colors.laneBadge}`}
+                          className={`text-[9px] font-mono font-medium px-2 py-0.5 rounded border ${colors.laneBadge}`}
                         >
                           {member.archetype.replace('_', ' ').toLowerCase()}
                         </span>
@@ -422,36 +477,52 @@ export function ScheduleTimeline({
                       </div>
                     </div>
 
-                    {/* Right Timeline Canvas with Positioned Activity Blocks */}
-                    <div className="flex-1 relative h-auto min-h-[68px] sm:min-h-[72px] p-1.5">
-                      {/* Vertical Hour Grid Lines for Spatial Alignment */}
-                      {timeTicks.map((hour) => {
-                        const leftPercent = (hour / 24) * 100;
-                        return (
-                          <div
-                            key={hour}
-                            className="absolute top-0 bottom-0 w-px bg-black/[0.04] dark:bg-white/[0.04] pointer-events-none"
-                            style={{ left: `${leftPercent}%` }}
-                          />
-                        );
-                      })}
+                    {/* Right Timeline Canvas with Positioned Activity Blocks & Smog Horizon */}
+                    <div className="flex-1 relative h-auto min-h-[74px] sm:min-h-[80px] p-2 flex items-center">
+                      {/* Synchronized Diurnal Smog Horizon Ribbon Background */}
+                      <div className="absolute inset-0 flex pointer-events-none opacity-80" aria-hidden="true">
+                        {validPoints.map((point, hourIdx) => {
+                          const pm25 = point.pm25 ?? 0;
+                          const normalizedIntensity = (pm25 - minPm25) / pm25Range;
+                          const isHigh = normalizedIntensity >= 0.7 || pm25 > 90;
+                          const isLow = normalizedIntensity <= 0.3 && pm25 <= 60;
+                          const isMajor = hourIdx % 3 === 0;
+
+                          return (
+                            <div
+                              key={hourIdx}
+                              className={`flex-1 h-full border-r ${
+                                isMajor
+                                  ? 'border-black/10 dark:border-white/10'
+                                  : 'border-black/[0.03] dark:border-white/[0.03]'
+                              } ${
+                                isHigh
+                                  ? 'bg-amber-500/[0.06] dark:bg-amber-500/[0.12]'
+                                  : isLow
+                                  ? 'bg-emerald-500/[0.06] dark:bg-emerald-500/[0.12]'
+                                  : 'bg-transparent'
+                              }`}
+                            />
+                          );
+                        })}
+                      </div>
 
                       {/* Render Member Scheduled Activity Blocks */}
                       {member.schedules.length === 0 ? (
-                        <div className="h-full flex items-center justify-start pl-3 text-[11px] text-[var(--ink-muted)] italic font-mono">
-                          <span>No routine scheduled</span>
+                        <div className="h-full flex items-center justify-start pl-4 text-xs text-[var(--ink-muted)] italic font-mono relative z-10">
+                          <span>No routine scheduled for this member</span>
                           {onAddActivityClick && (
                             <button
                               type="button"
                               onClick={() => onAddActivityClick(member.id)}
-                              className="ml-2 text-[10px] text-[var(--brand-primary)] hover:underline font-bold not-italic cursor-pointer"
+                              className="ml-3 text-[11px] text-[var(--brand-primary)] hover:underline font-bold not-italic cursor-pointer"
                             >
                               + Add Activity
                             </button>
                           )}
                         </div>
                       ) : (
-                        member.schedules.map((schedule) => {
+                        member.schedules.map((schedule, actIdx) => {
                           const startMinutes = parseMinutes(schedule.startTime);
                           const duration = schedule.durationMinutes || 45;
                           const endMinutes = startMinutes + duration;
@@ -476,8 +547,10 @@ export function ScheduleTimeline({
                             ? parseMinutes(displayStart)
                             : startMinutes;
                           const leftPercent = (effectiveStartMinutes / 1440) * 100;
-                          // Keep block nicely positioned within the 24h timeline canvas
-                          const clampedLeftPercent = Math.min(leftPercent, 83);
+                          const durationPercent = (duration / 1440) * 100;
+
+                          // Keep block nicely positioned within the 24h timeline canvas without clipping off right
+                          const clampedLeftPercent = Math.min(Math.max(0, leftPercent), 84);
 
                           // Forecast at that hour
                           const hourIndex = Math.floor(effectiveStartMinutes / 60);
@@ -487,15 +560,23 @@ export function ScheduleTimeline({
                           const actIcon =
                             ACTIVITY_ICONS[schedule.activityType] || '⏰';
 
+                          // Distinct visual style based on activity type & archetype to ensure no duplicate colors side-by-side
+                          const actStyle =
+                            ACTIVITY_STYLE_MAP[schedule.activityType] || {
+                              blockBg: colors.blockBg,
+                              blockBorder: colors.blockBorder,
+                              blockText: colors.blockText,
+                            };
+
                           return (
                             <div
                               key={schedule.id}
-                              className={`absolute top-2 bottom-2 rounded-xl border-2 px-2.5 py-1.5 shadow-xs cursor-pointer transition-all flex flex-col justify-between group hover:scale-[1.02] hover:shadow-md hover:z-20 min-w-[130px] sm:min-w-[145px] max-w-[220px] w-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] ${
+                              className={`absolute top-2 bottom-2 rounded-xl border-2 px-3 py-1.5 shadow-xs cursor-pointer transition-all flex flex-col justify-between group hover:scale-[1.02] hover:shadow-md hover:z-30 min-w-[125px] sm:min-w-[140px] max-w-[210px] w-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] z-10 ${
                                 isShifted
-                                  ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-400 dark:border-emerald-600 text-emerald-950 dark:text-emerald-100 ring-1 ring-emerald-500/30'
+                                  ? 'bg-emerald-50 dark:bg-emerald-950/70 border-emerald-500 dark:border-emerald-500 text-emerald-950 dark:text-emerald-100 ring-2 ring-emerald-500/30'
                                   : isHighForecast
-                                  ? `${colors.blockBg} border-amber-400 dark:border-amber-600 ${colors.blockText}`
-                                  : `${colors.blockBg} ${colors.blockBorder} ${colors.blockText}`
+                                  ? `${actStyle.blockBg} border-amber-500 dark:border-amber-500 ${actStyle.blockText}`
+                                  : `${actStyle.blockBg} ${actStyle.blockBorder} ${actStyle.blockText}`
                               }`}
                               style={{
                                 left: `${clampedLeftPercent}%`,
@@ -503,7 +584,7 @@ export function ScheduleTimeline({
                               role="button"
                               tabIndex={0}
                               aria-haspopup="dialog"
-                              aria-label={`${member.nickname}: ${schedule.activityName}, scheduled ${displayStart} to ${displayEnd}${
+                              aria-label={`${member.nickname}: ${schedule.activityName}, scheduled ${displayStart} to ${displayEnd} (${duration} minutes)${
                                 isShifted ? ', Shifted window adopted' : ''
                               }`}
                               onClick={() =>
@@ -540,24 +621,24 @@ export function ScheduleTimeline({
                                 <span className="text-xs select-none shrink-0" aria-hidden="true">
                                   {actIcon}
                                 </span>
-                                <span className="text-xs font-bold whitespace-nowrap leading-tight">
+                                <span className="text-xs font-bold whitespace-nowrap tracking-tight">
                                   {schedule.activityName}
                                 </span>
                               </div>
 
-                              <div className="flex items-center justify-between gap-1.5 text-[10px] font-mono leading-none mt-1 opacity-90 whitespace-nowrap">
-                                <span>{displayStart}</span>
+                              <div className="flex items-center justify-between gap-1.5 text-[10px] font-mono leading-none mt-1 whitespace-nowrap">
+                                <span className="font-semibold">{displayStart} – {displayEnd}</span>
                                 {isShifted ? (
-                                  <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-300 ml-1">
+                                  <span className="text-[9px] font-bold text-emerald-700 dark:text-emerald-300 ml-1">
                                     ✓ Shifted
                                   </span>
                                 ) : isHighForecast ? (
-                                  <span className="text-[9px] text-amber-600 dark:text-amber-400 font-bold ml-1">
+                                  <span className="text-[9px] text-amber-700 dark:text-amber-400 font-bold ml-1">
                                     ⚠️ Smog
                                   </span>
                                 ) : (
-                                  <span className="text-[9px] text-[var(--ink-muted)] opacity-80 ml-1">
-                                    {schedule.durationMinutes}m
+                                  <span className="text-[9px] text-[var(--ink-muted)] opacity-85 ml-1">
+                                    ({duration}m)
                                   </span>
                                 )}
                               </div>
@@ -573,23 +654,27 @@ export function ScheduleTimeline({
           </div>
 
           {/* Timeline Dynamic Intensity & Status Legend */}
-          <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-[var(--ink-muted)] pt-1 font-mono">
+          <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-[var(--ink-muted)] pt-1.5 font-mono">
             <div className="flex flex-wrap items-center gap-4">
               <span className="flex items-center gap-1.5">
                 <span className="h-3 w-3 rounded bg-emerald-500/30 border border-emerald-500/50" aria-hidden="true" />
-                <span>Lower Forecast Pollution Window (≤30 μg/m³)</span>
+                <span>Lower Forecast Window (≤30 μg/m³)</span>
               </span>
               <span className="flex items-center gap-1.5">
                 <span className="h-3 w-3 rounded bg-slate-500/20 border border-slate-500/40" aria-hidden="true" />
-                <span>Moderate Concentration Period</span>
+                <span>Moderate Concentration</span>
               </span>
               <span className="flex items-center gap-1.5">
                 <span className="h-3 w-3 rounded bg-amber-500/30 border border-amber-500/50" aria-hidden="true" />
-                <span>Higher Forecast Pollution Period (&gt;55 μg/m³)</span>
+                <span>Higher Pollution Window (&gt;55 μg/m³)</span>
               </span>
               <span className="flex items-center gap-1.5">
                 <span className="h-3 w-3 rounded bg-emerald-100 dark:bg-emerald-950 border border-emerald-500" aria-hidden="true" />
-                <span>Adopted Routine Shift</span>
+                <span>Adopted Routine Shift (Emerald)</span>
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="h-3 w-3 rounded bg-rose-100 dark:bg-rose-950 border border-rose-400" aria-hidden="true" />
+                <span>Exercise / Sport</span>
               </span>
             </div>
             <span className="text-[11px] text-[var(--ink-muted)]">

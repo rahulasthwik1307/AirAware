@@ -3,13 +3,14 @@
 import React, { useState } from 'react';
 import { ForecastPoint, AtmosphericModelMetadata } from '@/domain/types';
 import { HouseholdMember } from '@/domain/household/types';
-import { PlannerRecommendation } from '@/domain/planner/types';
+import { PlannerRecommendation, ActiveActionItem } from '@/domain/planner/types';
 
 interface FamilyDailyBriefingProps {
   readonly members: readonly HouseholdMember[];
   readonly forecast: readonly ForecastPoint[];
   readonly recommendations: readonly PlannerRecommendation[];
   readonly adoptedCount: number;
+  readonly activePlanActions?: readonly ActiveActionItem[];
   readonly modelMetadata?: AtmosphericModelMetadata;
   readonly isLoadingForecast?: boolean;
   readonly forecastError?: string | null;
@@ -47,6 +48,7 @@ export function FamilyDailyBriefing({
   forecast,
   recommendations,
   adoptedCount,
+  activePlanActions = [],
   modelMetadata,
   isLoadingForecast = false,
   forecastError = null,
@@ -158,6 +160,55 @@ export function FamilyDailyBriefing({
     }
   }
 
+  // Exposure Reduction Gauge Calculations
+  const recsWithDelta = recommendations.filter(
+    (r) => r.deltaC && r.deltaC.deltaValue > 0
+  );
+
+  const adoptedDeltaActions = (activePlanActions || []).filter(
+    (a) => a.deltaCValue && a.deltaCValue > 0
+  );
+
+  const hasAdoptedShifts = adoptedDeltaActions.length > 0;
+  const hasPotentialShifts = recsWithDelta.length > 0;
+
+  let gaugePercentage = 0;
+  let gaugeDeltaCValue = 0;
+  let gaugeStatusTitle = 'Baseline Routine Schedule';
+  let gaugeStatusSubtitle = 'No routine shifts active';
+  let gaugeIsOptimized = false;
+
+  if (hasAdoptedShifts) {
+    gaugeIsOptimized = true;
+    gaugeDeltaCValue = Math.round(
+      adoptedDeltaActions.reduce((sum, a) => sum + (a.deltaCValue ?? 0), 0) * 10
+    ) / 10;
+    const avgDelta = gaugeDeltaCValue / adoptedDeltaActions.length;
+    gaugePercentage = Math.min(85, Math.max(15, Math.round((avgDelta / Math.max(avgDelta + 20, 100)) * 100)));
+    gaugeStatusTitle = 'Active Smog Exposure Reduction';
+    gaugeStatusSubtitle = `${adoptedDeltaActions.length} routine ${adoptedDeltaActions.length === 1 ? 'shift' : 'shifts'} adopted across family`;
+  } else if (hasPotentialShifts) {
+    const totalPotentialDelta = Math.round(
+      recsWithDelta.reduce((sum, r) => sum + (r.deltaC?.deltaValue ?? 0), 0) * 10
+    ) / 10;
+    gaugeDeltaCValue = totalPotentialDelta;
+    const bestRec = recsWithDelta[0];
+    const pct = bestRec.deltaC
+      ? Math.round((bestRec.deltaC.deltaValue / Math.max(1, bestRec.deltaC.originalConcentration)) * 100)
+      : 35;
+    gaugePercentage = Math.min(85, Math.max(10, pct));
+    gaugeStatusTitle = 'Potential Exposure Reduction Available';
+    gaugeStatusSubtitle = `${recsWithDelta.length} routine shift ${recsWithDelta.length === 1 ? 'window' : 'windows'} ready to adopt`;
+  } else {
+    gaugePercentage = 0;
+    gaugeStatusTitle = 'Routines In Lower Smog Hours';
+    gaugeStatusSubtitle = 'Current schedule aligns with daytime forecast dips';
+  }
+
+  // Semi-circle arc geometry: radius 68, length = PI * 68 = 213.63
+  const arcLength = 213.63;
+  const strokeDashoffset = arcLength * (1 - Math.min(100, Math.max(0, gaugePercentage)) / 100);
+
   return (
     <section
       aria-labelledby="family-briefing-title"
@@ -194,6 +245,145 @@ export function FamilyDailyBriefing({
             Today&apos;s Checklist ({adoptedCount} active) ↓
           </button>
         )}
+      </div>
+
+      {/* ============================================================ */}
+      {/* FEATURE: FAMILY SMOG EXPOSURE REDUCTION GAUGE                */}
+      {/* Visual Semi-Circle Arc & Ambient Difference Telemetry         */}
+      {/* ============================================================ */}
+      <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-subtle)] p-4 sm:p-5 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
+        {/* Left: SVG Semi-Circle Exposure Reduction Gauge */}
+        <div className="flex items-center gap-5 shrink-0">
+          <div className="relative w-40 h-24 flex items-end justify-center select-none">
+            <svg
+              viewBox="0 0 190 110"
+              className="w-full h-full overflow-visible"
+              role="img"
+              aria-label={`Family Smog Exposure Reduction Meter: ${gaugePercentage}%`}
+            >
+              <defs>
+                <linearGradient id="reduction-gauge-emerald" x1="0%" y1="100%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#10b981" />
+                  <stop offset="100%" stopColor="#06b6d4" />
+                </linearGradient>
+                <linearGradient id="reduction-gauge-amber" x1="0%" y1="100%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#f59e0b" />
+                  <stop offset="100%" stopColor="#10b981" />
+                </linearGradient>
+              </defs>
+
+              {/* Background Arc Track */}
+              <path
+                d="M 27 96 A 68 68 0 0 1 163 96"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="12"
+                strokeLinecap="round"
+                className="text-slate-200 dark:text-slate-800"
+              />
+
+              {/* Foreground Meter Arc */}
+              <path
+                d="M 27 96 A 68 68 0 0 1 163 96"
+                fill="none"
+                stroke={gaugeIsOptimized ? 'url(#reduction-gauge-emerald)' : hasPotentialShifts ? 'url(#reduction-gauge-amber)' : '#10b981'}
+                strokeWidth="12"
+                strokeLinecap="round"
+                strokeDasharray={arcLength}
+                strokeDashoffset={strokeDashoffset}
+                className="transition-all duration-700 ease-out"
+              />
+
+              {/* In-Arc Text Content: Guaranteed completely inside the arc dome with ample clearance */}
+              {hasPotentialShifts && !gaugeIsOptimized && (
+                <text
+                  x="95"
+                  y="50"
+                  textAnchor="middle"
+                  className="text-[10px] font-mono font-bold uppercase tracking-widest fill-amber-700 dark:fill-amber-300"
+                >
+                  UP TO
+                </text>
+              )}
+              <text
+                x="95"
+                y={hasPotentialShifts && !gaugeIsOptimized ? "76" : "70"}
+                textAnchor="middle"
+                className="text-2xl font-black font-mono tracking-tight fill-[var(--ink-primary)]"
+              >
+                {gaugePercentage > 0 ? `${gaugePercentage}%` : 'OPTIMAL'}
+              </text>
+              <text
+                x="95"
+                y={hasPotentialShifts && !gaugeIsOptimized ? "91" : "88"}
+                textAnchor="middle"
+                className="text-[9px] font-mono font-bold uppercase tracking-widest fill-[var(--ink-muted)]"
+              >
+                {gaugeIsOptimized ? 'ACHIEVED' : hasPotentialShifts ? 'POTENTIAL' : 'SCHEDULE'}
+              </text>
+            </svg>
+          </div>
+
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-mono font-bold uppercase tracking-wider text-[var(--ink-muted)]">
+                Smog Exposure Reduction
+              </span>
+              <span
+                className={`text-[9px] font-mono px-2 py-0.5 rounded-full border font-semibold ${
+                  gaugeIsOptimized
+                    ? 'bg-emerald-500/15 text-emerald-800 dark:text-emerald-200 border-emerald-500/30'
+                    : hasPotentialShifts
+                    ? 'bg-amber-500/15 text-amber-800 dark:text-amber-200 border-amber-500/30'
+                    : 'bg-slate-500/10 text-[var(--ink-muted)] border-slate-500/20'
+                }`}
+              >
+                {gaugeIsOptimized ? 'Active Optimization' : hasPotentialShifts ? 'Timing Opportunity' : 'Aligned'}
+              </span>
+            </div>
+            <h3 className="text-sm font-bold text-[var(--ink-primary)] font-sans">
+              {gaugeStatusTitle}
+            </h3>
+            <p className="text-xs text-[var(--ink-secondary)]">
+              {gaugeStatusSubtitle}
+            </p>
+          </div>
+        </div>
+
+        {/* Right: Comparative Metric Cards & Action Trigger */}
+        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+          {gaugeDeltaCValue > 0 && (
+            <div className="flex-1 md:flex-initial p-2.5 px-3.5 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-card)] space-y-0.5">
+              <span className="text-[10px] font-mono text-[var(--ink-muted)] block uppercase tracking-wider">
+                Modelled Ambient Difference (ΔC)
+              </span>
+              <div className="flex items-baseline gap-1">
+                <span className="text-base font-bold font-mono text-emerald-700 dark:text-emerald-300">
+                  +{gaugeDeltaCValue}
+                </span>
+                <span className="text-[10px] font-mono text-[var(--ink-muted)]">μg/m³ PM₂.₅</span>
+              </div>
+            </div>
+          )}
+
+          {hasPotentialShifts && !gaugeIsOptimized && onJumpToActions && (
+            <button
+              type="button"
+              onClick={onJumpToActions}
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-mono text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+            >
+              <span>⚡ View Recommended Shifts</span>
+              <span>↓</span>
+            </button>
+          )}
+
+          {gaugeIsOptimized && (
+            <div className="p-2.5 px-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-700 text-emerald-900 dark:text-emerald-100 flex items-center gap-2 text-xs font-mono">
+              <span className="text-emerald-600 dark:text-emerald-400 font-bold">✓</span>
+              <span>Routines Protected</span>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Briefing Key Indicators Grid */}

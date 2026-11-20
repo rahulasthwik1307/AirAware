@@ -278,6 +278,7 @@ export function FamilyPlannerWorkspace() {
         forecast={report?.forecast ?? []}
         recommendations={householdRecommendations}
         adoptedCount={activePlanState.actions.length}
+        activePlanActions={activePlanState.actions}
         modelMetadata={report?.modelMetadata}
         isLoadingForecast={isLoadingForecast}
         forecastError={forecastError}

@@ -82,102 +82,170 @@ export function ScientificGrounding({ report }: ScientificGroundingProps) {
   return (
     <section
       aria-labelledby="scientific-grounding-heading"
-      className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-subtle)]/70 p-4 sm:p-5 text-xs text-[var(--ink-secondary)] shadow-xs"
+      className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-subtle)]/70 p-4 sm:p-6 text-xs text-[var(--ink-secondary)] shadow-xs transition-all"
     >
       <details className="group">
-        <summary className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 cursor-pointer list-none select-none">
+        <summary className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer list-none select-none">
           <div>
             <h2
               id="scientific-grounding-heading"
-              className="text-xs font-mono font-bold uppercase tracking-wider text-[var(--ink-primary)] flex items-center gap-2"
+              className="text-xs sm:text-sm font-mono font-black uppercase tracking-wider text-[var(--ink-primary)] flex flex-wrap items-center gap-2"
             >
-              <span>🔬 Scientific Grounding // Multi-Standard &amp; Sensor Calibration</span>
-              <span aria-hidden="true" className="text-[10px] text-[var(--ink-muted)] group-open:rotate-180 transition-transform duration-200">
+              <span className="flex items-center gap-1.5 text-[var(--brand-primary)]">
+                <span>🔬</span>
+                <span>Scientific Grounding</span>
+              </span>
+              <span className="text-[var(--ink-muted)] font-normal text-base">//</span>
+              <span className="text-[var(--ink-primary)]">Multi-Standard Sensor Calibration</span>
+              <span aria-hidden="true" className="text-xs text-[var(--ink-muted)] group-open:rotate-180 transition-transform duration-200 ml-1">
                 ▼
               </span>
             </h2>
-            <p className="text-[11px] text-[var(--ink-muted)] mt-0.5">
-              Transparent comparison of regulatory averaging intervals, national standards, and CAMS grid physics.
+            <p className="text-xs text-[var(--ink-muted)] mt-1 font-sans">
+              Transparent mathematical comparison of regulatory averaging intervals, national standards, and CAMS grid physics.
             </p>
           </div>
-          <span className="text-[10px] font-mono font-bold text-[var(--brand-primary)] bg-[var(--surface-card)] px-2.5 py-1 rounded-md border border-[var(--border-subtle)] self-start sm:self-auto shadow-2xs group-open:bg-[var(--brand-surface)] transition-colors">
+          <span className="text-xs font-mono font-bold text-[var(--brand-primary)] bg-[var(--surface-card)] px-3 py-1.5 rounded-lg border border-[var(--border-subtle)] self-start sm:self-auto shadow-2xs group-open:bg-[var(--brand-surface)] transition-colors">
             OPEN SCIENCE AUDIT ▾
           </span>
         </summary>
 
-        <div className="space-y-3 leading-relaxed mt-3.5 pt-3 border-t border-[var(--border-subtle)]/80">
+        <div className="space-y-4 leading-relaxed mt-4 pt-4 border-t border-[var(--border-subtle)]">
           {/* Specific Indian CPCB Context when viewing Indian Locations */}
           {cpcbComparison && (
-            <div className="p-3.5 rounded-xl bg-[var(--surface-card)] border border-[var(--border-subtle)] shadow-2xs">
-              <div className="flex items-center gap-2 mb-1.5">
-                <span className="text-sm font-bold text-[var(--ink-primary)]">
-                  🇮🇳 India CPCB PM2.5 Regulatory Benchmark
+            <div className="p-4 rounded-xl bg-[var(--surface-card)] border border-[var(--border-subtle)] shadow-xs">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                <span className="text-sm font-bold text-[var(--ink-primary)] flex items-center gap-2 font-sans">
+                  <span>🇮🇳</span>
+                  <span>India CPCB PM2.5 Regulatory Benchmark</span>
                 </span>
-                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-[var(--surface-subtle)] text-[var(--ink-primary)] border border-[var(--border-subtle)]">
+                <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-md bg-[var(--surface-subtle)] text-[var(--ink-primary)] border border-[var(--border-subtle)]">
                   CPCB PM2.5 BENCHMARK: {cpcbComparison.estimatedAqiRange} ({cpcbComparison.equivalentCategory})
                 </span>
               </div>
-              <p className="text-[11px] text-[var(--ink-secondary)]">
+              <p className="text-xs text-[var(--ink-secondary)] leading-relaxed">
                 {cpcbComparison.methodologyDifference}
               </p>
-              <p className="text-[11px] text-[var(--ink-muted)] mt-1.5 font-mono">
+              <p className="text-xs text-[var(--ink-muted)] mt-2 font-mono bg-[var(--surface-subtle)]/60 p-2 rounded-lg border border-[var(--border-subtle)]/50">
                 Ground Station Reality: {cpcbComparison.stationContext}
               </p>
             </div>
           )}
 
-          {/* Multi-standard Cross-Comparison Table */}
-          <div className="overflow-x-auto rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-card)] shadow-2xs">
-            <table className="w-full text-left text-[11px] border-collapse font-mono">
+          {/* Attractive Multi-standard Cross-Comparison Table with Larger Font Size */}
+          <div className="overflow-x-auto rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-card)] shadow-xs">
+            <table className="w-full text-left text-xs sm:text-sm border-collapse font-sans">
               <thead>
-                <tr className="border-b border-[var(--border-subtle)] bg-[var(--surface-subtle)] text-[10px] uppercase text-[var(--ink-muted)]">
-                  <th className="p-3">Standard / Agency</th>
-                  <th className="p-3">Averaging Period</th>
-                  <th className="p-3">PM2.5 Breakpoint for Current Value ({pm25Val ?? '—'} μg/m³)</th>
-                  <th className="p-3">Health Classification</th>
+                <tr className="border-b border-[var(--border-subtle)] bg-[var(--surface-subtle)] text-xs uppercase tracking-wider font-mono text-[var(--ink-secondary)] font-bold">
+                  <th className="p-3.5 sm:p-4">Standard / Agency</th>
+                  <th className="p-3.5 sm:p-4">Averaging Period</th>
+                  <th className="p-3.5 sm:p-4">PM2.5 Breakpoint for Current Value ({pm25Val ?? '—'} μg/m³)</th>
+                  <th className="p-3.5 sm:p-4">Health Classification</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[var(--border-subtle)]">
-                <tr>
-                  <td className="p-3 font-bold text-[var(--ink-primary)]">US EPA AQI</td>
-                  <td className="p-3">Preceding 24-hour rolling average (provider-modelled sub-index; not computed locally)</td>
-                  <td className="p-3">{epaBreakpoint}</td>
-                  <td className={`p-3 font-bold ${epaColor}`}>{epaClass}</td>
+              <tbody className="divide-y divide-[var(--border-subtle)] text-xs sm:text-sm">
+                <tr className="hover:bg-[var(--surface-subtle)]/40 transition-colors">
+                  <td className="p-3.5 sm:p-4">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-[var(--ink-primary)]">US EPA AQI</span>
+                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
+                        EPA Reference
+                      </span>
+                    </div>
+                  </td>
+                  <td className="p-3.5 sm:p-4 text-[var(--ink-secondary)] font-mono text-xs">
+                    Preceding 24-hour rolling average (provider-modelled sub-index; not computed locally)
+                  </td>
+                  <td className="p-3.5 sm:p-4 font-mono font-medium text-[var(--ink-primary)]">
+                    {epaBreakpoint}
+                  </td>
+                  <td className="p-3.5 sm:p-4">
+                    <span className={`inline-block px-2.5 py-1 rounded-md text-xs font-bold font-mono ${epaColor} bg-[var(--surface-subtle)] border border-[var(--border-subtle)]`}>
+                      {epaClass}
+                    </span>
+                  </td>
                 </tr>
-                <tr>
-                  <td className="p-3 font-bold text-[var(--ink-primary)]">European EAQI</td>
-                  <td className="p-3">Hourly concentration (EEA)</td>
-                  <td className="p-3">{eaqiBreakpoint}</td>
-                  <td className={`p-3 font-bold ${eaqiColor}`}>{eaqiClass}</td>
+
+                <tr className="hover:bg-[var(--surface-subtle)]/40 transition-colors">
+                  <td className="p-3.5 sm:p-4">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-[var(--ink-primary)]">European EAQI</span>
+                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200">
+                        EEA Standard
+                      </span>
+                    </div>
+                  </td>
+                  <td className="p-3.5 sm:p-4 text-[var(--ink-secondary)] font-mono text-xs">
+                    Hourly concentration (EEA)
+                  </td>
+                  <td className="p-3.5 sm:p-4 font-mono font-medium text-[var(--ink-primary)]">
+                    {eaqiBreakpoint}
+                  </td>
+                  <td className="p-3.5 sm:p-4">
+                    <span className={`inline-block px-2.5 py-1 rounded-md text-xs font-bold font-mono ${eaqiColor} bg-[var(--surface-subtle)] border border-[var(--border-subtle)]`}>
+                      {eaqiClass}
+                    </span>
+                  </td>
                 </tr>
-                <tr>
-                  <td className="p-3 font-bold text-[var(--ink-primary)]">India CPCB NAQI</td>
-                  <td className="p-3">
+
+                <tr className="hover:bg-[var(--surface-subtle)]/40 transition-colors">
+                  <td className="p-3.5 sm:p-4">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-[var(--ink-primary)]">India CPCB NAQI</span>
+                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">
+                        CPCB Benchmark
+                      </span>
+                    </div>
+                  </td>
+                  <td className="p-3.5 sm:p-4 text-[var(--ink-secondary)] font-mono text-xs">
                     24-hour arithmetic mean at physical CAAQMS stations (single-pollutant PM2.5 reference benchmark only; not an official composite CPCB NAQI calculation; CAAQMS physical stations are not integrated)
                   </td>
-                  <td className="p-3">
+                  <td className="p-3.5 sm:p-4 font-mono font-medium text-[var(--ink-primary)]">
                     {cpcbClassification.aqiRange !== 'N/A'
                       ? `${cpcbClassification.concentrationRange} (AQI ${cpcbClassification.aqiRange})`
                       : cpcbClassification.concentrationRange}
                   </td>
-                  <td className="p-3 font-bold" style={{ color: cpcbClassification.colorToken }}>
-                    {cpcbClassification.category}
+                  <td className="p-3.5 sm:p-4">
+                    <span
+                      className="inline-block px-2.5 py-1 rounded-md text-xs font-bold font-mono border"
+                      style={{
+                        color: cpcbClassification.colorToken,
+                        backgroundColor: 'var(--surface-subtle)',
+                        borderColor: 'var(--border-subtle)',
+                      }}
+                    >
+                      {cpcbClassification.category}
+                    </span>
                   </td>
                 </tr>
-                <tr>
-                  <td className="p-3 font-bold text-[var(--ink-primary)]">WHO 2021 Guideline</td>
-                  <td className="p-3">WHO 24-hour guideline level: 15 μg/m³ • WHO annual guideline level: 5 μg/m³ (Health-based reference)</td>
-                  <td className="p-3">15 μg/m³ (24-hour reference level) • 5 μg/m³ (annual reference level)</td>
-                  <td className="p-3 text-[var(--ink-secondary)]">Advisory reference level (incompatible averaging period; 1-hour model data cannot be evaluated for direct compliance)</td>
+
+                <tr className="hover:bg-[var(--surface-subtle)]/40 transition-colors">
+                  <td className="p-3.5 sm:p-4">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-[var(--ink-primary)]">WHO 2021 Guideline</span>
+                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        Health Baseline
+                      </span>
+                    </div>
+                  </td>
+                  <td className="p-3.5 sm:p-4 text-[var(--ink-secondary)] font-mono text-xs">
+                    WHO 24-hour guideline level: 15 μg/m³ • WHO annual guideline level: 5 μg/m³ (Health-based reference)
+                  </td>
+                  <td className="p-3.5 sm:p-4 font-mono text-xs text-[var(--ink-primary)]">
+                    15 μg/m³ (24-hour reference level) • 5 μg/m³ (annual reference level)
+                  </td>
+                  <td className="p-3.5 sm:p-4 text-xs text-[var(--ink-secondary)]">
+                    Advisory reference level (incompatible averaging period; 1-hour model data cannot be evaluated for direct compliance)
+                  </td>
                 </tr>
               </tbody>
             </table>
           </div>
 
           {/* Spatial Resolution & Scientific Model Physics */}
-          <div className="text-[11px] text-[var(--ink-muted)] flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1 font-mono">
-            <span>MODEL PHYSICS: {report.modelMetadata.domainName} ({report.modelMetadata.spatialResolution})</span>
-            <span>CADENCE: {report.modelMetadata.temporalResolution} • {report.modelMetadata.updateCadence}</span>
+          <div className="text-xs text-[var(--ink-muted)] flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 font-mono border-t border-[var(--border-subtle)]/60">
+            <span>MODEL PHYSICS: <strong className="text-[var(--ink-secondary)]">{report.modelMetadata.domainName}</strong> ({report.modelMetadata.spatialResolution})</span>
+            <span>CADENCE: <strong className="text-[var(--ink-secondary)]">{report.modelMetadata.temporalResolution}</strong> • {report.modelMetadata.updateCadence}</span>
           </div>
         </div>
       </details>

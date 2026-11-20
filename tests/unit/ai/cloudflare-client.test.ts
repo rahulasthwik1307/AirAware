@@ -54,7 +54,7 @@ describe('Cloudflare Workers AI Client & Failover', () => {
 
     expect(result).toEqual(validResponseData);
     expect(mockFetch).toHaveBeenCalledTimes(1);
-    expect(mockFetch.mock.calls[0][0]).toContain(encodeURIComponent(CLOUDFLARE_DEFAULTS.MODEL_PRIMARY));
+    expect(mockFetch.mock.calls[0][0]).toContain(CLOUDFLARE_DEFAULTS.MODEL_PRIMARY);
   });
 
   it('fails over to secondary model when primary returns HTTP 503 overload (error 3040)', async () => {
@@ -84,7 +84,7 @@ describe('Cloudflare Workers AI Client & Failover', () => {
     expect(result).toEqual(validResponseData);
     expect(mockFetch).toHaveBeenCalledTimes(3);
     // 3rd call must target secondary model
-    expect(mockFetch.mock.calls[2][0]).toContain(encodeURIComponent(CLOUDFLARE_DEFAULTS.MODEL_SECONDARY));
+    expect(mockFetch.mock.calls[2][0]).toContain(CLOUDFLARE_DEFAULTS.MODEL_SECONDARY);
   });
 
   it('fails over to tertiary model when primary and secondary both fail', async () => {
@@ -112,7 +112,7 @@ describe('Cloudflare Workers AI Client & Failover', () => {
 
     expect(result).toEqual(validResponseData);
     expect(mockFetch).toHaveBeenCalledTimes(4);
-    expect(mockFetch.mock.calls[3][0]).toContain(encodeURIComponent(CLOUDFLARE_DEFAULTS.MODEL_TERTIARY));
+    expect(mockFetch.mock.calls[3][0]).toContain(CLOUDFLARE_DEFAULTS.MODEL_TERTIARY);
   });
 
   it('stops immediately and DOES NOT switch models on daily quota exhaustion', async () => {
@@ -221,5 +221,44 @@ describe('Cloudflare Workers AI Client & Failover', () => {
     ).rejects.toThrow(/Zod validation failed/);
 
     expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('successfully cleans markdown code fences from completion payload', async () => {
+    const fencedContent = '```json\n' + JSON.stringify(validResponseData) + '\n```';
+    const mockFetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          choices: [{ message: { content: fencedContent } }],
+        }),
+        { status: 200 }
+      )
+    );
+
+    const result = await executeWorkersAiInference({
+      payloadBuilder: () => ({ test: true }),
+      schema: GuidanceResponseSchema,
+      customFetch: mockFetch,
+    });
+
+    expect(result).toEqual(validResponseData);
+  });
+
+  it('supports direct text completion format in choices[0].text', async () => {
+    const mockFetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          choices: [{ text: JSON.stringify(validResponseData) }],
+        }),
+        { status: 200 }
+      )
+    );
+
+    const result = await executeWorkersAiInference({
+      payloadBuilder: () => ({ test: true }),
+      schema: GuidanceResponseSchema,
+      customFetch: mockFetch,
+    });
+
+    expect(result).toEqual(validResponseData);
   });
 });

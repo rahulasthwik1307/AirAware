@@ -125,7 +125,7 @@ interface AttemptParams<T> {
 
 async function attemptModelInference<T>(params: AttemptParams<T>): Promise<T> {
   const { model, payload, schema, config, customFetch } = params;
-  const endpoint = `https://api.cloudflare.com/client/v4/accounts/${config.accountId}/ai/run/${encodeURIComponent(model)}`;
+  const endpoint = `https://api.cloudflare.com/client/v4/accounts/${config.accountId}/ai/run/${model}`;
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
@@ -201,10 +201,15 @@ async function attemptModelInference<T>(params: AttemptParams<T>): Promise<T> {
     throw new AiServiceError('SCHEMA_VALIDATION_ERROR', 'Model returned empty completion payload.', 500);
   }
 
-  // Parse structured JSON
+  // Parse structured JSON (stripping markdown code fences if model returned them)
+  const cleanedJson = rawCompletion
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/\s*```$/i, '')
+    .trim();
+
   let parsedObject: unknown;
   try {
-    parsedObject = JSON.parse(rawCompletion);
+    parsedObject = JSON.parse(cleanedJson);
   } catch {
     throw new AiServiceError('SCHEMA_VALIDATION_ERROR', 'Model response is not valid JSON.', 500);
   }
@@ -224,8 +229,8 @@ async function attemptModelInference<T>(params: AttemptParams<T>): Promise<T> {
 
 /**
  * Safely extracts completion content from Cloudflare's supported response envelopes:
- * 1. Standard OpenAI format: { choices: [{ message: { content: string } }] }
- * 2. Cloudflare result wrapper: { result: { response: string } }
+ * 1. Standard OpenAI format: { choices: [{ message: { content: string } }] } or { choices: [{ text: string }] }
+ * 2. Cloudflare result wrapper: { result: { response: string } } or { result: { choices: [...] } }
  * 3. Bare response format: { response: string }
  */
 function extractCompletionText(json: unknown): string | null {
@@ -240,6 +245,9 @@ function extractCompletionText(json: unknown): string | null {
     if (message && typeof message.content === 'string') {
       return message.content.trim();
     }
+    if (typeof choice.text === 'string') {
+      return choice.text.trim();
+    }
   }
 
   // Format 2: Cloudflare result envelope
@@ -253,6 +261,9 @@ function extractCompletionText(json: unknown): string | null {
       const message = choice.message as Record<string, unknown> | undefined;
       if (message && typeof message.content === 'string') {
         return message.content.trim();
+      }
+      if (typeof choice.text === 'string') {
+        return choice.text.trim();
       }
     }
   }

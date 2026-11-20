@@ -1,24 +1,80 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
+import { WorkspaceKey, AirQualityReport, GeoLocation } from '@/domain/types';
+import { RoomContext } from '@/lib/ai/types';
+import { useAirCopilot, CopilotChatMessage } from '@/lib/ai/use-copilot';
 
 interface CopilotDrawerShellProps {
   readonly isOpen: boolean;
   readonly onClose: () => void;
+  readonly activeWorkspace: WorkspaceKey;
+  readonly initialPrompt?: string | null;
+  readonly roomContext?: RoomContext | null;
+  readonly report?: AirQualityReport | null;
+  readonly location?: GeoLocation | null;
 }
 
-const SAMPLE_PROMPT_CHIPS: readonly string[] = [
-  'Why is pollution higher this morning?',
-  'How does thermal inversion trap particulate matter?',
-  'When is the best window to ventilate indoor rooms?',
-  'Is electric rail cleaner than solo driving today?',
-  'What is the difference between PM2.5 and PM10?',
-];
+const WORKSPACE_PROMPT_CHIPS: Record<WorkspaceKey, readonly string[]> = {
+  'indoor-air': [
+    'When should I open my windows today?',
+    'Does HEPA filtration capture gas stove fumes?',
+    'What does CADR mean for my room size?',
+    'How does a Corsi-Rosenthal box fan compare to commercial units?',
+  ],
+  'family-planner': [
+    'When is the lowest pollution window for children outdoor play today?',
+    'Is cycling or public transit cleaner for commuting today?',
+    'Why does morning smog trap particulate matter near the ground?',
+  ],
+  'air-intelligence': [
+    'Why is PM2.5 elevated while Ozone is low?',
+    'What does an AQI above 150 mean for healthy adults?',
+    'How does wind speed influence regional smog dispersion?',
+  ],
+  'cleaner-choices': [
+    'What everyday switch reduces toxic exposure fastest?',
+    'How much CO2 does taking electric rail save compared to solo driving?',
+  ],
+};
 
-export function CopilotDrawerShell({ isOpen, onClose }: CopilotDrawerShellProps) {
+const WORKSPACE_LABELS: Record<WorkspaceKey, string> = {
+  'air-intelligence': 'Air Intelligence',
+  'family-planner': 'Family Daily Planner',
+  'indoor-air': 'Indoor Air Intelligence',
+  'cleaner-choices': 'Cleaner Choices & Impact',
+};
+
+export function CopilotDrawerShell({
+  isOpen,
+  onClose,
+  activeWorkspace,
+  initialPrompt,
+  roomContext,
+  report,
+  location,
+}: CopilotDrawerShellProps) {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  // Focus management & Escape key listener
+  const {
+    messages,
+    inputQuery,
+    setInputQuery,
+    isThinking,
+    cooldownSeconds,
+    isDailyQuotaExhausted,
+    sendMessage,
+    resetConversation,
+  } = useAirCopilot({
+    activeWorkspace,
+    report,
+    location,
+    roomContext,
+  });
+
+  // Handle focus trapping and Escape key
   useEffect(() => {
     if (!isOpen) return;
 
@@ -34,16 +90,37 @@ export function CopilotDrawerShell({ isOpen, onClose }: CopilotDrawerShellProps)
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
+  // Handle auto-seeding initial prompt when opening from an in-situ card
+  useEffect(() => {
+    if (isOpen && initialPrompt) {
+      sendMessage(initialPrompt, roomContext);
+    }
+  }, [isOpen, initialPrompt, roomContext, sendMessage]);
+
+  // Scroll to bottom when messages update
+  useEffect(() => {
+    if (isOpen) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages, isThinking, isOpen]);
+
   if (!isOpen) {
     return null;
   }
+
+  const chips = WORKSPACE_PROMPT_CHIPS[activeWorkspace] || WORKSPACE_PROMPT_CHIPS['air-intelligence'];
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    sendMessage();
+  };
 
   return (
     <div
       role="dialog"
       aria-modal="true"
       aria-labelledby="copilot-drawer-title"
-      className="fixed inset-0 z-50 flex justify-end"
+      className="fixed inset-0 z-50 flex justify-end animate-fadeIn"
     >
       {/* Dimmed Backdrop */}
       <div
@@ -53,92 +130,318 @@ export function CopilotDrawerShell({ isOpen, onClose }: CopilotDrawerShellProps)
       />
 
       {/* Slide-Over Drawer Container */}
-      <div className="relative z-10 flex h-full w-full max-w-md flex-col bg-white shadow-2xl border-l border-[var(--border-subtle)] text-[var(--ink-primary)]">
+      <div className="relative z-10 flex h-full w-full max-w-lg flex-col bg-white shadow-2xl border-l border-[var(--border-subtle)] text-[var(--ink-primary)]">
         {/* Drawer Header */}
-        <div className="flex items-center justify-between border-b border-[var(--border-subtle)] px-5 py-4 bg-[var(--surface-subtle)]/70">
+        <div className="flex items-center justify-between border-b border-[var(--border-subtle)] px-4 py-3 sm:px-5 sm:py-4 bg-[var(--surface-subtle)]/70">
           <div className="flex items-center gap-2.5">
             <div
-              className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--brand-surface)] text-[var(--brand-primary)] text-base border border-[var(--border-subtle)]"
+              className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--brand-surface)] text-[var(--brand-primary)] text-base border border-[var(--brand-primary)]/30 font-bold"
               aria-hidden="true"
             >
               🤖
             </div>
             <div>
-              <h2
-                id="copilot-drawer-title"
-                className="text-sm font-bold text-[var(--ink-primary)] font-sans"
-              >
-                AI Air Copilot
-              </h2>
-              <span className="text-[10px] font-mono text-[var(--brand-primary)] font-bold uppercase tracking-wider">
-                Phase 5 Architecture Preview
+              <div className="flex items-center gap-2">
+                <h2
+                  id="copilot-drawer-title"
+                  className="text-sm font-bold text-[var(--ink-primary)] font-sans"
+                >
+                  AI Air Copilot
+                </h2>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white text-[var(--brand-primary)] border border-[var(--border-subtle)] font-bold">
+                  Global Assistant
+                </span>
+              </div>
+              <span className="text-[10px] font-mono text-[var(--ink-muted)] block mt-0.5">
+                Active Context: {WORKSPACE_LABELS[activeWorkspace]}
               </span>
             </div>
           </div>
 
-          <button
-            ref={closeButtonRef}
-            type="button"
-            onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border-subtle)] bg-white text-[var(--ink-muted)] hover:text-[var(--ink-primary)] hover:bg-[var(--surface-subtle)] transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
-            aria-label="Close AI Copilot drawer"
-          >
-            ✕
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={resetConversation}
+              className="px-2 py-1 text-[11px] font-mono text-[var(--ink-muted)] hover:text-[var(--ink-primary)] hover:bg-white rounded border border-[var(--border-subtle)] transition-all cursor-pointer"
+              title="Reset conversation"
+            >
+              🔄 Reset
+            </button>
+
+            <button
+              ref={closeButtonRef}
+              type="button"
+              onClick={onClose}
+              className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border-subtle)] bg-white text-[var(--ink-muted)] hover:text-[var(--ink-primary)] hover:bg-[var(--surface-subtle)] transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
+              aria-label="Close AI Copilot drawer"
+            >
+              ✕
+            </button>
+          </div>
         </div>
 
-        {/* Content Body */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-5">
-          {/* Phase 5 Implementation Boundary Callout */}
-          <div className="rounded-xl border border-[var(--brand-primary)]/30 bg-[var(--brand-surface)]/60 p-4 text-xs leading-relaxed text-[var(--ink-secondary)]">
-            <div className="flex items-center gap-2 font-bold font-mono text-[var(--brand-primary)] uppercase text-[11px] mb-1">
-              <span>⚡ Phase Boundary Governance</span>
-            </div>
-            <p>
-              In accordance with the approved Master Specification, live conversational inference via Cloudflare Workers AI is scheduled for <strong>Phase 5</strong>.
-            </p>
-            <p className="mt-2 text-[11px] text-[var(--ink-muted)]">
-              In this current <strong>Phase 2 release</strong>, all environmental intelligence is deterministic and grounded directly in verified Copernicus CAMS atmospheric model outputs.
-            </p>
+        {/* Daily Quota / Cooldown Status Banners */}
+        {isDailyQuotaExhausted && (
+          <div className="px-4 py-2 bg-amber-50 border-b border-amber-200 text-amber-900 text-[11px] font-mono flex items-center gap-2">
+            <span>🛡️</span>
+            <span>Daily Cloudflare AI free allowance reached. Switched to offline deterministic rule engine.</span>
           </div>
+        )}
 
-          {/* Phase 5 Privacy Architecture Plan */}
-          <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-subtle)]/50 p-4 text-xs text-[var(--ink-secondary)] space-y-1.5">
-            <span className="font-bold text-[var(--ink-primary)] block font-sans">
-              🔒 Phase 5 Privacy Architecture (Planned)
+        {cooldownSeconds !== null && cooldownSeconds > 0 && (
+          <div className="px-4 py-2 bg-rose-50 border-b border-rose-200 text-rose-900 text-[11px] font-mono flex items-center justify-between">
+            <span>⚠️ Rate limit active (max 10 requests / 10 min)</span>
+            <span className="font-bold">Available in {cooldownSeconds}s</span>
+          </div>
+        )}
+
+        {/* Conversation Message Stream */}
+        <div
+          role="log"
+          aria-live="polite"
+          className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4"
+        >
+          {messages.map((msg) => (
+            <MessageBubble key={msg.id} message={msg} />
+          ))}
+
+          {/* Thinking / Generation Indicator */}
+          {isThinking && (
+            <div className="flex items-start gap-2.5 animate-fadeIn">
+              <div
+                className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--brand-surface)] text-[var(--brand-primary)] text-xs border border-[var(--brand-primary)]/30 font-bold shrink-0 mt-0.5"
+                aria-hidden="true"
+              >
+                🤖
+              </div>
+              <div className="rounded-2xl rounded-tl-xs bg-[var(--surface-subtle)] border border-[var(--border-subtle)] p-3 text-xs text-[var(--ink-muted)] flex items-center gap-2">
+                <span className="flex h-2 w-2 relative">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--brand-primary)] opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--brand-primary)]" />
+                </span>
+                <span className="font-mono text-[11px]">Evaluating atmospheric physics &amp; guidance...</span>
+              </div>
+            </div>
+          )}
+
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Suggested Context Question Chips */}
+        <div className="border-t border-[var(--border-subtle)] bg-[var(--surface-subtle)]/40 p-3">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--ink-muted)]">
+              Suggested Inquiries ({WORKSPACE_LABELS[activeWorkspace]})
             </span>
-            <p className="text-[11px] leading-relaxed">
-              When remote AI inference is connected in Phase 5, an explicit server-side allowlist in <code className="font-mono text-[10px] bg-white px-1 py-0.5 rounded border border-[var(--border-subtle)]">/api/ai/copilot</code> will enforce that only general city-level environmental context is transmitted. Zero personal names, household member schedules, exact residential coordinates, or health sensitivity data will ever be sent to Cloudflare Workers AI.
-            </p>
-            <p className="text-[10px] font-mono text-[var(--ink-muted)]">
-              Current Phase 2 Status: Interface preview shell only. Zero network requests or AI inference calls are initiated from this component.
-            </p>
           </div>
-
-          {/* Sample Questions & Capabilities */}
-          <div>
-            <h3 className="text-xs font-bold font-mono text-[var(--ink-primary)] uppercase tracking-wider mb-2.5">
-              Sample Inquiries (Phase 5 Pipeline)
-            </h3>
-            <div className="space-y-2">
-              {SAMPLE_PROMPT_CHIPS.map((chip, idx) => (
-                <div
-                  key={idx}
-                  className="rounded-lg border border-[var(--border-subtle)] bg-white p-2.5 text-xs text-[var(--ink-secondary)] font-medium hover:border-[var(--brand-primary)]/40 hover:bg-[var(--brand-surface)]/30 transition-all select-none"
-                >
-                  <span className="text-[var(--brand-primary)] font-bold mr-1.5 font-mono">Q:</span>
-                  {chip}
-                </div>
-              ))}
-            </div>
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+            {chips.map((chip, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => sendMessage(chip)}
+                disabled={isThinking || (cooldownSeconds !== null && cooldownSeconds > 0)}
+                className="shrink-0 px-2.5 py-1 text-[11px] font-medium rounded-lg bg-white hover:bg-[var(--brand-surface)] text-[var(--ink-secondary)] hover:text-[var(--brand-primary)] border border-[var(--border-subtle)] hover:border-[var(--brand-primary)]/40 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none text-left"
+              >
+                {chip}
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* Drawer Footer */}
-        <div className="border-t border-[var(--border-subtle)] bg-[var(--surface-subtle)]/50 p-4 text-center">
-          <p className="text-[11px] font-mono text-[var(--ink-muted)]">
-            Deterministic Rule Engine Active • Strict ₹0 Architecture
+        {/* Input Bar & Send Form */}
+        <form
+          onSubmit={handleSubmit}
+          className="border-t border-[var(--border-subtle)] bg-white p-3 sm:p-4 space-y-2"
+        >
+          <div className="flex items-center gap-2">
+            <input
+              ref={inputRef}
+              type="text"
+              value={inputQuery}
+              onChange={(e) => setInputQuery(e.target.value.slice(0, 200))}
+              placeholder={`Ask about ${WORKSPACE_LABELS[activeWorkspace].toLowerCase()}...`}
+              disabled={isThinking || (cooldownSeconds !== null && cooldownSeconds > 0)}
+              maxLength={200}
+              className="flex-1 px-3 py-2 text-xs text-[var(--ink-primary)] bg-[var(--surface-subtle)] rounded-xl border border-[var(--border-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] disabled:opacity-50"
+              aria-label="Ask Copilot a question"
+            />
+
+            <button
+              type="submit"
+              disabled={
+                !inputQuery.trim() ||
+                isThinking ||
+                (cooldownSeconds !== null && cooldownSeconds > 0)
+              }
+              className="px-4 py-2 bg-[var(--brand-primary)] hover:bg-[var(--brand-hover)] text-white text-xs font-mono font-bold rounded-xl shadow-xs transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+              aria-label="Send message to Copilot"
+            >
+              Send ➤
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between text-[10px] font-mono text-[var(--ink-muted)]">
+            <span>🔒 Zero PII: Only numerical context transmitted</span>
+            <span>{inputQuery.length}/200</span>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function MessageBubble({ message }: { readonly message: CopilotChatMessage }) {
+  if (message.sender === 'user') {
+    return (
+      <div className="flex justify-end">
+        <div className="max-w-[85%] rounded-2xl rounded-tr-xs bg-[var(--brand-primary)] text-white px-3.5 py-2.5 text-xs shadow-xs leading-relaxed font-sans">
+          {message.text}
+        </div>
+      </div>
+    );
+  }
+
+  // Assistant Error State
+  if (message.isError) {
+    return (
+      <div className="flex items-start gap-2.5">
+        <div
+          className="flex h-7 w-7 items-center justify-center rounded-full bg-rose-50 text-rose-700 text-xs border border-rose-200 font-bold shrink-0 mt-0.5"
+          aria-hidden="true"
+        >
+          !
+        </div>
+        <div className="max-w-[90%] rounded-2xl rounded-tl-xs bg-rose-50/80 border border-rose-200 p-3 text-xs text-rose-900 leading-relaxed font-sans">
+          {message.errorMessage}
+        </div>
+      </div>
+    );
+  }
+
+  // Assistant Initial Welcome Greeting (text only)
+  if (message.text && !message.response) {
+    return (
+      <div className="flex items-start gap-2.5">
+        <div
+          className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--brand-surface)] text-[var(--brand-primary)] text-xs border border-[var(--brand-primary)]/30 font-bold shrink-0 mt-0.5"
+          aria-hidden="true"
+        >
+          🤖
+        </div>
+        <div className="max-w-[90%] rounded-2xl rounded-tl-xs bg-[var(--surface-subtle)] border border-[var(--border-subtle)] p-3 text-xs text-[var(--ink-secondary)] leading-relaxed font-sans space-y-1.5">
+          <p>{message.text}</p>
+          <span className="text-[10px] font-mono text-[var(--ink-muted)] block">
+            Copernicus CAMS Numerical Forecasts • US EPA &amp; WHO Standards
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  // Structured 7-Part Response Card (Master Specification §4.4)
+  const res = message.response;
+  if (!res) return null;
+
+  const isLiveAi = message.source === 'cloudflare-ai' && !res.isDeterministicFallback;
+
+  return (
+    <div className="flex items-start gap-2.5">
+      <div
+        className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--brand-surface)] text-[var(--brand-primary)] text-xs border border-[var(--brand-primary)]/30 font-bold shrink-0 mt-0.5"
+        aria-hidden="true"
+      >
+        🤖
+      </div>
+
+      <div className="max-w-[92%] rounded-2xl rounded-tl-xs bg-white border border-[var(--border-subtle)] shadow-xs p-4 text-xs space-y-3 font-sans">
+        {/* Source Badge */}
+        <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-2">
+          <span
+            className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${
+              isLiveAi
+                ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                : 'bg-slate-100 text-slate-800 border-slate-300'
+            }`}
+          >
+            {isLiveAi
+              ? '⚡ Cloudflare Workers AI • Gemma 4'
+              : '🛡️ Deterministic Guidance Engine'}
+          </span>
+
+          <span className="text-[10px] font-mono text-[var(--ink-muted)]">
+            Verified Response
+          </span>
+        </div>
+
+        {/* 1. Direct Answer */}
+        <div>
+          <span className="text-[10px] font-mono font-bold text-[var(--brand-primary)] uppercase tracking-wider block">
+            Direct Answer
+          </span>
+          <p className="text-sm font-bold text-[var(--ink-primary)] mt-0.5 leading-snug">
+            {res.directAnswer}
           </p>
+        </div>
+
+        {/* 2. Atmospheric & Environmental Context */}
+        <div className="p-2.5 rounded-lg bg-[var(--surface-subtle)] border border-[var(--border-subtle)] space-y-1">
+          <span className="text-[10px] font-mono font-bold text-[var(--ink-muted)] uppercase block">
+            Environmental Context
+          </span>
+          <p className="text-xs text-[var(--ink-secondary)] leading-relaxed">
+            {res.environmentalConditions}
+          </p>
+        </div>
+
+        {/* 3. Recommended Action */}
+        <div className="space-y-0.5">
+          <span className="text-[10px] font-mono font-bold text-emerald-800 uppercase tracking-wider block">
+            Primary Action
+          </span>
+          <p className="text-xs font-semibold text-[var(--ink-primary)] leading-relaxed">
+            {res.recommendedAction}
+          </p>
+        </div>
+
+        {/* 4. Scientific Explanation */}
+        <div className="space-y-0.5">
+          <span className="text-[10px] font-mono font-bold text-[var(--ink-muted)] uppercase tracking-wider block">
+            Scientific Reasoning
+          </span>
+          <p className="text-xs text-[var(--ink-secondary)] leading-relaxed">
+            {res.explanation}
+          </p>
+        </div>
+
+        {/* 5. Practical Alternatives */}
+        {res.practicalAlternatives && res.practicalAlternatives.length > 0 && (
+          <div className="space-y-1">
+            <span className="text-[10px] font-mono font-bold text-[var(--ink-muted)] uppercase tracking-wider block">
+              Practical Alternatives
+            </span>
+            <ul className="space-y-1">
+              {res.practicalAlternatives.map((alt, idx) => (
+                <li
+                  key={idx}
+                  className="flex items-start gap-1.5 text-[11px] text-[var(--ink-secondary)]"
+                >
+                  <span className="text-[var(--brand-primary)] font-bold">›</span>
+                  <span>{alt}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* 6. Data Source & 7. Limitations */}
+        <div className="pt-2 border-t border-[var(--border-subtle)] text-[10px] font-mono text-[var(--ink-muted)] space-y-1">
+          <div className="flex items-center gap-1.5">
+            <strong>Source:</strong> <span>{res.dataSourceAndFreshness}</span>
+          </div>
+          <div className="flex items-start gap-1.5">
+            <strong>Notice:</strong> <span className="italic">{res.limitationsOrUncertainty}</span>
+          </div>
         </div>
       </div>
     </div>

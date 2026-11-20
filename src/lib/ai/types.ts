@@ -73,12 +73,29 @@ export type GuidanceResponse = z.infer<typeof GuidanceResponseSchema>;
 // 2. Air Copilot Conversational Schemas (Master Specification §4.4)
 // ==============================================================================
 
+export const WorkspaceEnum = z.enum([
+  'air-intelligence',
+  'family-planner',
+  'indoor-air',
+  'cleaner-choices',
+]);
+export type WorkspaceContext = z.infer<typeof WorkspaceEnum>;
+
+export const RoomContextSchema = z.object({
+  roomName: z.string().max(50),
+  floorAreaM2: z.number().positive().max(200).optional(),
+  cadrM3h: z.number().positive().max(2000).optional(),
+});
+export type RoomContext = z.infer<typeof RoomContextSchema>;
+
 export const CopilotRequestSchema = z.object({
   question: z
     .string()
     .min(3, 'Question must be at least 3 characters long')
     .max(200, 'Question must not exceed 200 characters')
     .transform((str) => str.replace(/[\x00-\x1F\x7F]/g, '').trim()), // Strip non-printable ASCII
+  workspace: WorkspaceEnum.optional().default('air-intelligence'),
+  roomContext: RoomContextSchema.optional(),
   aqi: z.number().int().min(0).max(500),
   category: AqiCategoryEnum,
   dominantPollutant: PollutantEnum,
@@ -97,7 +114,9 @@ export const CopilotRequestSchema = z.object({
     })
     .default({ isSensitiveGroup: false, primaryActivity: 'general', locale: 'en' }),
 });
-export type CopilotRequest = z.infer<typeof CopilotRequestSchema>;
+export type CopilotRequest = Omit<z.infer<typeof CopilotRequestSchema>, 'workspace'> & {
+  workspace?: WorkspaceContext;
+};
 
 export const CopilotResponseSchema = z.object({
   directAnswer: z.string().min(5).max(250),

@@ -9,10 +9,25 @@ import { CopilotDrawerShell } from './CopilotDrawerShell';
 import { UpcomingWorkspacePlaceholder } from './UpcomingWorkspacePlaceholder';
 import { AirQualityDashboard } from '@/components/dashboard/AirQualityDashboard';
 import { FamilyPlannerWorkspace } from '@/components/planner/FamilyPlannerWorkspace';
+import { IndoorAirWorkspace } from '@/components/indoor/IndoorAirWorkspace';
 
 export function AirAwareShell() {
   const [activeWorkspace, setActiveWorkspace] = useState<WorkspaceKey>('air-intelligence');
   const [isCopilotOpen, setIsCopilotOpen] = useState(false);
+  const [copilotInitialPrompt, setCopilotInitialPrompt] = useState<string | null>(null);
+  const [copilotRoomContext, setCopilotRoomContext] = useState<string | null>(null);
+
+  const handleOpenCopilotWithContext = (prompt?: string, roomName?: string) => {
+    setCopilotInitialPrompt(prompt || null);
+    setCopilotRoomContext(roomName || null);
+    setIsCopilotOpen(true);
+  };
+
+  const handleCloseCopilot = () => {
+    setIsCopilotOpen(false);
+    setCopilotInitialPrompt(null);
+    setCopilotRoomContext(null);
+  };
 
   return (
     <div className="flex min-h-screen flex-col bg-[var(--surface-ground)] text-[var(--ink-primary)] pb-16 md:pb-0">
@@ -39,8 +54,11 @@ export function AirAwareShell() {
         ) : activeWorkspace === 'family-planner' ? (
           /* Production Phase 3 Family Daily Planner Workspace */
           <FamilyPlannerWorkspace />
+        ) : activeWorkspace === 'indoor-air' ? (
+          /* Production Phase 4 Indoor Air Intelligence Workspace */
+          <IndoorAirWorkspace onOpenCopilotWithContext={handleOpenCopilotWithContext} />
         ) : (
-          /* Non-broken upcoming workspace placeholder */
+          /* Non-broken upcoming workspace placeholder (Phase 6) */
           <UpcomingWorkspacePlaceholder
             workspace={activeWorkspace}
             onReturnToLive={() => setActiveWorkspace('air-intelligence')}
@@ -112,7 +130,10 @@ export function AirAwareShell() {
       {/* Global AI Copilot Slide-Over Drawer Shell */}
       <CopilotDrawerShell
         isOpen={isCopilotOpen}
-        onClose={() => setIsCopilotOpen(false)}
+        onClose={handleCloseCopilot}
+        activeWorkspace={activeWorkspace}
+        initialPrompt={copilotInitialPrompt}
+        roomContext={copilotRoomContext ? { roomName: copilotRoomContext } : null}
       />
     </div>
   );

@@ -147,6 +147,136 @@ export function HouseholdProfilesManager({
   const [sensitivityTier, setSensitivityTier] = useState<SensitivityTier>('NONE');
   const [memberFormError, setMemberFormError] = useState<string | null>(null);
 
+  // Edit Member Form State
+  const [editingMember, setEditingMember] = useState<HouseholdMember | null>(null);
+  const [editNickname, setEditNickname] = useState('');
+  const [editArchetype, setEditArchetype] = useState<HouseholdArchetype>('CHILD_STUDENT');
+  const [editSensitivityTier, setEditSensitivityTier] = useState<SensitivityTier>('NONE');
+  const [editFormError, setEditFormError] = useState<string | null>(null);
+
+  const handleStartEditMember = (member: HouseholdMember) => {
+    setEditingMember(member);
+    setEditNickname(member.nickname);
+    setEditArchetype(member.archetype);
+    setEditSensitivityTier(member.sensitivityTier);
+    setEditFormError(null);
+  };
+
+  const handleUpdateMemberSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingMember) return;
+    const trimmed = editNickname.trim();
+    if (!trimmed) {
+      setEditFormError('Please enter a nickname.');
+      return;
+    }
+    const otherMembers = members.filter((m) => m.id !== editingMember.id);
+    if (!isNicknameUnique(otherMembers, trimmed)) {
+      setEditFormError(`A member named "${trimmed}" already exists.`);
+      return;
+    }
+
+    onUpdateMember(editingMember.id, {
+      nickname: trimmed,
+      archetype: editArchetype,
+      sensitivityTier: editSensitivityTier,
+    });
+    setEditingMember(null);
+  };
+
+  const handleNicknameChange = (val: string) => {
+    setNickname(val);
+    if (memberFormError) setMemberFormError(null);
+    const lower = val.toLowerCase().trim();
+    if (
+      lower.includes('grandma') ||
+      lower.includes('dadi') ||
+      lower.includes('nani') ||
+      lower.includes('grandpa') ||
+      lower.includes('dada') ||
+      lower.includes('nana') ||
+      lower.includes('elder') ||
+      lower.includes('senior')
+    ) {
+      setArchetype('SENIOR_VULNERABLE');
+      setSensitivityTier('SENIOR');
+    } else if (
+      lower.includes('aarav') ||
+      lower.includes('child') ||
+      lower.includes('kid') ||
+      lower.includes('baby') ||
+      lower.includes('son') ||
+      lower.includes('daughter')
+    ) {
+      setArchetype('CHILD_STUDENT');
+      setSensitivityTier('PEDIATRIC');
+    } else if (
+      lower.includes('priya') ||
+      lower.includes('work') ||
+      lower.includes('office') ||
+      lower.includes('commute')
+    ) {
+      setArchetype('WORKING_COMMUTER');
+    } else if (
+      lower.includes('runner') ||
+      lower.includes('cyclist') ||
+      lower.includes('athlete') ||
+      lower.includes('fitness')
+    ) {
+      setArchetype('OUTDOOR_ENTHUSIAST');
+    }
+  };
+
+  const handleLoadSampleFamily = () => {
+    if (members.length === 0) {
+      onAddMember({
+        nickname: 'Priya',
+        archetype: 'WORKING_COMMUTER',
+        sensitivityTier: 'NONE',
+        schedules: [
+          {
+            id: 'sample-commute',
+            activityName: 'Work Commute',
+            activityType: 'COMMUTE',
+            startTime: '08:30',
+            durationMinutes: 45,
+            commuteMode: 'PRIVATE_CAR',
+            commuteDistanceKm: 12,
+          },
+        ],
+      });
+      onAddMember({
+        nickname: 'Grandma',
+        archetype: 'SENIOR_VULNERABLE',
+        sensitivityTier: 'SENIOR',
+        schedules: [
+          {
+            id: 'sample-walk',
+            activityName: 'Morning Garden Walk',
+            activityType: 'OUTDOOR_EXERCISE',
+            startTime: '07:15',
+            durationMinutes: 30,
+          },
+        ],
+      });
+      onAddMember({
+        nickname: 'Aarav',
+        archetype: 'CHILD_STUDENT',
+        sensitivityTier: 'PEDIATRIC',
+        schedules: [
+          {
+            id: 'sample-school',
+            activityName: 'School Bus Transit',
+            activityType: 'SCHOOL_TRAVEL',
+            startTime: '07:45',
+            durationMinutes: 30,
+            commuteMode: 'PUBLIC_TRANSIT',
+          },
+        ],
+      });
+    }
+  };
+
   // New Schedule Form State
   const [activityName, setActivityName] = useState('');
   const [activityType, setActivityType] = useState<ActivityType>('OUTDOOR_EXERCISE');
@@ -338,10 +468,17 @@ export function HouseholdProfilesManager({
           </div>
 
           {members.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-[var(--border-strong)] bg-[var(--surface-subtle)] p-6 text-center space-y-2">
+            <div className="rounded-xl border border-dashed border-[var(--border-strong)] bg-[var(--surface-subtle)] p-6 text-center space-y-3">
               <p className="text-xs text-[var(--ink-muted)]">
-                No household members configured yet. Click &quot;+ Add Member&quot; to get started.
+                No household members configured yet. Click &quot;+ Add Member&quot; or get started instantly with sample family profiles.
               </p>
+              <button
+                type="button"
+                onClick={handleLoadSampleFamily}
+                className="px-4 py-2 rounded-xl bg-[var(--brand-surface)] text-[var(--brand-primary)] hover:bg-[var(--brand-primary)] hover:text-white border border-[var(--brand-primary)]/30 text-xs font-mono font-bold transition-all shadow-xs cursor-pointer"
+              >
+                ✨ Quick Start: Load Sample Family (Priya, Grandma & Aarav)
+              </button>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -370,7 +507,15 @@ export function HouseholdProfilesManager({
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => handleStartEditMember(member)}
+                        className="px-2 py-1 rounded text-[11px] font-mono font-medium text-[var(--ink-secondary)] hover:bg-[var(--surface-card)] hover:text-[var(--ink-primary)] transition-colors cursor-pointer border border-[var(--border-subtle)]"
+                        title="Edit member archetype or sensitivity"
+                      >
+                        ✎ Edit
+                      </button>
                       <button
                         type="button"
                         onClick={() => handleOpenScheduleModal(member.id)}
@@ -484,10 +629,7 @@ export function HouseholdProfilesManager({
                   id="member-nickname-input"
                   type="text"
                   value={nickname}
-                  onChange={(e) => {
-                    setNickname(e.target.value);
-                    if (memberFormError) setMemberFormError(null);
-                  }}
+                  onChange={(e) => handleNicknameChange(e.target.value)}
                   placeholder="e.g. Aarav, Grandma, Priya"
                   maxLength={30}
                   required
@@ -699,6 +841,102 @@ export function HouseholdProfilesManager({
                   className="px-4 py-2 rounded-xl bg-[var(--brand-primary)] hover:bg-[var(--brand-hover)] text-white text-xs font-mono font-bold transition-all shadow-xs cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
                 >
                   Add Routine Activity
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* EDIT MEMBER PROFILE MODAL */}
+      {editingMember && isMounted && createPortal(
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="edit-member-dialog-title"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/50 animate-fadeIn"
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') setEditingMember(null);
+          }}
+        >
+          <div className="w-full max-w-md rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-card)] p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
+              <h3 id="edit-member-dialog-title" className="text-base font-bold text-[var(--ink-primary)] font-sans">
+                Edit Member: {editingMember.nickname}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setEditingMember(null)}
+                className="p-1.5 rounded-lg text-[var(--ink-muted)] hover:text-[var(--ink-primary)] hover:bg-[var(--surface-subtle)] transition-colors cursor-pointer"
+                aria-label="Close dialog"
+              >
+                ✕
+              </button>
+            </div>
+
+            {editFormError && (
+              <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-medium">
+                {editFormError}
+              </div>
+            )}
+
+            <form onSubmit={handleUpdateMemberSubmit} className="space-y-4">
+              <div>
+                <label htmlFor="edit-member-nickname-input" className="block text-xs font-semibold text-[var(--ink-secondary)] mb-1.5">
+                  Nickname or Identifier
+                </label>
+                <input
+                  id="edit-member-nickname-input"
+                  type="text"
+                  value={editNickname}
+                  onChange={(e) => {
+                    setEditNickname(e.target.value);
+                    if (editFormError) setEditFormError(null);
+                  }}
+                  maxLength={30}
+                  required
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-subtle)] text-sm font-medium text-[var(--ink-primary)] hover:border-[var(--brand-primary)]/40 focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/25 focus:border-[var(--brand-primary)] transition-all"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="edit-member-archetype-select" className="block text-xs font-semibold text-[var(--ink-secondary)] mb-1.5">
+                  Household Archetype
+                </label>
+                <CustomSelect<HouseholdArchetype>
+                  id="edit-member-archetype-select"
+                  value={editArchetype}
+                  options={ARCHETYPE_SELECT_OPTIONS}
+                  onChange={setEditArchetype}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="edit-member-sensitivity-select" className="block text-xs font-semibold text-[var(--ink-secondary)] mb-1.5">
+                  Physiological Sensitivity Category
+                </label>
+                <CustomSelect<SensitivityTier>
+                  id="edit-member-sensitivity-select"
+                  value={editSensitivityTier}
+                  options={SENSITIVITY_SELECT_OPTIONS}
+                  onChange={setEditSensitivityTier}
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-[var(--border-subtle)]">
+                <button
+                  type="button"
+                  onClick={() => setEditingMember(null)}
+                  className="px-4 py-2 rounded-xl text-xs font-mono font-medium text-[var(--ink-secondary)] hover:bg-[var(--surface-subtle)] transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-xl bg-[var(--brand-primary)] hover:bg-[var(--brand-hover)] text-white text-xs font-mono font-bold transition-all shadow-xs cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
+                >
+                  Save Profile
                 </button>
               </div>
             </form>
