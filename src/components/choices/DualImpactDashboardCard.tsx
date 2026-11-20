@@ -70,21 +70,21 @@ export function DualImpactDashboardCard({
         </div>
       </div>
 
-      {/* Side-by-Side Dual Panels (Power BI Style) */}
+      {/* Side-by-Side Dual Panels (Personal Defense vs Planetary Avoidance) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Panel 1: Personal Exposure Defense */}
-        <div className="p-4 rounded-2xl bg-sky-50/50 border border-sky-200 flex flex-col justify-between gap-3">
+        <div className="p-4 rounded-2xl bg-gradient-to-b from-sky-50/70 to-sky-100/40 border border-sky-200/90 shadow-2xs flex flex-col justify-between gap-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-sky-900 flex items-center gap-1.5">
-              <span>🛡️</span> Personal Smog Defense
+            <span className="text-xs font-bold text-sky-950 flex items-center gap-1.5">
+              <span className="text-sm">🛡️</span> Personal Smog Defense
             </span>
-            <span className="text-[10px] font-mono font-bold text-sky-700 bg-white px-2 py-0.5 rounded border border-sky-200">
+            <span className="text-[10px] font-mono font-bold text-sky-800 bg-white px-2 py-0.5 rounded-full border border-sky-200 shadow-2xs">
               {dualImpact.personalDefenseBadge}
             </span>
           </div>
 
           {/* SVG Circular Radial Progress Arc */}
-          <div className="flex items-center justify-center my-1">
+          <div className="flex items-center justify-center my-0.5">
             <div className="relative flex items-center justify-center">
               <svg className="w-24 h-24 transform -rotate-90" viewBox="0 0 96 96">
                 <circle
@@ -121,28 +121,51 @@ export function DualImpactDashboardCard({
           </div>
 
           <div className="space-y-1 text-center">
-            <p className="text-xs font-semibold text-sky-900">
+            <p className="text-xs font-bold text-sky-950">
               Shifted Away from Peak Inversion
             </p>
-            <p className="text-[11px] font-mono text-sky-700">
+            <p className="text-[11px] font-mono font-semibold text-sky-800">
               Modelled Relative ΔC: -{dualImpact.relativeAmbientDeltaC} µg/m³
             </p>
+          </div>
+
+          {/* Progressive Micro-Indicators for Personal Smog Defense */}
+          <div className="pt-2 border-t border-sky-200/80 space-y-2 text-[11px]">
+            <div>
+              <div className="flex justify-between items-center text-[10px] font-mono text-sky-900 mb-0.5">
+                <span className="font-semibold">Morning Inversion Shield:</span>
+                <span className="font-bold">{personalProgress}%</span>
+              </div>
+              <div className="w-full h-1.5 bg-sky-200/60 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-sky-500 rounded-full transition-all duration-500"
+                  style={{ width: `${personalProgress}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="p-2 rounded-xl bg-white/80 border border-sky-200 text-[10px] text-sky-900 leading-snug flex items-center gap-1.5">
+              <span className="text-xs">🫁</span>
+              <span>
+                Sidewalk breathing zone soot deposition minimized during cold-air pooling.
+              </span>
+            </div>
           </div>
         </div>
 
         {/* Panel 2: Planetary Emissions Avoided */}
-        <div className="p-4 rounded-2xl bg-emerald-50/50 border border-emerald-200 flex flex-col justify-between gap-3">
+        <div className="p-4 rounded-2xl bg-gradient-to-b from-emerald-50/70 to-emerald-100/40 border border-emerald-200/90 shadow-2xs flex flex-col justify-between gap-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-emerald-900 flex items-center gap-1.5">
-              <span>🌍</span> Planetary Avoidance
+            <span className="text-xs font-bold text-emerald-950 flex items-center gap-1.5">
+              <span className="text-sm">🌍</span> Planetary Avoidance
             </span>
-            <span className="text-[10px] font-mono font-bold text-emerald-700 bg-white px-2 py-0.5 rounded border border-emerald-200">
+            <span className="text-[10px] font-mono font-bold text-emerald-800 bg-white px-2 py-0.5 rounded-full border border-emerald-200 shadow-2xs">
               {dualImpact.avoidedCo2eProgressPercent}% of Goal
             </span>
           </div>
 
           {/* SVG Circular Radial Progress Arc */}
-          <div className="flex items-center justify-center my-1">
+          <div className="flex items-center justify-center my-0.5">
             <div className="relative flex items-center justify-center">
               <svg className="w-24 h-24 transform -rotate-90" viewBox="0 0 96 96">
                 <circle
@@ -179,11 +202,70 @@ export function DualImpactDashboardCard({
           </div>
 
           <div className="space-y-1 text-center">
-            <p className="text-xs font-semibold text-emerald-900">
+            <p className="text-xs font-bold text-emerald-950">
               Tailpipe Greenhouse Gases Prevented
             </p>
-            <p className="text-[11px] font-mono text-emerald-700">
+            <p className="text-[11px] font-mono font-semibold text-emerald-800">
               ~{dualImpact.equivalentCarKmSavedMonthly} km car travel eliminated
+            </p>
+          </div>
+
+          {/* Progressive Micro-Indicators for Planetary Climate Mitigation */}
+          <div className="pt-2 border-t border-emerald-200/80 space-y-2 text-[11px]">
+            <div>
+              <div className="flex justify-between items-center text-[10px] font-mono text-emerald-900 mb-0.5">
+                <span className="font-semibold">Monthly Carbon Target:</span>
+                <span className="font-bold">{planetaryProgress}%</span>
+              </div>
+              <div className="w-full h-1.5 bg-emerald-200/60 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-emerald-600 rounded-full transition-all duration-500"
+                  style={{ width: `${planetaryProgress}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="p-2 rounded-xl bg-white/80 border border-emerald-200 text-[10px] text-emerald-900 leading-snug flex items-center gap-1.5">
+              <span className="text-xs">🌲</span>
+              <span>
+                Equivalent to ~{Math.max(1, Math.round(dualImpact.avoidedCo2eKgMonthly / 21.7))} mature urban trees absorbing carbon monthly.
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Dual-Impact Reconciliation Synthesis Ledger (Zero Dead Space) */}
+      <div className="p-3.5 rounded-2xl bg-gradient-to-r from-sky-50/60 via-slate-50 to-emerald-50/60 border border-slate-200 text-xs space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="font-mono font-bold text-[11px] uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+            <span>⚖️</span> Dual-Impact Synthesis Matrix
+          </span>
+          <span className="text-[10px] font-mono font-bold text-slate-600 bg-white px-2 py-0.5 rounded border border-slate-200">
+            Scientific Separation
+          </span>
+        </div>
+        <div className="grid grid-cols-2 gap-2 text-[11px]">
+          <div className="p-2 rounded-xl bg-white/90 border border-sky-100 shadow-2xs space-y-0.5">
+            <span className="text-[10px] font-mono font-bold text-sky-800 uppercase">
+              Immediate / Acute
+            </span>
+            <p className="font-semibold text-slate-800 text-xs">
+              Personal Breathing Zone
+            </p>
+            <p className="text-[10px] text-slate-600 leading-snug">
+              Shields lung alveoli from toxic microgram concentrations during 8 PM - 9 AM thermal stagnation.
+            </p>
+          </div>
+          <div className="p-2 rounded-xl bg-white/90 border border-emerald-100 shadow-2xs space-y-0.5">
+            <span className="text-[10px] font-mono font-bold text-emerald-800 uppercase">
+              Cumulative / Global
+            </span>
+            <p className="font-semibold text-slate-800 text-xs">
+              Planetary Decarbonization
+            </p>
+            <p className="text-[10px] text-slate-600 leading-snug">
+              Permanent tailpipe metric-ton emission prevention that flattens regional airshed pollution curves.
             </p>
           </div>
         </div>
