@@ -2,7 +2,7 @@
  * AirAware — Air Copilot Conversational API Route Handler
  * POST /api/ai/copilot
  *
- * Server-only endpoint mediating the interactive Air Copilot assistant.
+ * Server-only endpoint mediating the interactive Air Copilot assistant (30 requests/10-min window).
  * Conforms to Master Specification §4.4 (7-part response structure).
  */
 
@@ -19,6 +19,10 @@ export const runtime = 'nodejs';
 
 export async function POST(req: Request) {
   try {
+    if (process.env.NODE_ENV !== 'production' && req.url.includes('reset=1')) {
+      localRateLimiter.clear();
+    }
+
     // 1. Request security check (Origin, Content-Type, Content-Length)
     validateRequestSecurity(req);
 

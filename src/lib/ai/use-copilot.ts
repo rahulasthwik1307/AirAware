@@ -43,6 +43,15 @@ export function useAirCopilot({
   const [isDailyQuotaExhausted, setIsDailyQuotaExhausted] = useState(false);
   const cooldownTimerRef = useRef<NodeJS.Timeout | null>(null);
 
+  const isThinkingRef = useRef(false);
+  isThinkingRef.current = isThinking;
+
+  const cooldownRef = useRef<number | null>(null);
+  cooldownRef.current = cooldownSeconds;
+
+  const inputQueryRef = useRef('');
+  inputQueryRef.current = inputQuery;
+
   // Countdown timer for burst rate limit
   useEffect(() => {
     if (cooldownSeconds === null || cooldownSeconds <= 0) return;
@@ -76,8 +85,8 @@ export function useAirCopilot({
 
   const sendMessage = useCallback(
     async (queryToSend?: string, overrideRoomContext?: RoomContext | null) => {
-      const q = (queryToSend ?? inputQuery).trim();
-      if (!q || isThinking || (cooldownSeconds !== null && cooldownSeconds > 0)) {
+      const q = (queryToSend ?? inputQueryRef.current).trim();
+      if (!q || isThinkingRef.current || (cooldownRef.current !== null && cooldownRef.current > 0)) {
         return;
       }
 
@@ -164,7 +173,9 @@ export function useAirCopilot({
         }
 
         if (!res.ok) {
-          throw new Error(`Server returned HTTP ${res.status}`);
+          const errData = await res.json().catch(() => null);
+          const customMsg = errData?.message || (res.status === 400 ? 'Please enter a valid question.' : `Server returned HTTP ${res.status}`);
+          throw new Error(customMsg);
         }
 
         const data: CopilotResponse = await res.json();
@@ -181,13 +192,14 @@ export function useAirCopilot({
         ]);
       } catch (err: unknown) {
         // Fallback message
+        const errMsg = err instanceof Error ? err.message : 'Network connection interrupted. Please try asking your question again.';
         setMessages((prev) => [
           ...prev,
           {
             id: `err-${Date.now()}`,
             sender: 'assistant',
             isError: true,
-            errorMessage: 'Network connection interrupted. Please try asking your question again.',
+            errorMessage: errMsg,
             timestamp: new Date().toISOString(),
             source: 'deterministic',
           },
@@ -196,7 +208,7 @@ export function useAirCopilot({
         setIsThinking(false);
       }
     },
-    [inputQuery, isThinking, cooldownSeconds, report, activeWorkspace, roomContext]
+    [report, activeWorkspace, roomContext]
   );
 
   return {

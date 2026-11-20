@@ -69,13 +69,13 @@ describe('Route Rate Limiter & Origin Security', () => {
     expect(hash1.length).toBe(16);
   });
 
-  it('enforces sliding-window limit (allows 10, rejects 11th)', () => {
+  it('enforces sliding-window limit (allows 30, rejects 31st)', () => {
     const client = 'client-test-hash';
 
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 30; i++) {
       const res = localRateLimiter.check(client);
       expect(res.allowed).toBe(true);
-      expect(res.remaining).toBe(9 - i);
+      expect(res.remaining).toBe(29 - i);
     }
 
     const blocked = localRateLimiter.check(client);

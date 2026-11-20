@@ -91,7 +91,7 @@ export type RoomContext = z.infer<typeof RoomContextSchema>;
 export const CopilotRequestSchema = z.object({
   question: z
     .string()
-    .min(3, 'Question must be at least 3 characters long')
+    .min(2, 'Question must be at least 2 characters long')
     .max(200, 'Question must not exceed 200 characters')
     .transform((str) => str.replace(/[\x00-\x1F\x7F]/g, '').trim()), // Strip non-printable ASCII
   workspace: WorkspaceEnum.optional().default('air-intelligence'),

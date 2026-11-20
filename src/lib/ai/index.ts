@@ -120,7 +120,8 @@ export async function askAirCopilot(
 
       aiCache.setCopilot(cacheKey, result);
       return result;
-    } catch {
+    } catch (err: unknown) {
+      console.error('[Copilot Workers AI Error]:', err);
       // Graceful degradation to deterministic 7-part response
       const fallback = getDeterministicCopilotAnswer(validatedInput);
       aiCache.setCopilot(cacheKey, fallback);

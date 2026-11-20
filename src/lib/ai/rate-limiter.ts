@@ -17,9 +17,9 @@ export interface RateLimitResult {
   reason?: string;
 }
 
-// 10 requests allowed per 10-minute sliding window per client
+// 30 requests allowed per 10-minute sliding window per client (fluid human conversation)
 const WINDOW_MS = 10 * 60 * 1000;
-const MAX_REQUESTS_PER_WINDOW = 10;
+const MAX_REQUESTS_PER_WINDOW = 30;
 const MAX_PAYLOAD_BYTES = 2048; // 2KB payload ceiling
 
 interface RateLimitBucket {
@@ -62,7 +62,7 @@ class LocalRateLimiter {
         allowed: false,
         remaining: 0,
         resetAt: bucket.windowStart + WINDOW_MS,
-        reason: 'Rate limit exceeded: maximum 10 guidance requests per 10-minute window.',
+        reason: 'Rate limit exceeded: maximum 30 guidance requests per 10-minute window.',
       };
     }
 

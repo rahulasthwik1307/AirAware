@@ -96,7 +96,7 @@ No markdown blocks, thoughts, or conversational preamble.`;
       { role: 'system', content: systemPrompt },
       { role: 'user', content: `<user_query>${sanitizedQuery}</user_query>` },
     ],
-    max_tokens: 280,
+    max_tokens: 350,
     temperature: 0.15,
     response_format: { type: 'json_object' },
     chat_template_kwargs: isGemma ? { enable_thinking: false } : undefined,

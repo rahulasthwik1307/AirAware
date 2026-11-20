@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { WorkspaceKey, AirQualityReport, GeoLocation } from '@/domain/types';
 import { RoomContext } from '@/lib/ai/types';
 import { useAirCopilot, CopilotChatMessage } from '@/lib/ai/use-copilot';
@@ -90,9 +90,17 @@ export function CopilotDrawerShell({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  // Handle auto-seeding initial prompt when opening from an in-situ card
+  // Handle auto-seeding initial prompt when opening from an in-situ card (strictly single-fire guard)
+  const dispatchedPromptRef = useRef<string | null>(null);
+
   useEffect(() => {
-    if (isOpen && initialPrompt) {
+    if (!isOpen) {
+      dispatchedPromptRef.current = null;
+      return;
+    }
+
+    if (initialPrompt && dispatchedPromptRef.current !== initialPrompt) {
+      dispatchedPromptRef.current = initialPrompt;
       sendMessage(initialPrompt, roomContext);
     }
   }, [isOpen, initialPrompt, roomContext, sendMessage]);
@@ -190,7 +198,7 @@ export function CopilotDrawerShell({
 
         {cooldownSeconds !== null && cooldownSeconds > 0 && (
           <div className="px-4 py-2 bg-rose-50 border-b border-rose-200 text-rose-900 text-[11px] font-mono flex items-center justify-between">
-            <span>⚠️ Rate limit active (max 10 requests / 10 min)</span>
+            <span>⚠️ Rate limit active (max 30 requests / 10 min)</span>
             <span className="font-bold">Available in {cooldownSeconds}s</span>
           </div>
         )}
@@ -201,8 +209,12 @@ export function CopilotDrawerShell({
           aria-live="polite"
           className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4"
         >
-          {messages.map((msg) => (
-            <MessageBubble key={msg.id} message={msg} />
+          {messages.map((msg, idx) => (
+            <MessageBubble
+              key={msg.id}
+              message={msg}
+              isLatest={idx === messages.length - 1 && msg.sender === 'assistant'}
+            />
           ))}
 
           {/* Thinking / Generation Indicator */}
@@ -291,7 +303,69 @@ export function CopilotDrawerShell({
   );
 }
 
-function MessageBubble({ message }: { readonly message: CopilotChatMessage }) {
+interface FastTypewriterTextProps {
+  readonly text: string;
+  readonly speedMs?: number;
+  readonly isNew?: boolean;
+  readonly className?: string;
+}
+
+function FastTypewriterText({
+  text,
+  speedMs = 10,
+  isNew = false,
+  className = '',
+}: FastTypewriterTextProps) {
+  const [displayedLength, setDisplayedLength] = useState(isNew ? 0 : text.length);
+  const [isTyping, setIsTyping] = useState(isNew);
+
+  useEffect(() => {
+    if (!isNew) {
+      setDisplayedLength(text.length);
+      setIsTyping(false);
+      return;
+    }
+
+    setDisplayedLength(0);
+    setIsTyping(true);
+
+    let current = 0;
+    // Fast typewriter: dynamically adjusts step size so full text appears within ~400–700ms
+    const step = text.length > 120 ? 3 : text.length > 60 ? 2 : 1;
+
+    const timer = setInterval(() => {
+      current = Math.min(text.length, current + step);
+      setDisplayedLength(current);
+
+      if (current >= text.length) {
+        clearInterval(timer);
+        setIsTyping(false);
+      }
+    }, speedMs);
+
+    return () => clearInterval(timer);
+  }, [text, speedMs, isNew]);
+
+  return (
+    <span className={className}>
+      {text.slice(0, displayedLength)}
+      {isTyping && (
+        <span
+          className="inline-block w-1.5 h-3.5 ml-0.5 bg-[var(--brand-primary)] animate-pulse rounded-xs align-middle"
+          aria-hidden="true"
+        />
+      )}
+    </span>
+  );
+}
+
+function MessageBubble({
+  message,
+  isLatest = false,
+}: {
+  readonly message: CopilotChatMessage;
+  readonly isLatest?: boolean;
+}) {
   if (message.sender === 'user') {
     return (
       <div className="flex justify-end">
@@ -380,12 +454,12 @@ function MessageBubble({ message }: { readonly message: CopilotChatMessage }) {
             Direct Answer
           </span>
           <p className="text-sm font-bold text-[var(--ink-primary)] mt-0.5 leading-snug">
-            {res.directAnswer}
+            <FastTypewriterText text={res.directAnswer} speedMs={10} isNew={isLatest} />
           </p>
         </div>
 
         {/* 2. Atmospheric & Environmental Context */}
-        <div className="p-2.5 rounded-lg bg-[var(--surface-subtle)] border border-[var(--border-subtle)] space-y-1">
+        <div className="p-2.5 rounded-lg bg-[var(--surface-subtle)] border border-[var(--border-subtle)] space-y-1 animate-fadeIn">
           <span className="text-[10px] font-mono font-bold text-[var(--ink-muted)] uppercase block">
             Environmental Context
           </span>
@@ -395,7 +469,7 @@ function MessageBubble({ message }: { readonly message: CopilotChatMessage }) {
         </div>
 
         {/* 3. Recommended Action */}
-        <div className="space-y-0.5">
+        <div className="space-y-0.5 animate-fadeIn">
           <span className="text-[10px] font-mono font-bold text-emerald-800 uppercase tracking-wider block">
             Primary Action
           </span>
@@ -405,7 +479,7 @@ function MessageBubble({ message }: { readonly message: CopilotChatMessage }) {
         </div>
 
         {/* 4. Scientific Explanation */}
-        <div className="space-y-0.5">
+        <div className="space-y-0.5 animate-fadeIn">
           <span className="text-[10px] font-mono font-bold text-[var(--ink-muted)] uppercase tracking-wider block">
             Scientific Reasoning
           </span>

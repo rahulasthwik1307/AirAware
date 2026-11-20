@@ -214,6 +214,17 @@ async function attemptModelInference<T>(params: AttemptParams<T>): Promise<T> {
     throw new AiServiceError('SCHEMA_VALIDATION_ERROR', 'Model response is not valid JSON.', 500);
   }
 
+  // Normalize snake_case keys to camelCase (e.g. practical_alternatives -> practicalAlternatives)
+  if (parsedObject && typeof parsedObject === 'object' && !Array.isArray(parsedObject)) {
+    const raw = parsedObject as Record<string, unknown>;
+    const normalized: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(raw)) {
+      const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+      normalized[camelKey] = value;
+    }
+    parsedObject = normalized;
+  }
+
   // Validate with strict Zod schema
   const validationResult = schema.safeParse(parsedObject);
   if (!validationResult.success) {

@@ -63,9 +63,9 @@ describe('Copilot Request & Workspace Context Schema', () => {
     expect(() => CopilotRequestSchema.parse(rawTooLong)).toThrow(/exceed 200 characters/);
   });
 
-  it('rejects questions shorter than 3 characters', () => {
+  it('rejects questions shorter than 2 characters', () => {
     const raw = {
-      question: 'hi',
+      question: 'a',
       aqi: 50,
       category: 'Good',
       dominantPollutant: 'pm25',
