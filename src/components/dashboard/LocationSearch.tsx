@@ -268,12 +268,12 @@ export function LocationSearch({
           <div className="flex items-center gap-2">
             <label
               htmlFor="location-search-input"
-              className="text-xs font-bold tracking-wider text-[var(--ink-secondary)] uppercase font-mono"
+              className="text-xs sm:text-sm font-bold tracking-wider text-[var(--ink-secondary)] uppercase font-mono"
             >
               Location Discovery &amp; Global Grid
             </label>
             {selectedLocation && (
-              <span className="text-[11px] font-mono text-[var(--ink-muted)]">
+              <span className="text-xs font-mono text-[var(--ink-muted)]">
                 ({selectedLocation.latitude.toFixed(2)}°N, {selectedLocation.longitude.toFixed(2)}°E)
                 {isDefaultLocation && (
                   <span className="ml-1 text-amber-700 font-semibold">• Default starting reference (Not your detected location)</span>
@@ -314,10 +314,10 @@ export function LocationSearch({
                 onChange={handleInputChange}
                 onKeyDown={handleKeyDown}
                 onFocus={() => suggestions.length > 0 && setIsOpen(true)}
-                placeholder="Search any global city or coordinates (e.g. New Delhi, London, Tokyo, Paris)..."
+                placeholder="Search city or coordinates (e.g. New Delhi, Gurugram, Patna, Lucknow, Hyderabad, London)..."
                 autoComplete="off"
                 spellCheck="false"
-                className="w-full h-11 pl-9 pr-10 text-sm font-medium text-[var(--ink-primary)] bg-[var(--surface-card)] border border-[var(--border-subtle)] rounded-xl shadow-xs placeholder:text-[var(--ink-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/40 focus:border-[var(--brand-primary)] transition-all font-sans"
+                className="w-full h-12 pl-10 pr-10 text-sm sm:text-base font-medium text-[var(--ink-primary)] bg-[var(--surface-card)] border border-[var(--border-subtle)] rounded-xl shadow-xs placeholder:text-[var(--ink-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/40 focus:border-[var(--brand-primary)] transition-all font-sans"
               />
               {isSearching && (
                 <div
@@ -391,8 +391,8 @@ export function LocationSearch({
         </div>
 
         {/* Global Quick-Pick Reference Cities */}
-        <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-          <span className="text-[11px] font-mono text-[var(--ink-muted)] uppercase tracking-wider mr-1">
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <span className="text-xs font-mono font-bold text-[var(--ink-muted)] uppercase tracking-wider mr-1">
             Presets:
           </span>
           {QUICK_PICK_CITIES.map((city) => {
@@ -403,9 +403,9 @@ export function LocationSearch({
                 key={city.id}
                 type="button"
                 onClick={() => handleSelect(city)}
-                className={`text-[11px] font-mono px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
+                className={`text-xs font-mono px-3 py-1.5 rounded-lg border transition-all cursor-pointer ${
                   isCityActive
-                    ? 'border-[var(--brand-primary)] bg-[var(--brand-surface)] text-[var(--brand-primary)] font-bold shadow-xs'
+                    ? 'border-[var(--brand-primary)] bg-[var(--brand-surface)] text-[var(--brand-primary)] font-bold shadow-xs ring-1 ring-[var(--brand-primary)]/40'
                     : 'border-[var(--border-subtle)] bg-[var(--surface-card)] text-[var(--ink-secondary)] hover:border-[var(--border-strong)] hover:text-[var(--ink-primary)]'
                 }`}
               >

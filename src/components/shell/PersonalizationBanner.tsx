@@ -77,7 +77,7 @@ export function PersonalizationBanner({ onOpenSetup }: PersonalizationBannerProp
             onClick={() => onOpenSetup('family-planner')}
             className="px-3.5 py-1.5 rounded-lg bg-[var(--brand-primary)] hover:bg-[var(--brand-hover)] text-white text-xs font-mono font-bold shadow-xs transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
           >
-            Quick Setup (Phase 3)
+            Quick Setup
           </button>
           <button
             type="button"

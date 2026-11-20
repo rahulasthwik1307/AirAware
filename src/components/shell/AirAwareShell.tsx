@@ -45,13 +45,8 @@ export function AirAwareShell() {
         className="flex-1 mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8"
       >
         {activeWorkspace === 'air-intelligence' ? (
-          <>
-            {/* Dismissible In-Situ Personalization Banner */}
-            <PersonalizationBanner onOpenSetup={setActiveWorkspace} />
-
-            {/* Live Global Air Intelligence Dashboard */}
-            <AirQualityDashboard onSelectWorkspace={setActiveWorkspace} />
-          </>
+          /* Live Global Air Intelligence Dashboard */
+          <AirQualityDashboard onSelectWorkspace={setActiveWorkspace} />
         ) : activeWorkspace === 'family-planner' ? (
           /* Production Phase 3 Family Daily Planner Workspace */
           <FamilyPlannerWorkspace />

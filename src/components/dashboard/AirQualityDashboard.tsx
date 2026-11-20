@@ -314,6 +314,9 @@ export function AirQualityDashboard({ onSelectWorkspace }: AirQualityDashboardPr
             dominantPollutant={report.dominantPollutant}
             variant="light"
             onSelectWorkspace={onSelectWorkspace}
+            location={report.location}
+            providerAqi={report.providerAqi}
+            cpcbCategory={report.cpcbComparison?.equivalentCategory}
           />
 
           {/* 3. 24-Hour Telemetry Forecast with Interactive Hourly Inspection */}

@@ -125,16 +125,16 @@ export function SustainableHabitHubCard({
                   <span className="text-xl shrink-0 mt-0.5">{habit.icon}</span>
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h4 className="text-xs sm:text-sm font-bold text-slate-900 truncate">
+                      <h4 className="text-xs sm:text-sm font-bold text-slate-900 leading-snug">
                         {habit.title}
                       </h4>
                       {habit.isAdopted && habit.currentStreakDays > 0 && (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded border border-amber-200">
+                        <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded border border-amber-200 shrink-0">
                           🔥 {habit.currentStreakDays}d streak
                         </span>
                       )}
                     </div>
-                    <p className="text-[11px] text-slate-600 line-clamp-1 mt-0.5">
+                    <p className="text-xs text-slate-600 mt-1 leading-relaxed">
                       {habit.description}
                     </p>
                   </div>

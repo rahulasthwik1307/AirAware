@@ -100,18 +100,16 @@ export function CommuteComparatorCard({
               >
                 <div className="flex items-center justify-between">
                   <span className="text-lg">{modeMeta.icon}</span>
-                  {isBaseline ? (
-                    <span className="text-[10px] font-mono font-bold text-slate-500 bg-white px-1.5 py-0.2 rounded border border-slate-200">
-                      Baseline
-                    </span>
-                  ) : modeMeta.factorKgCo2ePerKm === 0 ? (
-                    <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-100/70 px-1.5 py-0.2 rounded">
-                      -100%
-                    </span>
-                  ) : (
-                    <span className="text-[10px] font-mono font-bold text-sky-700 bg-sky-100/70 px-1.5 py-0.2 rounded">
-                      -{Math.round(((0.170 - modeMeta.factorKgCo2ePerKm) / 0.170) * 100)}%
-                    </span>
+                  {!isBaseline && (
+                    modeMeta.factorKgCo2ePerKm === 0 ? (
+                      <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-100/70 px-1.5 py-0.2 rounded">
+                        -100%
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-mono font-bold text-sky-700 bg-sky-100/70 px-1.5 py-0.2 rounded">
+                        -{Math.round(((0.170 - modeMeta.factorKgCo2ePerKm) / 0.170) * 100)}%
+                      </span>
+                    )
                   )}
                 </div>
                 <div>
