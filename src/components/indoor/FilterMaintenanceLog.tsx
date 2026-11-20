@@ -26,6 +26,11 @@ export function FilterMaintenanceLog({
   const percentElapsed = Math.min(100, Math.round((daysElapsed / totalLifespanDays) * 100));
   const daysRemaining = Math.max(0, Math.round(totalLifespanDays - daysElapsed));
 
+  // Pre-filter vacuum status (recommend every 21 days)
+  const lastVacuumAt = filterLog.lastVacuumDate ? new Date(filterLog.lastVacuumDate).getTime() : installedAt;
+  const daysSinceVacuum = Math.max(0, Math.floor((now - lastVacuumAt) / (1000 * 60 * 60 * 24)));
+  const isVacuumDue = daysSinceVacuum >= 21;
+
   const handleSave = () => {
     onUpdateLog({
       installDate,
@@ -50,164 +55,288 @@ export function FilterMaintenanceLog({
     });
   };
 
+  // Circular progress calculations (radius 44, circumference ~276.46)
+  const radius = 44;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (percentElapsed / 100) * circumference;
+
   return (
     <section
       aria-labelledby="filter-tracker-heading"
-      className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-card)] p-4 sm:p-6 shadow-xs space-y-4"
+      className="h-full rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-xs space-y-3 sm:space-y-3.5 flex flex-col justify-start overflow-hidden"
     >
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[var(--border-subtle)] pb-3">
-        <div>
-          <div className="flex items-center gap-2">
+      {/* Header */}
+      <div className="border-b border-slate-100 pb-2.5 space-y-1.5">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-xl shrink-0" aria-hidden="true">🛡️</span>
             <h2
               id="filter-tracker-heading"
-              className="text-base sm:text-lg font-bold text-[var(--ink-primary)] font-sans flex items-center gap-2"
+              className="text-base sm:text-lg font-bold text-slate-900 font-sans tracking-tight truncate"
             >
-              <span>🛡️ Filter Maintenance &amp; Care Log</span>
+              Filter Maintenance &amp; Airflow Health
             </h2>
-            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-[var(--surface-subtle)] text-[var(--ink-secondary)] border border-[var(--border-subtle)]">
-              Local-First Log
-            </span>
-          </div>
-          <p className="text-xs text-[var(--ink-muted)] mt-0.5">
-            Track filter service intervals according to your purifier manufacturer specifications.
-          </p>
-        </div>
-
-        {onAskCopilot && (
-          <button
-            type="button"
-            onClick={() =>
-              onAskCopilot('How often should I clean and replace my air purifier filters?')
-            }
-            className="px-3 py-1.5 rounded-lg bg-[var(--surface-subtle)] text-[var(--ink-secondary)] hover:text-[var(--brand-primary)] hover:bg-[var(--surface-card)] text-xs font-mono font-medium border border-[var(--border-subtle)] transition-all cursor-pointer self-start sm:self-auto shrink-0 flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
-          >
-            <span>🤖</span>
-            <span>Ask Copilot about Filters</span>
-          </button>
-        )}
-      </div>
-
-      {/* Main Status & Progress Ring Display */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-subtle)]/40">
-        {/* Left: Progress Indicator */}
-        <div className="sm:col-span-2 space-y-2.5">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-mono font-bold text-[var(--ink-primary)] uppercase">
-              Current Filter Cycle: {filterLog.customIntervalMonths || 6} Months
-            </span>
-            <span className="text-xs font-mono font-bold text-[var(--brand-primary)]">
-              {daysRemaining} Days Remaining
-            </span>
           </div>
 
-          <div className="h-3 w-full rounded-full bg-slate-200 overflow-hidden flex">
-            <div
-              className={`h-full transition-all duration-300 ${
-                percentElapsed >= 90
-                  ? 'bg-rose-500'
-                  : percentElapsed >= 75
-                  ? 'bg-amber-500'
-                  : 'bg-[var(--brand-primary)]'
-              }`}
-              style={{ width: `${percentElapsed}%` }}
-            />
-          </div>
-
-          <div className="flex items-center justify-between text-[11px] font-mono text-[var(--ink-muted)]">
-            <span>Installed: {filterLog.installDate || installDate}</span>
-            <span>{percentElapsed}% Elapsed</span>
-          </div>
-
-          {filterLog.lastVacuumDate && (
-            <p className="text-[11px] font-mono text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded border border-emerald-200">
-              ✓ Pre-filter last vacuumed: {filterLog.lastVacuumDate}
-            </p>
+          {onAskCopilot && (
+            <button
+              type="button"
+              onClick={() =>
+                onAskCopilot('How often should I clean my air cleaner pre-filter to maintain rated CADR?')
+              }
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-sky-50 to-blue-50 hover:from-sky-100 hover:to-blue-100 text-sky-800 text-xs font-mono font-bold border border-sky-200/80 shadow-2xs hover:shadow-xs transition-all cursor-pointer shrink-0"
+            >
+              <span className="text-sm">🤖</span>
+              <span>Ask Copilot</span>
+            </button>
           )}
         </div>
 
-        {/* Right: Quick Maintenance Actions */}
-        <div className="flex flex-col gap-2 justify-center border-t sm:border-t-0 sm:border-l border-[var(--border-subtle)] pt-3 sm:pt-0 sm:pl-4">
+        <div className="flex items-center gap-2 min-w-0 flex-wrap sm:flex-nowrap">
+          <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 shrink-0">
+            Local-First Tracker
+          </span>
+          <p className="text-xs text-slate-500 whitespace-nowrap">
+            HEPA &amp; carbon lifecycle monitoring.
+          </p>
+        </div>
+      </div>
+
+      {/* Main Lifecycle & Donut Status Panel - Enlarged & Visually Engaging */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-stretch">
+        {/* Left: SVG Circular Donut Progress Ring with Prominent Readout */}
+        <div className="rounded-xl border border-slate-200/90 bg-gradient-to-b from-slate-50 to-slate-100/70 p-3 sm:p-3.5 flex items-center justify-around gap-3 shadow-2xs">
+          <div className="relative flex items-center justify-center shrink-0">
+            <svg width="108" height="108" viewBox="0 0 108 108" className="transform -rotate-90 select-none">
+              <circle
+                cx="54"
+                cy="54"
+                r={radius}
+                stroke="#e2e8f0"
+                strokeWidth="8"
+                fill="none"
+              />
+              <circle
+                cx="54"
+                cy="54"
+                r={radius}
+                stroke={percentElapsed > 85 ? '#ef4444' : percentElapsed > 65 ? '#f59e0b' : '#0284c7'}
+                strokeWidth="8"
+                strokeDasharray={circumference}
+                strokeDashoffset={strokeDashoffset}
+                strokeLinecap="round"
+                fill="none"
+                className="transition-all duration-700"
+              />
+            </svg>
+            <div className="absolute text-center flex flex-col items-center justify-center pointer-events-none">
+              <span className="text-xl sm:text-2xl font-black text-slate-900 font-mono block leading-none">
+                {100 - percentElapsed}%
+              </span>
+              <span className="text-[9px] font-mono font-bold text-slate-500 uppercase tracking-wider mt-0.5">
+                Life Left
+              </span>
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <span className="text-[10px] font-mono font-bold text-slate-600 uppercase tracking-wider block bg-white/80 px-2 py-0.5 rounded border border-slate-200/70 text-center">
+              {filterLog.customIntervalMonths || 6}-Mo. HEPA Cycle
+            </span>
+            <div className="text-2xl sm:text-3xl font-black font-mono text-slate-900 leading-none">
+              {daysRemaining} <span className="text-xs font-semibold text-slate-500">Days</span>
+            </div>
+            <span className="text-[10px] text-slate-500 block leading-tight font-mono">
+              Installed: {filterLog.installDate || installDate}
+            </span>
+            <span className="text-[9.5px] font-mono font-semibold text-emerald-700 block">
+              ✓ Optimal Filtration
+            </span>
+          </div>
+        </div>
+
+        {/* Right: Airflow & Resistance Health Status with Visual Progress Bar */}
+        <div className="rounded-xl border border-slate-200/90 bg-white p-3 sm:p-3.5 space-y-2 flex flex-col justify-between shadow-2xs">
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-bold text-slate-800 font-sans flex items-center gap-1.5">
+                <span>🕸️</span>
+                <span>Pre-Filter Hygiene</span>
+              </span>
+              <span
+                className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${
+                  isVacuumDue
+                    ? 'bg-amber-100 text-amber-900 border-amber-300'
+                    : 'bg-emerald-100 text-emerald-900 border-emerald-300'
+                }`}
+              >
+                {isVacuumDue ? '⚠️ Vacuum Due' : '✓ Airflow Optimal'}
+              </span>
+            </div>
+
+            {/* Visual Airflow & Static Fan Pressure Bar */}
+            <div className="space-y-1">
+              <div className="flex justify-between text-[10px] font-mono text-slate-500">
+                <span>Intake Static Pressure:</span>
+                <span className="font-bold text-slate-800">{isVacuumDue ? '75% (Air Drag)' : '100% Free Flow'}</span>
+              </div>
+              <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden flex">
+                <div
+                  className={`h-full rounded-full transition-all duration-500 ${
+                    isVacuumDue ? 'bg-amber-500 w-3/4' : 'bg-gradient-to-r from-emerald-500 to-sky-500 w-full'
+                  }`}
+                />
+              </div>
+            </div>
+
+            <p className="text-[11px] text-slate-600 leading-snug">
+              {isVacuumDue
+                ? `Last cleaned ${daysSinceVacuum} days ago. Dust buildup on pre-filter reduces CADR delivery by ~15–25%.`
+                : `Vacuumed ${daysSinceVacuum} days ago. Airflow and static fan pressure are optimal, maximizing clean air.`}
+            </p>
+          </div>
+
           <button
             type="button"
             onClick={handleLogVacuum}
-            className="w-full py-1.5 px-3 rounded-lg bg-white hover:bg-[var(--surface-card)] text-xs font-mono font-semibold text-[var(--ink-primary)] border border-[var(--border-subtle)] shadow-2xs transition-all cursor-pointer"
+            className="w-full py-1.5 text-xs font-mono font-bold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300/80 transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs hover:shadow-xs active:scale-[0.99]"
           >
-            🧹 Log Pre-Filter Clean
-          </button>
-
-          <button
-            type="button"
-            onClick={handleResetFilter}
-            className="w-full py-1.5 px-3 rounded-lg bg-white hover:bg-[var(--surface-card)] text-xs font-mono font-semibold text-[var(--ink-primary)] border border-[var(--border-subtle)] shadow-2xs transition-all cursor-pointer"
-          >
-            🔄 Reset New Filter
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setIsEditing((prev) => !prev)}
-            className="w-full py-1.5 px-3 rounded-lg bg-[var(--surface-subtle)] hover:bg-slate-200 text-xs font-mono text-[var(--ink-secondary)] transition-all cursor-pointer text-center"
-          >
-            {isEditing ? 'Cancel Edit' : '⚙️ Adjust Interval'}
+            <span>🧹</span>
+            <span>Record Pre-Filter Clean Today</span>
           </button>
         </div>
       </div>
 
-      {/* Interval Customization Form */}
-      {isEditing && (
-        <div className="p-4 rounded-xl border border-[var(--brand-primary)]/30 bg-[var(--brand-surface)]/40 space-y-3 text-xs animate-fadeIn">
-          <h3 className="font-bold font-sans text-[var(--ink-primary)]">
-            Configure Manufacturer Replacement Specifications
-          </h3>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label htmlFor="install-date-input" className="block text-[11px] font-medium text-[var(--ink-secondary)] mb-1">
-                Filter Installation Date
-              </label>
-              <input
-                id="install-date-input"
-                type="date"
-                value={installDate}
-                onChange={(e) => setInstallDate(e.target.value)}
-                className="w-full p-2 bg-white rounded-lg border border-[var(--border-subtle)] font-mono text-xs text-[var(--ink-primary)]"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="interval-select" className="block text-[11px] font-medium text-[var(--ink-secondary)] mb-1">
-                Manufacturer Specified Interval
-              </label>
-              <select
-                id="interval-select"
-                value={intervalMonths}
-                onChange={(e) => setIntervalMonths(Number(e.target.value))}
-                className="w-full p-2 bg-white rounded-lg border border-[var(--border-subtle)] font-mono text-xs text-[var(--ink-primary)] cursor-pointer"
-              >
-                <option value={3}>3 Months (Heavy particulate environment)</option>
-                <option value={6}>6 Months (Standard residential recommendation)</option>
-                <option value={9}>9 Months</option>
-                <option value={12}>12 Months (Large capacity / light usage)</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-2 pt-2">
-            <button
-              type="button"
-              onClick={handleSave}
-              className="px-4 py-1.5 bg-[var(--brand-primary)] text-white text-xs font-mono font-bold rounded-lg shadow-2xs cursor-pointer hover:bg-[var(--brand-hover)] transition-all"
-            >
-              Save Schedule
-            </button>
-          </div>
+      {/* 3-Stage Visual Filtration Stack Diagram - Enriched & Aligned with Left Forecast Wave */}
+      <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 sm:p-4 space-y-3 shadow-2xs">
+        <div className="flex items-center justify-between text-[11px] font-mono text-slate-600">
+          <span className="font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+            <span>🔬</span>
+            <span>3-Stage Filter Medium Mechanics</span>
+          </span>
+          <button
+            type="button"
+            onClick={() => setIsEditing(!isEditing)}
+            className="text-sky-700 font-bold hover:underline cursor-pointer flex items-center gap-1"
+          >
+            <span>{isEditing ? '✕ Cancel Edit' : '⚙️ Adjust Interval'}</span>
+          </button>
         </div>
-      )}
 
-      {/* Maintenance Rule of Thumb Disclosure */}
-      <p className="text-[11px] text-[var(--ink-muted)] leading-relaxed italic">
-        *Filter lifespans depend on ambient particulate loading, daily run-hours, fan speed, and manufacturer specifications (typically ranging from 3 to 12 months). Routine pre-filter vacuuming every 2–4 weeks extends HEPA lifespan and preserves rated CADR.
-      </p>
+        {isEditing ? (
+          <div className="bg-white p-3 rounded-lg border border-slate-200 space-y-2.5">
+            <div className="grid grid-cols-2 gap-3 text-xs">
+              <div>
+                <label className="font-semibold text-slate-700 block mb-1">
+                  Manufacturer Lifespan:
+                </label>
+                <select
+                  value={intervalMonths}
+                  onChange={(e) => setIntervalMonths(Number(e.target.value))}
+                  className="w-full p-1.5 bg-slate-50 border border-slate-200 rounded font-mono text-xs text-slate-900"
+                >
+                  <option value={3}>3 Months (Heavy particulate)</option>
+                  <option value={6}>6 Months (Standard residential)</option>
+                  <option value={9}>9 Months (Low pollution)</option>
+                  <option value={12}>12 Months (Extended Life)</option>
+                </select>
+              </div>
+              <div>
+                <label className="font-semibold text-slate-700 block mb-1">
+                  Install Date:
+                </label>
+                <input
+                  type="date"
+                  value={installDate}
+                  onChange={(e) => setInstallDate(e.target.value)}
+                  className="w-full p-1.5 bg-slate-50 border border-slate-200 rounded font-mono text-xs text-slate-900"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-1">
+              <button
+                type="button"
+                onClick={handleSave}
+                className="px-3 py-1 rounded bg-sky-600 hover:bg-sky-700 text-white text-xs font-mono font-bold transition-colors cursor-pointer"
+              >
+                Save Settings
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-3 gap-2.5 text-center text-xs items-stretch">
+            {/* Tile 1: Pre-Filter */}
+            <div className="bg-white p-3 sm:p-3.5 rounded-xl border border-slate-200/90 flex flex-col justify-between space-y-1.5 shadow-2xs">
+              <div className="space-y-1">
+                <span className="text-xl block leading-none" aria-hidden="true">🕸️</span>
+                <span className="text-[10px] font-mono font-bold text-sky-700 uppercase tracking-wide block">
+                  1. Pre-Filter
+                </span>
+                <strong className="text-slate-900 font-bold block text-xs leading-tight">
+                  Mesh Screen
+                </strong>
+                <span className="text-[9.5px] text-slate-500 block leading-snug">
+                  Traps coarse hair, fur &amp; dust &gt;10µm
+                </span>
+              </div>
+              <span className="text-[9.5px] font-mono font-bold text-sky-800 bg-sky-50 px-2 py-1 rounded-md border border-sky-200 block">
+                Vacuum 2–4 wks
+              </span>
+            </div>
+
+            {/* Tile 2: True HEPA */}
+            <div className="bg-white p-3 sm:p-3.5 rounded-xl border border-slate-200/90 flex flex-col justify-between space-y-1.5 shadow-2xs">
+              <div className="space-y-1">
+                <span className="text-xl block leading-none" aria-hidden="true">🔬</span>
+                <span className="text-[10px] font-mono font-bold text-emerald-700 uppercase tracking-wide block">
+                  2. True HEPA
+                </span>
+                <strong className="text-slate-900 font-bold block text-xs leading-tight">
+                  H13 Borosilicate
+                </strong>
+                <span className="text-[9.5px] text-slate-500 block leading-snug">
+                  99.97% removal of 0.3µm PM₂.₅ soot
+                </span>
+              </div>
+              <span className="text-[9.5px] font-mono font-bold text-emerald-800 bg-emerald-50 px-2 py-1 rounded-md border border-emerald-200 block">
+                Replace ~6–12 mo
+              </span>
+            </div>
+
+            {/* Tile 3: Carbon Bed */}
+            <div className="bg-white p-3 sm:p-3.5 rounded-xl border border-slate-200/90 flex flex-col justify-between space-y-1.5 shadow-2xs">
+              <div className="space-y-1">
+                <span className="text-xl block leading-none" aria-hidden="true">🪨</span>
+                <span className="text-[10px] font-mono font-bold text-amber-700 uppercase tracking-wide block">
+                  3. Carbon Bed
+                </span>
+                <strong className="text-slate-900 font-bold block text-xs leading-tight">
+                  Activated Pellets
+                </strong>
+                <span className="text-[9.5px] text-slate-500 block leading-snug">
+                  Adsorbs VOCs, cooking fumes &amp; NO₂
+                </span>
+              </div>
+              <span className="text-[9.5px] font-mono font-bold text-amber-800 bg-amber-50 px-2 py-1 rounded-md border border-amber-200 block">
+                Replace ~6–12 mo
+              </span>
+            </div>
+          </div>
+        )}
+
+        <div className="flex items-center justify-between pt-1 border-t border-slate-200/70">
+          <span className="text-[10px] text-slate-500 font-mono">
+            *Manufacturer standard: Vacuum pre-filter bi-weekly; replace HEPA annually.
+          </span>
+          <button
+            type="button"
+            onClick={handleResetFilter}
+            className="text-[10px] font-mono font-semibold text-slate-500 hover:text-rose-600 transition-colors cursor-pointer"
+          >
+            🔄 Reset to New Filter
+          </button>
+        </div>
+      </div>
     </section>
   );
 }

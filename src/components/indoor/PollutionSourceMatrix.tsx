@@ -8,6 +8,8 @@ interface SourceItem {
   readonly icon: string;
   readonly pollutantType: 'particulate' | 'gaseous' | 'mixed';
   readonly typeLabel: string;
+  readonly emissionScore: number; // 1 to 5 scale
+  readonly emissionLabel: string;
   readonly whyItMatters: string;
   readonly keyActions: readonly string[];
   readonly technicalDetail: string;
@@ -20,8 +22,10 @@ const SOURCES: readonly SourceItem[] = [
     icon: '🍳',
     pollutantType: 'mixed',
     typeLabel: 'Mixed: Ultrafine PM + NO₂ Gas',
+    emissionScore: 4,
+    emissionLabel: 'High PM & Combustion Gases',
     whyItMatters:
-      'High-heat oil frying generates dense ultrafine particulate aerosols, while natural gas and LPG burners release nitrogen dioxide (NO2) and carbon monoxide directly into living spaces.',
+      'High-heat oil frying generates dense ultrafine particulate aerosols, while natural gas and LPG burners release nitrogen dioxide (NO2) and carbon monoxide directly into breathing zones.',
     keyActions: [
       'Turn on range hood 2 minutes before lighting flame; keep running for 10–15 min after.',
       'Cook on rear burners under the hood canopy to increase fume capture efficiency up to 70%.',
@@ -36,6 +40,8 @@ const SOURCES: readonly SourceItem[] = [
     icon: '🧹',
     pollutantType: 'particulate',
     typeLabel: 'Particulate: Coarse PM₁₀ & Fine PM₂.₅',
+    emissionScore: 3,
+    emissionLabel: 'High Mechanical Resuspension',
     whyItMatters:
       'Dry sweeping, vigorous bed-making, and unsealed vacuum exhausts kick settled dust and allergen reservoirs back into the breathing zone, keeping them airborne for 2 to 4 hours.',
     keyActions: [
@@ -52,8 +58,10 @@ const SOURCES: readonly SourceItem[] = [
     icon: '🧴',
     pollutantType: 'gaseous',
     typeLabel: 'Gaseous: Chemical VOCs & SOA',
+    emissionScore: 3,
+    emissionLabel: 'Volatile Chemical Off-Gassing',
     whyItMatters:
-      'Aerosolized bleach, pine/citrus terpenoid fragrances, and air fresheners emit volatile organic compounds (VOCs) that react with indoor ozone to generate secondary organic aerosols and formaldehyde.',
+      'Aerosolized bleach, pine/citrus fragrances, and air fresheners emit volatile organic compounds (VOCs) that react with indoor ozone to generate secondary organic aerosols and formaldehyde.',
     keyActions: [
       'Choose unscented or low-VOC cleaning agents without synthetic terpene fragrances.',
       'Never mix bleach with ammonia or acidic cleaning products (releases toxic chloramine gas).',
@@ -68,6 +76,8 @@ const SOURCES: readonly SourceItem[] = [
     icon: '🪟',
     pollutantType: 'particulate',
     typeLabel: 'Particulate: Ambient PM₂.₅ & Black Carbon',
+    emissionScore: 4,
+    emissionLabel: 'Continuous Leakage (30–70%)',
     whyItMatters:
       'During thermal inversions, fine outdoor combustion soot penetrates building cracks, unsealed window frames, and exterior door perimeters even when windows remain shut.',
     keyActions: [
@@ -76,7 +86,7 @@ const SOURCES: readonly SourceItem[] = [
       'Run indoor HEPA purifiers continuously to filter incoming air leakage.',
     ],
     technicalDetail:
-      'Infiltration factor (Finf) in typical urban homes ranges from 0.3 to 0.7 without active sealing, meaning 30% to 70% of outdoor ambient smog naturally enters indoor living spaces.',
+      'Infiltration factor in typical urban homes ranges from 0.3 to 0.7 without active sealing, meaning 30% to 70% of outdoor ambient smog naturally enters indoor living spaces.',
   },
   {
     id: 'combustion',
@@ -84,15 +94,17 @@ const SOURCES: readonly SourceItem[] = [
     icon: '🕯️',
     pollutantType: 'mixed',
     typeLabel: 'Mixed: High Particulate + Benzene',
+    emissionScore: 5,
+    emissionLabel: 'Extreme Toxic Particulate Mass',
     whyItMatters:
       'Burning a single mosquito coil produces particulate emissions equivalent to 75–130 cigarettes, alongside hazardous volatile organic byproducts like formaldehyde and benzene.',
     keyActions: [
       'Replace burning mosquito coils with electric evaporators or window insect screens.',
-      'Avoid regular indoor incense burning, particularly in enclosed or poorly ventilated rooms.',
-      'Use LED or wick-trimmed pure beeswax candles rather than synthetic paraffin candles.',
+      'Avoid continuous smoldering incense in unventilated living or sleeping spaces.',
+      'Use natural beeswax candles with lead-free wicks rather than paraffin novelty candles.',
     ],
     technicalDetail:
-      'Pyrolysis of biomass binding agents in coils and incense produces polycyclic aromatic hydrocarbons (PAHs) that linger in indoor air and deposit on walls and upholstery.',
+      'Smoldering combustion produces submicron tar aerosols with high polycyclic aromatic hydrocarbon (PAH) content that linger in stagnant indoor air for many hours.',
   },
 ];
 
@@ -101,24 +113,31 @@ interface PollutionSourceMatrixProps {
 }
 
 export function PollutionSourceMatrix({ onAskCopilot }: PollutionSourceMatrixProps) {
-  const [selectedSourceId, setSelectedSourceId] = useState<string>(SOURCES[0].id);
-  const activeSource = SOURCES.find((s) => s.id === selectedSourceId) || SOURCES[0];
+  const [activeSourceId, setActiveSourceId] = useState<string>('cooking');
+  const activeSource = SOURCES.find((s) => s.id === activeSourceId) || SOURCES[0];
 
   return (
     <section
-      aria-labelledby="source-matrix-heading"
-      className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-card)] p-4 sm:p-6 shadow-xs space-y-4"
+      aria-labelledby="pollution-source-heading"
+      className="w-full rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-xs space-y-5 overflow-hidden"
     >
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[var(--border-subtle)] pb-3">
-        <div>
-          <h2
-            id="source-matrix-heading"
-            className="text-base sm:text-lg font-bold text-[var(--ink-primary)] font-sans flex items-center gap-2"
-          >
-            <span>🔬 Indoor Pollution Source Intelligence</span>
-          </h2>
-          <p className="text-xs text-[var(--ink-muted)] mt-0.5">
-            Understand common indoor emission sources, particle vs. gas distinctions, and evidence-backed mitigations.
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3.5">
+        <div className="min-w-0 flex-1 pr-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xl shrink-0" aria-hidden="true">🔬</span>
+            <h2
+              id="pollution-source-heading"
+              className="text-base sm:text-lg font-bold text-slate-900 font-sans tracking-tight"
+            >
+              Indoor Pollution Source Intelligence &amp; Particle-to-Gas Spectrum
+            </h2>
+            <span className="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 shrink-0">
+              Source Attribution &amp; Physics
+            </span>
+          </div>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Identify aerosol diameters, combustion emission volumes, and targeted physical mitigations.
           </p>
         </div>
 
@@ -126,92 +145,159 @@ export function PollutionSourceMatrix({ onAskCopilot }: PollutionSourceMatrixPro
           <button
             type="button"
             onClick={() =>
-              onAskCopilot(`How can I reduce indoor pollution from ${activeSource.name}?`)
+              onAskCopilot(
+                `What are the most effective ways to mitigate indoor air pollution from ${activeSource.name.toLowerCase()}?`
+              )
             }
-            className="px-3 py-1.5 rounded-lg bg-[var(--surface-subtle)] text-[var(--ink-secondary)] hover:text-[var(--brand-primary)] hover:bg-[var(--surface-card)] text-xs font-mono font-medium border border-[var(--border-subtle)] transition-all cursor-pointer self-start sm:self-auto shrink-0 flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-sky-50 to-blue-50 hover:from-sky-100 hover:to-blue-100 text-sky-800 text-xs font-mono font-bold border border-sky-200/80 shadow-2xs hover:shadow-xs transition-all cursor-pointer self-start sm:self-center shrink-0"
           >
-            <span>🤖</span>
+            <span className="text-sm">🤖</span>
             <span>Ask Copilot about {activeSource.name.split(' ')[0]}</span>
           </button>
         )}
       </div>
 
-      {/* Source Selector Chips */}
-      <div className="flex flex-wrap gap-2">
-        {SOURCES.map((source) => {
-          const isSelected = source.id === selectedSourceId;
+      {/* Aerodynamic Particle-to-Gas Spectrum Visualization */}
+      <div className="rounded-xl border border-slate-200/90 bg-gradient-to-r from-slate-50 via-sky-50/40 to-slate-50 p-4 space-y-2">
+        <div className="flex items-center justify-between text-[11px] font-mono text-slate-600">
+          <span className="font-bold uppercase tracking-wider text-slate-700">
+            Aerodynamic Size Spectrum (Logarithmic Microns)
+          </span>
+          <span>HEPA traps particles ≥ 0.3µm • Carbon traps gases &lt; 0.01µm</span>
+        </div>
 
-          return (
-            <button
-              key={source.id}
-              type="button"
-              onClick={() => setSelectedSourceId(source.id)}
-              className={`px-3 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer border flex items-center gap-2 ${
-                isSelected
-                  ? 'bg-[var(--brand-surface)] text-[var(--brand-primary)] border-[var(--brand-primary)] shadow-xs font-semibold'
-                  : 'bg-white hover:bg-[var(--surface-subtle)] text-[var(--ink-secondary)] border-[var(--border-subtle)]'
-              }`}
-              aria-pressed={isSelected}
-            >
-              <span className="text-base" aria-hidden="true">{source.icon}</span>
-              <span>{source.name}</span>
-            </button>
-          );
-        })}
+        {/* Visual Spectrum Bar */}
+        <div className="grid grid-cols-4 gap-2 text-center text-xs">
+          <div className="bg-white p-2.5 rounded-lg border border-slate-200 shadow-2xs">
+            <span className="text-[10px] font-mono font-bold text-amber-700 block">10 µm (PM₁₀)</span>
+            <strong className="text-slate-900 block text-xs mt-0.5">Coarse Dust &amp; Pollen</strong>
+            <span className="text-[9px] text-slate-500 block leading-tight mt-1">
+              Resuspended by sweeping; trapped by pre-filter
+            </span>
+          </div>
+          <div className="bg-white p-2.5 rounded-lg border border-slate-200 shadow-2xs">
+            <span className="text-[10px] font-mono font-bold text-sky-700 block">2.5 µm (PM₂.₅)</span>
+            <strong className="text-slate-900 block text-xs mt-0.5">Soot &amp; Infiltration</strong>
+            <span className="text-[9px] text-slate-500 block leading-tight mt-1">
+              Enters via cracks; 99.97% trapped by HEPA
+            </span>
+          </div>
+          <div className="bg-white p-2.5 rounded-lg border border-slate-200 shadow-2xs">
+            <span className="text-[10px] font-mono font-bold text-rose-700 block">0.1 µm (Ultrafine)</span>
+            <strong className="text-slate-900 block text-xs mt-0.5">Cooking Aerosols</strong>
+            <span className="text-[9px] text-slate-500 block leading-tight mt-1">
+              Deep alveolar penetration; captured by range hood
+            </span>
+          </div>
+          <div className="bg-white p-2.5 rounded-lg border border-slate-200 shadow-2xs">
+            <span className="text-[10px] font-mono font-bold text-purple-700 block">&lt;0.001 µm (Gas)</span>
+            <strong className="text-slate-900 block text-xs mt-0.5">NO₂ &amp; Chemical VOCs</strong>
+            <span className="text-[9px] text-slate-500 block leading-tight mt-1">
+              Bypasses HEPA; requires activated carbon
+            </span>
+          </div>
+        </div>
       </div>
 
-      {/* Active Source Card Detail */}
-      <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-subtle)]/40 p-4 sm:p-5 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[var(--border-subtle)] pb-3">
-          <div className="flex items-center gap-2.5">
-            <span className="text-2xl" aria-hidden="true">{activeSource.icon}</span>
-            <div>
-              <h3 className="text-sm sm:text-base font-bold text-[var(--ink-primary)] font-sans">
-                {activeSource.name}
-              </h3>
-              <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-white border border-[var(--border-subtle)] text-[var(--brand-primary)] font-semibold inline-block mt-0.5">
-                {activeSource.typeLabel}
-              </span>
+      {/* Interactive Source Selector & Detail Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        {/* Left Column: 5 Clickable Source Cards (5 cols) */}
+        <div className="lg:col-span-5 space-y-2">
+          <span className="text-[11px] font-mono font-bold text-slate-500 uppercase tracking-wider block mb-1">
+            Household Emission Categories
+          </span>
+          {SOURCES.map((source) => {
+            const isSelected = source.id === activeSourceId;
+            return (
+              <button
+                key={source.id}
+                type="button"
+                onClick={() => setActiveSourceId(source.id)}
+                className={`w-full text-left p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
+                  isSelected
+                    ? 'bg-sky-50/80 border-sky-500 shadow-xs ring-1 ring-sky-500'
+                    : 'bg-white hover:bg-slate-50 border-slate-200/90'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <span className="text-xl" aria-hidden="true">{source.icon}</span>
+                  <div>
+                    <h3 className="text-xs sm:text-sm font-bold text-slate-900 leading-tight">
+                      {source.name}
+                    </h3>
+                    <span className="text-[10px] font-mono text-slate-500">
+                      {source.emissionLabel}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <span
+                      key={i}
+                      className={`h-2 w-1.5 rounded-xs ${
+                        i < source.emissionScore ? 'bg-rose-500' : 'bg-slate-200'
+                      }`}
+                    />
+                  ))}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Right Column: Deep Dive Action Panel (7 cols) */}
+        <div className="lg:col-span-7 rounded-xl border border-slate-200 bg-slate-50/70 p-4 sm:p-5 flex flex-col justify-between space-y-4">
+          <div>
+            <div className="flex items-center justify-between border-b border-slate-200/70 pb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl" aria-hidden="true">{activeSource.icon}</span>
+                <div>
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900 font-sans">
+                    {activeSource.name}
+                  </h3>
+                  <span className="text-xs font-mono font-semibold text-rose-700">
+                    {activeSource.typeLabel}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-3 space-y-3">
+              <div>
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 block mb-1">
+                  Physical Mechanism
+                </span>
+                <p className="text-xs text-slate-700 leading-relaxed font-sans">
+                  {activeSource.whyItMatters}
+                </p>
+              </div>
+
+              <div>
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 block mb-1">
+                  Practical Mitigation Checklist
+                </span>
+                <div className="space-y-1.5">
+                  {activeSource.keyActions.map((act, idx) => (
+                    <div
+                      key={idx}
+                      className="rounded-lg bg-white p-2.5 border border-slate-200 text-xs flex items-start gap-2 text-slate-800 shadow-2xs"
+                    >
+                      <span className="text-emerald-700 font-bold shrink-0 mt-0.5" aria-hidden="true">✓</span>
+                      <span className="leading-snug">{act}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Why it Matters */}
-        <div>
-          <h4 className="text-xs font-mono font-bold text-[var(--ink-muted)] uppercase tracking-wider mb-1">
-            Why It Matters
-          </h4>
-          <p className="text-xs sm:text-sm text-[var(--ink-primary)] leading-relaxed font-sans">
-            {activeSource.whyItMatters}
-          </p>
-        </div>
-
-        {/* Key Actions Checklist */}
-        <div>
-          <h4 className="text-xs font-mono font-bold text-[var(--ink-muted)] uppercase tracking-wider mb-2">
-            Actionable Mitigations
-          </h4>
-          <div className="space-y-2">
-            {activeSource.keyActions.map((action, idx) => (
-              <div
-                key={idx}
-                className="flex items-start gap-2.5 p-2.5 rounded-lg border border-[var(--border-subtle)] bg-white text-xs text-[var(--ink-secondary)]"
-              >
-                <span className="text-[var(--brand-primary)] font-bold text-sm leading-none mt-0.5">✓</span>
-                <span className="leading-relaxed font-sans">{action}</span>
-              </div>
-            ))}
+          <div className="rounded-lg bg-white p-2.5 border border-slate-200 text-[11px] text-slate-600 space-y-1">
+            <strong className="text-slate-800 font-mono text-[10px] uppercase block">
+              Scientific Background:
+            </strong>
+            <p className="leading-normal">{activeSource.technicalDetail}</p>
           </div>
-        </div>
-
-        {/* Scientific In-Depth Footnote */}
-        <div className="p-3 rounded-lg bg-white border border-[var(--border-subtle)] text-[11px] text-[var(--ink-muted)] space-y-0.5">
-          <span className="font-bold font-mono text-[var(--ink-secondary)] uppercase text-[10px] block">
-            Scientific Context:
-          </span>
-          <p className="leading-relaxed">
-            {activeSource.technicalDetail}
-          </p>
         </div>
       </div>
     </section>

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { RoomType, RoomProfile } from '@/domain/indoor/types';
+import { RoomType } from '@/domain/indoor/types';
 import { getStandardRoomProfiles } from '@/domain/indoor/calculations';
 
 interface TheAirAwareHomeProps {
@@ -26,190 +26,184 @@ export function TheAirAwareHome({
   return (
     <section
       aria-labelledby="airaware-home-heading"
-      className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-card)] p-4 sm:p-6 shadow-xs space-y-5"
+      className="h-full rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-xs space-y-2.5 sm:space-y-3 flex flex-col justify-start overflow-hidden"
     >
-      {/* Header with Scientific Model Badging */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[var(--border-subtle)] pb-4">
-        <div>
-          <div className="flex items-center gap-2">
+      {/* Header */}
+      <div className="border-b border-slate-100 pb-2.5 space-y-1.5">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-xl shrink-0" aria-hidden="true">🏠</span>
             <h2
               id="airaware-home-heading"
-              className="text-base sm:text-lg font-bold text-[var(--ink-primary)] font-sans"
+              className="text-base sm:text-lg font-bold text-slate-900 font-sans tracking-tight truncate"
             >
               The AirAware Home
             </h2>
-            <span className="text-[11px] font-mono font-semibold px-2.5 py-0.5 rounded-full bg-[var(--surface-subtle)] text-[var(--ink-secondary)] border border-[var(--border-subtle)]">
-              Interactive Educational Model
-            </span>
           </div>
-          <p className="text-xs text-[var(--ink-muted)] mt-1">
-            Explore micro-environment vulnerabilities and localized exposure mitigations.
-          </p>
+
+          {onAskCopilot && (
+            <button
+              type="button"
+              onClick={() =>
+                onAskCopilot(
+                  `How can I protect air quality in my ${currentRoom.name} (${currentArea}m²) against ${currentRoom.primaryPollutantRisks[0]?.pollutant || 'indoor pollutants'}?`
+                )
+              }
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-sky-50 to-blue-50 hover:from-sky-100 hover:to-blue-100 text-sky-800 text-xs font-mono font-bold border border-sky-200/80 shadow-2xs hover:shadow-xs transition-all cursor-pointer shrink-0"
+            >
+              <span className="text-sm">🤖</span>
+              <span>Ask Copilot</span>
+            </button>
+          )}
         </div>
 
-        {/* Explicit No-Sensor Disclaimer Badge */}
-        <div className="flex items-center gap-1.5 self-start sm:self-auto px-2.5 py-1 rounded-lg bg-amber-50/80 border border-amber-200 text-amber-900 text-[11px] font-mono font-medium">
-          <span aria-hidden="true">🔒</span>
-          <span>No Indoor Sensor Required • Scenario Explorer</span>
+        <div className="flex items-center gap-2 min-w-0 flex-wrap sm:flex-nowrap">
+          <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 shrink-0">
+            Interactive Scenario Explorer
+          </span>
+          <p className="text-xs text-slate-500 whitespace-nowrap">
+            Room vulnerabilities &amp; localized mitigations.
+          </p>
         </div>
       </div>
 
-      {/* SVG Interactive Architectural Cutaway */}
-      <div className="relative w-full rounded-xl bg-[var(--surface-subtle)]/70 p-3 sm:p-5 border border-[var(--border-subtle)] overflow-hidden">
-        {/* Subtle Room Labels in SVG Cross-Section */}
-        <div className="grid grid-cols-2 gap-3 sm:gap-4 max-w-2xl mx-auto">
+      {/* Architectural Room Selection Grid - Larger & Generous Boxes */}
+      <div className="rounded-xl border border-slate-200/90 bg-gradient-to-b from-slate-50 to-slate-100/60 p-3 sm:p-3.5 space-y-2">
+        <div className="flex items-center justify-between text-[11px] font-mono text-slate-500">
+          <span className="font-bold uppercase tracking-wider text-slate-700">
+            Architectural Room Selection
+          </span>
+          <span className="text-[10px]">Click a room to inspect breathing zone</span>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
           {rooms.map((room) => {
             const isSelected = room.id === selectedRoomId;
             const area = roomAreas[room.id] || room.defaultAreaM2;
+
+            const vectorBadge =
+              room.id === 'kitchen'
+                ? { label: 'Cooking Fumes & NO₂', color: 'bg-rose-50 text-rose-700 border-rose-200' }
+                : room.id === 'living_room'
+                ? { label: 'Dust & Infiltration', color: 'bg-amber-50 text-amber-700 border-amber-200' }
+                : room.id === 'bedroom'
+                ? { label: 'CO₂ & Night Airflow', color: 'bg-blue-50 text-blue-700 border-blue-200' }
+                : { label: 'Resuspended Dust', color: 'bg-emerald-50 text-emerald-700 border-emerald-200' };
 
             return (
               <button
                 key={room.id}
                 type="button"
                 onClick={() => onSelectRoom(room.id)}
-                className={`group relative text-left p-3.5 sm:p-4 rounded-xl transition-all cursor-pointer border ${
+                className={`relative text-left p-3 sm:p-3.5 rounded-xl transition-all cursor-pointer border flex flex-col justify-between min-h-[88px] sm:min-h-[96px] ${
                   isSelected
-                    ? 'bg-white border-[var(--brand-primary)] shadow-md ring-2 ring-[var(--brand-primary)]/20'
-                    : 'bg-white/80 hover:bg-white border-[var(--border-subtle)] hover:border-[var(--brand-primary)]/40 hover:shadow-xs'
+                    ? 'bg-white border-sky-500 shadow-md ring-2 ring-sky-500/20'
+                    : 'bg-white/95 hover:bg-white border-slate-200/90 hover:border-sky-300 hover:shadow-xs'
                 }`}
                 aria-pressed={isSelected}
                 aria-label={`Select ${room.name}`}
               >
-                <div className="flex items-center justify-between">
-                  <span className="text-2xl sm:text-3xl" aria-hidden="true">
-                    {room.icon}
-                  </span>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[var(--surface-subtle)] text-[var(--ink-secondary)] font-medium border border-[var(--border-subtle)]">
-                    {area} m² <span className="text-[9px] text-[var(--ink-muted)]">[User]</span>
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl" aria-hidden="true">{room.icon}</span>
+                    <div>
+                      <h3 className="text-xs sm:text-sm font-bold text-slate-900 font-sans leading-tight">
+                        {room.name}
+                      </h3>
+                      <span className="text-[10px] text-slate-500 font-sans block leading-tight">
+                        {room.tag}
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 font-bold border border-slate-200 shrink-0">
+                    {area} m²
                   </span>
                 </div>
 
-                <h3 className="text-sm font-bold text-[var(--ink-primary)] font-sans mt-2 group-hover:text-[var(--brand-primary)] transition-colors">
-                  {room.name}
-                </h3>
-
-                <p className="text-[11px] text-[var(--ink-muted)] mt-0.5 line-clamp-1">
-                  {room.tag}
-                </p>
-
-                {isSelected && (
-                  <span className="absolute top-2 right-2 flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--brand-primary)] opacity-75" />
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--brand-primary)]" />
+                <div className="mt-2 flex items-center justify-between">
+                  <span
+                    className={`text-[9px] font-mono font-semibold px-2 py-0.5 rounded-full border ${vectorBadge.color}`}
+                  >
+                    {vectorBadge.label}
                   </span>
-                )}
+                  {isSelected && (
+                    <span className="text-[10px] font-mono font-bold text-sky-700 flex items-center gap-1">
+                      <span className="h-2 w-2 rounded-full bg-sky-500 animate-pulse" />
+                      Active
+                    </span>
+                  )}
+                </div>
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* Selected Room Deep Dive Panel */}
-      <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-card)] p-4 sm:p-5 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[var(--border-subtle)] pb-3">
-          <div className="flex items-center gap-2.5">
-            <span className="text-2xl" aria-hidden="true">{currentRoom.icon}</span>
+      {/* Selected Room Deep Dive Panel - Directly Connected with Zero Empty Space */}
+      <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3 sm:p-3.5 space-y-2.5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200/70 pb-2">
+          <div className="flex items-center gap-2">
+            <span className="text-lg" aria-hidden="true">{currentRoom.icon}</span>
             <div>
-              <h3 className="text-base font-bold text-[var(--ink-primary)] font-sans">
+              <span className="text-xs font-bold text-slate-900 font-sans">
                 {currentRoom.name}
-              </h3>
-              <span className="text-xs text-[var(--brand-primary)] font-medium font-sans">
-                {currentRoom.tag}
+              </span>
+              <span className="text-[11px] text-slate-500 ml-2 font-mono">
+                [Calculated Volume: {(currentArea * 2.7).toFixed(1)} m³ at 2.7m ceiling]
               </span>
             </div>
           </div>
 
-          {/* Area Customization Control */}
-          <div className="flex items-center gap-2 self-start sm:self-auto bg-[var(--surface-subtle)] px-3 py-1.5 rounded-lg border border-[var(--border-subtle)]">
-            <label htmlFor={`area-input-${currentRoom.id}`} className="text-xs text-[var(--ink-secondary)] font-medium">
+          <div className="flex items-center gap-2">
+            <label htmlFor="room-area-input" className="text-xs font-semibold text-slate-700">
               Floor Area:
             </label>
-            <input
-              id={`area-input-${currentRoom.id}`}
-              type="number"
-              min="4"
-              max="150"
-              value={currentArea}
-              onChange={(e) => onUpdateArea(currentRoom.id, Number(e.target.value))}
-              className="w-14 px-1.5 py-0.5 text-xs font-mono font-bold text-[var(--ink-primary)] bg-white rounded border border-[var(--border-subtle)] text-right focus:outline-none focus:ring-1 focus:ring-[var(--brand-primary)]"
-            />
-            <span className="text-xs font-mono text-[var(--ink-muted)]">m²</span>
+            <div className="flex items-center">
+              <input
+                id="room-area-input"
+                type="number"
+                min={4}
+                max={150}
+                value={currentArea}
+                onChange={(e) => onUpdateArea(currentRoom.id, Math.max(4, Number(e.target.value) || 4))}
+                className="w-16 px-2 py-0.5 text-xs font-mono font-bold bg-white text-slate-900 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-sky-500"
+              />
+              <span className="text-xs font-mono text-slate-500 ml-1">m²</span>
+            </div>
           </div>
         </div>
 
-        {/* Primary Pollution Risks Grid */}
-        <div>
-          <h4 className="text-xs font-mono font-bold text-[var(--ink-muted)] uppercase tracking-wider mb-2">
-            Key Environmental Exposure Vectors
-          </h4>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-            {currentRoom.primaryPollutantRisks.map((risk, idx) => (
+        {/* Actionable Micro-Mitigations */}
+        <div className="space-y-1">
+          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 block">
+            Practical Daily Action Steps
+          </span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {currentRoom.practicalMitigations.slice(0, 2).map((mitigation, idx) => (
               <div
                 key={idx}
-                className="p-3 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-subtle)]/40 text-xs space-y-1"
+                className="rounded-lg bg-white p-2 border border-slate-200/80 text-xs space-y-0.5 shadow-2xs"
               >
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-[var(--ink-primary)] font-sans">
-                    {risk.pollutant}
-                  </span>
-                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 uppercase font-semibold">
-                    {risk.severity} risk
-                  </span>
+                <div className="flex items-start gap-1.5">
+                  <span className="text-emerald-700 font-bold shrink-0 mt-0.5" aria-hidden="true">✓</span>
+                  <strong className="text-slate-900 font-semibold leading-tight text-[11px]">
+                    {mitigation.action}
+                  </strong>
                 </div>
-                <p className="text-[11px] text-[var(--ink-secondary)] leading-relaxed">
-                  {risk.source}
+                <p className="text-[10px] text-slate-600 leading-normal pl-3.5">
+                  {mitigation.detail}
                 </p>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Practical Mitigations Checklist */}
-        <div>
-          <h4 className="text-xs font-mono font-bold text-[var(--ink-muted)] uppercase tracking-wider mb-2">
-            Practical Daily Action Steps
-          </h4>
-          <ul className="space-y-2">
-            {currentRoom.practicalMitigations.map((mitigation, idx) => (
-              <li
-                key={idx}
-                className="flex items-start gap-2.5 p-2.5 rounded-lg border border-[var(--border-subtle)] bg-white text-xs text-[var(--ink-secondary)]"
-              >
-                <span className="text-[var(--brand-primary)] font-bold text-sm leading-none mt-0.5">✓</span>
-                <div>
-                  <strong className="text-[var(--ink-primary)] font-semibold font-sans block">
-                    {mitigation.action}
-                  </strong>
-                  <span className="text-[11px] text-[var(--ink-muted)] leading-relaxed mt-0.5 block">
-                    {mitigation.detail}
-                  </span>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Filtration Consideration & Contextual Copilot Trigger */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-xl bg-[var(--brand-surface)]/60 border border-[var(--brand-primary)]/20 text-xs">
-          <div className="space-y-0.5 max-w-xl">
-            <span className="font-bold text-[var(--brand-primary)] font-mono text-[11px] uppercase tracking-wider block">
-              💡 Air Cleaning Strategy
-            </span>
-            <p className="text-[11px] text-[var(--ink-secondary)] leading-relaxed">
-              {currentRoom.filtrationAdvice}
-            </p>
-          </div>
-
-          {onAskCopilot && (
-            <button
-              type="button"
-              onClick={() => onAskCopilot(`How can I improve air quality in my ${currentRoom.name}?`)}
-              className="px-3 py-1.5 rounded-lg bg-white text-[var(--brand-primary)] hover:bg-[var(--brand-surface)] text-xs font-mono font-bold border border-[var(--brand-primary)]/30 shadow-2xs transition-all cursor-pointer self-start sm:self-auto shrink-0 flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
-            >
-              <span>🤖</span>
-              <span>Ask Copilot about {currentRoom.name}</span>
-            </button>
-          )}
+        {/* Air Cleaning Strategy */}
+        <div className="rounded-lg bg-sky-50/80 border border-sky-200/80 p-2 flex items-start gap-1.5 text-xs text-sky-950">
+          <span className="text-sky-700 font-bold shrink-0 text-[11px]">💡 Strategy:</span>
+          <span className="text-[11px] leading-snug">
+            {currentRoom.filtrationAdvice}
+          </span>
         </div>
       </div>
     </section>
