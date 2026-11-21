@@ -42,23 +42,7 @@ export function ForecastTimeline({
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const timelineContainerRef = useRef<HTMLDivElement>(null);
 
-  if (!forecast || forecast.length === 0) {
-    return (
-      <section aria-labelledby="forecast-telemetry-heading" className="w-full">
-        <h2
-          id="forecast-telemetry-heading"
-          className="text-base font-bold tracking-tight text-[var(--ink-primary)] font-sans"
-        >
-          24-Hour Modelled Forecast
-        </h2>
-        <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-card)] p-6 text-center text-xs text-[var(--ink-muted)]">
-          Hourly forecast data unavailable for the selected location.
-        </div>
-      </section>
-    );
-  }
-
-  const standardLabel = activeStandard === 'EUROPEAN_EAQI' ? 'European EAQI' : 'US EPA AQI';
+  const safeForecast = useMemo(() => forecast ?? [], [forecast]);
 
   // Identify peak and best projected hour based on available data
   let peakPoint: ForecastPoint | null = null;
@@ -66,7 +50,7 @@ export function ForecastTimeline({
   let maxAqi = -1;
   let minAqi = Infinity;
 
-  for (const p of forecast) {
+  for (const p of safeForecast) {
     if (p.activeAqi !== null && Number.isFinite(p.activeAqi)) {
       if (p.activeAqi > maxAqi) {
         maxAqi = p.activeAqi;
@@ -81,19 +65,29 @@ export function ForecastTimeline({
 
   // Active inspected point is either hovered or explicitly selected
   const activeIndex = hoveredIndex ?? selectedIndex;
-  const activePoint = forecast[activeIndex] ?? forecast[0];
+  const activePoint = safeForecast[activeIndex] ?? safeForecast[0];
 
   // SVG Spline calculations (viewBox 0 0 1000 220)
   const svgData = useMemo(() => {
+    if (safeForecast.length === 0) {
+      return {
+        points: [] as { x: number; y: number; aqi: number | null; point: ForecastPoint; index: number }[],
+        splineD: '',
+        areaD: '',
+        thresholds: [] as { val: number; label: string; y: number; color: string }[],
+        maxScale: 100,
+        chartBottom: 185,
+      };
+    }
     const isEaqi = activeStandard === 'EUROPEAN_EAQI';
     const maxScale = isEaqi ? 100 : Math.max(220, maxAqi > 0 ? maxAqi * 1.15 : 220);
     const chartBottom = 185;
     const chartTop = 35;
     const chartHeight = chartBottom - chartTop;
 
-    const points = forecast.map((p, i) => {
+    const points = safeForecast.map((p, i) => {
       const aqi = p.activeAqi ?? 0;
-      const x = 35 + (i / Math.max(1, forecast.length - 1)) * (1000 - 70);
+      const x = 35 + (i / Math.max(1, safeForecast.length - 1)) * (1000 - 70);
       const ratio = Math.min(1, Math.max(0, aqi / maxScale));
       const y = chartBottom - ratio * chartHeight;
       return { x, y, aqi: p.activeAqi, point: p, index: i };
@@ -119,7 +113,25 @@ export function ForecastTimeline({
         ];
 
     return { points, splineD, areaD, thresholds, maxScale, chartBottom };
-  }, [forecast, activeStandard, maxAqi]);
+  }, [safeForecast, activeStandard, maxAqi]);
+
+  if (!forecast || forecast.length === 0) {
+    return (
+      <section aria-labelledby="forecast-telemetry-heading" className="w-full">
+        <h2
+          id="forecast-telemetry-heading"
+          className="text-base font-bold tracking-tight text-[var(--ink-primary)] font-sans"
+        >
+          24-Hour Modelled Forecast
+        </h2>
+        <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-card)] p-6 text-center text-xs text-[var(--ink-muted)]">
+          Hourly forecast data unavailable for the selected location.
+        </div>
+      </section>
+    );
+  }
+
+  const standardLabel = activeStandard === 'EUROPEAN_EAQI' ? 'European EAQI' : 'US EPA AQI';
 
   // Keyboard navigation handler for stepping through hours
   const handleKeyDown = (e: React.KeyboardEvent, index: number) => {

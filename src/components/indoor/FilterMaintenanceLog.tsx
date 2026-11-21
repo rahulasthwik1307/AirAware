@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { FilterLogState } from '@/domain/indoor/types';
 
 interface FilterMaintenanceLogProps {
@@ -16,20 +16,28 @@ export function FilterMaintenanceLog({
 }: FilterMaintenanceLogProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [intervalMonths, setIntervalMonths] = useState(filterLog.customIntervalMonths || 6);
-  const [installDate, setInstallDate] = useState(filterLog.installDate || new Date().toISOString().split('T')[0]);
+  const [installDate, setInstallDate] = useState(() => filterLog.installDate || new Date().toISOString().split('T')[0]);
+  const [now] = useState(() => Date.now());
 
   // Calculate elapsed days and estimated lifecycle
-  const installedAt = new Date(filterLog.installDate || installDate).getTime();
-  const now = Date.now();
-  const daysElapsed = Math.max(0, Math.floor((now - installedAt) / (1000 * 60 * 60 * 24)));
-  const totalLifespanDays = Math.max(30, (filterLog.customIntervalMonths || intervalMonths) * 30.5);
-  const percentElapsed = Math.min(100, Math.round((daysElapsed / totalLifespanDays) * 100));
-  const daysRemaining = Math.max(0, Math.round(totalLifespanDays - daysElapsed));
+  const { daysElapsed, totalLifespanDays, percentElapsed, daysRemaining, isVacuumDue, daysSinceVacuum } = useMemo(() => {
+    const installedAt = new Date(filterLog.installDate || installDate).getTime();
+    const elapsed = Math.max(0, Math.floor((now - installedAt) / (1000 * 60 * 60 * 24)));
+    const totalDays = Math.max(30, (filterLog.customIntervalMonths || intervalMonths) * 30.5);
+    const pct = Math.min(100, Math.round((elapsed / totalDays) * 100));
+    const remaining = Math.max(0, Math.round(totalDays - elapsed));
 
-  // Pre-filter vacuum status (recommend every 21 days)
-  const lastVacuumAt = filterLog.lastVacuumDate ? new Date(filterLog.lastVacuumDate).getTime() : installedAt;
-  const daysSinceVacuum = Math.max(0, Math.floor((now - lastVacuumAt) / (1000 * 60 * 60 * 24)));
-  const isVacuumDue = daysSinceVacuum >= 21;
+    const lastVacuumAt = filterLog.lastVacuumDate ? new Date(filterLog.lastVacuumDate).getTime() : installedAt;
+    const sinceVacuum = Math.max(0, Math.floor((now - lastVacuumAt) / (1000 * 60 * 60 * 24)));
+    return {
+      daysElapsed: elapsed,
+      totalLifespanDays: totalDays,
+      percentElapsed: pct,
+      daysRemaining: remaining,
+      isVacuumDue: sinceVacuum >= 21,
+      daysSinceVacuum: sinceVacuum,
+    };
+  }, [filterLog.installDate, filterLog.customIntervalMonths, filterLog.lastVacuumDate, installDate, intervalMonths, now]);
 
   const handleSave = () => {
     onUpdateLog({

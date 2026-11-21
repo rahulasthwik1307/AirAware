@@ -304,6 +304,7 @@ export function IncidentJournalCard({
                 {/* Photo Preview (Clean, without duplicate download button) */}
                 {incident.photoDataUrl && (
                   <div className="pt-1">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={incident.photoDataUrl}
                       alt="Incident photo evidence"

@@ -316,6 +316,7 @@ export function PollutionIncidentReporterCard({
                   </button>
                 </div>
                 <div className="flex justify-center bg-white rounded-lg p-1.5 border border-slate-200 shadow-2xs">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={photoDataUrl}
                     alt="Uploaded incident preview"

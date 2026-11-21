@@ -48,13 +48,14 @@ export function useAirCopilot({
   const cooldownTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const isThinkingRef = useRef(false);
-  isThinkingRef.current = isThinking;
-
   const cooldownRef = useRef<number | null>(null);
-  cooldownRef.current = cooldownSeconds;
-
   const inputQueryRef = useRef('');
-  inputQueryRef.current = inputQuery;
+
+  useEffect(() => {
+    isThinkingRef.current = isThinking;
+    cooldownRef.current = cooldownSeconds;
+    inputQueryRef.current = inputQuery;
+  }, [isThinking, cooldownSeconds, inputQuery]);
 
   // Hydrate from localStorage on client mount
   useEffect(() => {
