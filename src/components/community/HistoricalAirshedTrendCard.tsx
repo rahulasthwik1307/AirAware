@@ -37,9 +37,9 @@ export function HistoricalAirshedTrendCard({
             </span>
             <h2
               id="historical-airshed-heading"
-              className="text-base sm:text-lg font-bold text-[var(--ink-primary)] font-sans tracking-tight"
+              className="text-base sm:text-lg font-bold text-[var(--ink-primary)] font-sans tracking-tight truncate"
             >
-              7-Day Air Quality Trend &amp; History
+              7-Day Air Quality Trend
             </h2>
           </div>
           <span className="text-[10px] font-mono font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 shrink-0">

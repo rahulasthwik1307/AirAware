@@ -81,10 +81,11 @@ export function IncidentJournalCard({
       return;
     }
 
+    const text = formatSocietyIncidentNotice(incident);
+
+    // If mobile Web Share with file support is available (Android / iOS)
     if (typeof navigator !== 'undefined' && navigator.share) {
       const file = dataUrlToFile(incident.photoDataUrl, `incident-${incident.id.slice(0, 8)}.jpg`);
-      const text = formatSocietyIncidentNotice(incident);
-
       if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
         try {
           await navigator.share({
@@ -92,18 +93,39 @@ export function IncidentJournalCard({
             text,
             files: [file],
           });
-          setShareStatus(`Shared photo for #${incident.id.slice(0, 6)}`);
-          setTimeout(() => setShareStatus(null), 3000);
+          setShareStatus(`✓ Shared photo & notice for #${incident.id.slice(0, 6)}`);
+          setTimeout(() => setShareStatus(null), 4000);
           return;
         } catch {
-          // Fall back to download + web share if canceled
+          // Continue to desktop clipboard fallback if user closed share sheet or unsupported
         }
       }
     }
 
-    // Desktop or non-supported fallback: Download photo & open WhatsApp
+    // Laptop & Desktop Fallback:
+    // 1. Copy image to system clipboard (so user can press Ctrl+V in WhatsApp Web)
+    try {
+      const res = await fetch(incident.photoDataUrl);
+      const blob = await res.blob();
+      if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.write) {
+        await navigator.clipboard.write([
+          new ClipboardItem({ [blob.type]: blob }),
+        ]);
+      }
+    } catch {
+      // Ignore clipboard write restrictions
+    }
+
+    // 2. Download photo file to user's downloads as backup
     triggerPhotoDownload(incident.photoDataUrl, incident.id);
-    handleShareSocietyWhatsApp(incident);
+
+    // 3. Open WhatsApp Web with the pre-formatted text
+    const encoded = encodeURIComponent(text);
+    window.open(`https://api.whatsapp.com/send?text=${encoded}`, '_blank');
+
+    // 4. Show friendly guidance toast
+    setShareStatus(`📸 Photo copied to clipboard & downloaded! In WhatsApp, just press Ctrl+V to attach photo with text.`);
+    setTimeout(() => setShareStatus(null), 7000);
   };
 
   const handleDownloadPhoto = (incident: PollutionIncident) => {
@@ -127,9 +149,9 @@ export function IncidentJournalCard({
             </span>
             <h2
               id="incident-journal-heading"
-              className="text-base sm:text-lg font-bold text-[var(--ink-primary)] font-sans tracking-tight"
+              className="text-base sm:text-lg font-bold text-[var(--ink-primary)] font-sans tracking-tight truncate"
             >
-              Citizen Incident Reports
+              Saved Community Reports
             </h2>
           </div>
           <span className="text-[10px] font-mono font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 shrink-0">
@@ -282,16 +304,16 @@ export function IncidentJournalCard({
                       <span>Send Municipal Grievance</span>
                     </button>
 
-                    {/* Action 3: One-Tap Photo + Text Share (Mobile) */}
+                    {/* Action 3: One-Tap Photo + Text Share (Mobile & Desktop) */}
                     {incident.photoDataUrl && (
                       <button
                         type="button"
                         onClick={() => handleShareWithPhoto(incident)}
                         className="px-3 py-1.5 text-xs font-semibold rounded-xl bg-teal-50 hover:bg-teal-100 text-teal-900 border border-teal-200 transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs sm:col-span-1"
-                        title="Share with photo attached via WhatsApp or phone apps"
+                        title="Share photo & text to WhatsApp (auto-copies photo on laptop)"
                       >
-                        <span>📤</span>
-                        <span>Share with Photo</span>
+                        <span>📸</span>
+                        <span>Share Photo + Text</span>
                       </button>
                     )}
 

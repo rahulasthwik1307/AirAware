@@ -131,9 +131,9 @@ export function PollutionIncidentReporterCard({
             </span>
             <h2
               id="incident-reporter-heading"
-              className="text-base sm:text-lg font-bold text-[var(--ink-primary)] font-sans tracking-tight"
+              className="text-base sm:text-lg font-bold text-[var(--ink-primary)] font-sans tracking-tight truncate"
             >
-              Citizen Pollution Incident Reporter
+              Report Pollution Incident
             </h2>
           </div>
           <button

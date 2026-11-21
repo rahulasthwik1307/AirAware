@@ -91,9 +91,9 @@ export function AirshedAlertFeedCard({
             </span>
             <h2
               id="airshed-alerts-heading"
-              className="text-base sm:text-lg font-bold text-[var(--ink-primary)] font-sans tracking-tight"
+              className="text-base sm:text-lg font-bold text-[var(--ink-primary)] font-sans tracking-tight truncate"
             >
-              Verified Smog &amp; Environmental Alerts
+              Airshed Alerts &amp; Warnings
             </h2>
           </div>
           <button
