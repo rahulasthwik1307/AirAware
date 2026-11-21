@@ -871,9 +871,9 @@ export function AqiHeroCard({
           </div>
 
           {/* Dual-Scale Legend (US EPA / EAQI + 🇮🇳 India CPCB Scale) */}
-          <div className="space-y-1">
+          <div className="space-y-1 overflow-x-auto scrollbar-none pb-0.5">
             {activeStandard === 'EUROPEAN_EAQI' ? (
-              <div className="flex justify-between text-xs font-mono text-slate-600 tabular-nums">
+              <div className="flex justify-between text-xs font-mono text-slate-600 tabular-nums min-w-[340px]">
                 <span>0 Good</span>
                 <span>20 Fair</span>
                 <span>40 Moderate</span>
@@ -882,7 +882,7 @@ export function AqiHeroCard({
                 <span>100+ Extr.</span>
               </div>
             ) : (
-              <>
+              <div className="min-w-[480px] sm:min-w-0 space-y-1">
                 <div className="flex justify-between text-xs font-mono font-bold text-slate-700 tabular-nums">
                   <span>0 Good</span>
                   <span>50 Mod</span>
@@ -891,7 +891,7 @@ export function AqiHeroCard({
                   <span>200 Very Unhealthy</span>
                   <span>300+ Haz</span>
                 </div>
-                <div className="flex justify-between text-[11px] font-mono text-emerald-800 font-semibold bg-emerald-50/70 px-2 py-1 rounded-lg border border-emerald-200">
+                <div className="flex justify-between text-[11px] font-mono text-emerald-800 font-semibold bg-emerald-50/70 px-2.5 py-1 rounded-lg border border-emerald-200 gap-1.5 whitespace-nowrap">
                   <span>🇮🇳 CPCB Good (0–50)</span>
                   <span>Satisfactory (51–100)</span>
                   <span>Moderate (101–200)</span>
@@ -899,7 +899,7 @@ export function AqiHeroCard({
                   <span>Very Poor (301–400)</span>
                   <span>Severe (401–500+)</span>
                 </div>
-              </>
+              </div>
             )}
           </div>
 

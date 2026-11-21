@@ -424,13 +424,19 @@ export function OnboardingModal({
 
                 {/* Search Any City Input */}
                 <div ref={searchContainerRef} className="relative flex-1">
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search any city (e.g. Hyderabad, Pune, London)..."
-                    className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-teal-700 focus:ring-1 focus:ring-teal-700 focus:outline-none transition-all"
-                  />
+                  <label htmlFor="onboarding-city-search" className="block w-full">
+                    <span className="sr-only">Search city or region</span>
+                    <input
+                      id="onboarding-city-search"
+                      name="citySearch"
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search any city (e.g. Hyderabad, Pune, London)..."
+                      aria-label="Search any city or region"
+                      className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-teal-700 focus:ring-1 focus:ring-teal-700 focus:outline-none transition-all"
+                    />
+                  </label>
                   {searchQuery && (
                     <button
                       type="button"
@@ -575,12 +581,18 @@ export function OnboardingModal({
                         : 'border-slate-200 bg-white hover:border-slate-300'
                     }`}
                   >
-                    <input
-                      type="checkbox"
-                      checked={isChecked}
-                      onChange={() => {}} // handled by parent div
-                      className="mt-1 h-4 w-4 shrink-0 rounded border-slate-300 text-teal-700 focus:ring-teal-700"
-                    />
+                    <label htmlFor={`sensitivity-${opt.id}`} className="mt-1 shrink-0 flex items-center">
+                      <span className="sr-only">{opt.title}</span>
+                      <input
+                        id={`sensitivity-${opt.id}`}
+                        name={`sensitivity-${opt.id}`}
+                        type="checkbox"
+                        checked={isChecked}
+                        aria-label={opt.title}
+                        onChange={() => {}} // handled by parent div
+                        className="h-4 w-4 shrink-0 rounded border-slate-300 text-teal-700 focus:ring-teal-700"
+                      />
+                    </label>
                     <div className="flex-1 space-y-0.5">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-bold text-slate-900">

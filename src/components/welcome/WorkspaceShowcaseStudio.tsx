@@ -200,14 +200,20 @@ export function WorkspaceShowcaseStudio() {
                     US EPA (0–500 Scale)
                   </span>
                 </div>
-                <input
-                  type="range"
-                  min="30"
-                  max="500"
-                  value={simulatedAqi}
-                  onChange={(e) => setSimulatedAqi(Number(e.target.value))}
-                  className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-teal-700"
-                />
+                <label htmlFor="simulated-aqi-slider" className="block w-full">
+                  <span className="sr-only">Simulate US EPA Air Quality Index value</span>
+                  <input
+                    id="simulated-aqi-slider"
+                    name="simulatedAqi"
+                    type="range"
+                    min="30"
+                    max="500"
+                    value={simulatedAqi}
+                    aria-label="Simulate US EPA Air Quality Index value"
+                    onChange={(e) => setSimulatedAqi(Number(e.target.value))}
+                    className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-teal-700"
+                  />
+                </label>
                 <div className="flex justify-between text-[10px] font-mono text-slate-500">
                   <span>50 (Good)</span>
                   <span>150 (Unhealthy)</span>
