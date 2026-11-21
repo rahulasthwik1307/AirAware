@@ -48,21 +48,21 @@ export function AirshedAlertFeedCard({
     switch (severity) {
       case 'CRITICAL':
         return (
-          <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold text-rose-800 bg-rose-100/80 px-2 py-0.5 rounded-full border border-rose-300">
-            <span className="w-1.5 h-1.5 rounded-full bg-rose-600 animate-ping" />
-            CRITICAL
+          <span className="inline-flex items-center gap-1 text-[10px] font-mono font-semibold text-rose-800 bg-rose-100/80 px-2 py-0.5 rounded-full border border-rose-300">
+            <span className="w-1.5 h-1.5 rounded-full bg-rose-600" />
+            Critical
           </span>
         );
       case 'VENTILATION':
         return (
-          <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold text-teal-800 bg-teal-100/80 px-2 py-0.5 rounded-full border border-teal-300">
+          <span className="inline-flex items-center gap-1 text-[10px] font-mono font-semibold text-teal-800 bg-teal-100/80 px-2 py-0.5 rounded-full border border-teal-300">
             <span>🪟</span>
-            VENTILATION WINDOW
+            Ventilation Window
           </span>
         );
       case 'ADVISORY':
         return (
-          <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold text-amber-800 bg-amber-100/80 px-2 py-0.5 rounded-full border border-amber-300">
+          <span className="inline-flex items-center gap-1 text-[10px] font-mono font-semibold text-amber-800 bg-amber-100/80 px-2 py-0.5 rounded-full border border-amber-300">
             <span>⚠️</span>
             ADVISORY
           </span>
@@ -112,7 +112,7 @@ export function AirshedAlertFeedCard({
         </div>
         <div className="flex items-center justify-between gap-2 flex-wrap min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-bold uppercase tracking-wider bg-rose-50 text-rose-800 border border-rose-200 shrink-0">
+            <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-rose-50 text-rose-800 border border-rose-200 shrink-0">
               Live Airshed Bulletins
             </span>
             <p className="text-xs text-[var(--ink-secondary)] leading-relaxed">

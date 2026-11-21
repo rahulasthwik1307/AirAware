@@ -147,37 +147,31 @@ const FOCUS_GOALS: readonly {
   readonly workspace: WorkspaceKey;
   readonly title: string;
   readonly desc: string;
-  readonly tag: string;
 }[] = [
   {
     workspace: 'air-intelligence',
     title: 'Outdoor Air Quality & Global Smog Tracking',
     desc: 'View real-time Copernicus satellite models, 3D Earth dispersion, and CPCB standard benchmarks.',
-    tag: 'Workspace 01',
   },
   {
     workspace: 'family-planner',
     title: 'Family Morning Routines & Commute Timing Shifts',
     desc: 'Protect vulnerable family members by rescheduling outdoor hours away from ground inversion smog.',
-    tag: 'Workspace 02',
   },
   {
     workspace: 'indoor-air',
     title: 'Indoor Air Purifier Sizing & Safe Window Timing',
     desc: 'Calculate room CADR/ACH and discover exact afternoon hours when solar heating safely opens windows.',
-    tag: 'Workspace 03',
   },
   {
     workspace: 'cleaner-choices',
     title: 'Sustainable Commute & Tailpipe Carbon Reduction',
     desc: 'Audit solo car emissions against electric metro transit and build low-emission daily habits.',
-    tag: 'Workspace 04',
   },
   {
     workspace: 'community-alerts',
     title: 'Society WhatsApp Alerts & Citizen Pollution Reporting',
     desc: 'Dispatch apartment clean-air notices to security guards and record geo-tagged visual evidence.',
-    tag: 'Workspace 05',
   },
 ];
 
@@ -355,7 +349,7 @@ export function OnboardingModal({
       />
 
       {/* Modal Dialog Card */}
-      <div className="relative w-full max-w-2xl rounded-3xl bg-white border border-slate-200/90 shadow-2xl p-6 sm:p-8 space-y-6 z-10 max-h-[90vh] flex flex-col justify-between overflow-y-auto animate-scaleUp">
+      <div className="relative w-full max-w-2xl rounded-3xl bg-white border border-slate-200/90 shadow-2xl p-5 sm:p-7 space-y-4 sm:space-y-5 z-10 max-h-[92vh] flex flex-col justify-between overflow-y-auto scrollbar-none animate-scaleUp">
         {/* Step Indicator Header */}
         <div className="space-y-3 pb-4 border-b border-slate-100">
           <div className="flex items-center justify-between">
@@ -510,7 +504,7 @@ export function OnboardingModal({
                         setSelectedLocation(city);
                         setGpsStatus(null);
                       }}
-                      className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                      className={`p-2.5 sm:p-3 rounded-xl border text-left transition-all cursor-pointer ${
                         isSelected
                           ? 'border-teal-700 bg-teal-50/70 shadow-2xs'
                           : 'border-slate-200 bg-white hover:border-slate-300'
@@ -575,7 +569,7 @@ export function OnboardingModal({
                   <div
                     key={opt.id}
                     onClick={() => toggleSensitivity(opt.id)}
-                    className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-start gap-3 ${
+                    className={`p-3 sm:p-3.5 rounded-2xl border transition-all cursor-pointer flex items-start gap-3 ${
                       isChecked
                         ? 'border-teal-700 bg-teal-50/50 shadow-2xs'
                         : 'border-slate-200 bg-white hover:border-slate-300'
@@ -585,7 +579,7 @@ export function OnboardingModal({
                       type="checkbox"
                       checked={isChecked}
                       onChange={() => {}} // handled by parent div
-                      className="mt-1 h-4 w-4 rounded border-slate-300 text-teal-700 focus:ring-teal-700"
+                      className="mt-1 h-4 w-4 shrink-0 rounded border-slate-300 text-teal-700 focus:ring-teal-700"
                     />
                     <div className="flex-1 space-y-0.5">
                       <div className="flex items-center justify-between">
@@ -630,26 +624,21 @@ export function OnboardingModal({
                   <div
                     key={goal.workspace}
                     onClick={() => setSelectedWorkspace(goal.workspace)}
-                    className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-start gap-3 ${
+                    className={`p-3 sm:p-3.5 rounded-2xl border transition-all cursor-pointer flex items-start gap-3 ${
                       isSelected
                         ? 'border-teal-700 bg-teal-50/60 shadow-2xs'
                         : 'border-slate-200 bg-white hover:border-slate-300'
                     }`}
                   >
-                    <div className="mt-0.5 flex h-4 w-4 items-center justify-center rounded-full border border-teal-700">
+                    <div className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-teal-700">
                       {isSelected && (
                         <div className="h-2 w-2 rounded-full bg-teal-700" />
                       )}
                     </div>
                     <div className="flex-1 space-y-0.5">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-bold text-slate-900">
-                          {goal.title}
-                        </span>
-                        <span className="text-[11px] font-sans font-semibold text-teal-800 bg-teal-50 px-2.5 py-0.5 rounded-md border border-teal-200">
-                          {goal.tag}
-                        </span>
-                      </div>
+                      <span className="text-sm font-bold text-slate-900 block">
+                        {goal.title}
+                      </span>
                       <p className="text-xs text-slate-600 leading-relaxed font-sans">
                         {goal.desc}
                       </p>

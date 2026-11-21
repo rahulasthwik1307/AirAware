@@ -393,7 +393,7 @@ export function CopilotDrawerShell({
             {/* Suggested Context Question Chips */}
             <div className="border-t border-[var(--border-subtle)] bg-[var(--surface-subtle)]/40 p-3">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--ink-muted)]">
+                <span className="text-[10px] font-semibold text-[var(--ink-muted)] font-sans">
                   Suggested Inquiries ({WORKSPACE_LABELS[activeWorkspace]})
                 </span>
               </div>
@@ -581,7 +581,7 @@ function MessageBubble({
 
         {/* 1. Direct Answer */}
         <div>
-          <span className="text-[10px] font-mono font-bold text-[var(--brand-primary)] uppercase tracking-wider block">
+          <span className="text-[11px] font-semibold text-[var(--brand-primary)] font-sans block">
             Direct Answer
           </span>
           <p className="text-sm font-bold text-[var(--ink-primary)] mt-0.5 leading-snug">
@@ -591,7 +591,7 @@ function MessageBubble({
 
         {/* 2. Atmospheric & Environmental Context */}
         <div className="p-2.5 rounded-lg bg-[var(--surface-subtle)] border border-[var(--border-subtle)] space-y-1 animate-fadeIn">
-          <span className="text-[10px] font-mono font-bold text-[var(--ink-muted)] uppercase block">
+          <span className="text-[11px] font-semibold text-[var(--ink-muted)] font-sans block">
             Environmental Context
           </span>
           <p className="text-xs text-[var(--ink-secondary)] leading-relaxed">
@@ -601,7 +601,7 @@ function MessageBubble({
 
         {/* 3. Recommended Action */}
         <div className="space-y-0.5 animate-fadeIn">
-          <span className="text-[10px] font-mono font-bold text-emerald-800 uppercase tracking-wider block">
+          <span className="text-[11px] font-semibold text-emerald-800 font-sans block">
             Primary Action
           </span>
           <p className="text-xs font-semibold text-[var(--ink-primary)] leading-relaxed">

@@ -89,14 +89,13 @@ export function ScientificGrounding({ report }: ScientificGroundingProps) {
           <div>
             <h2
               id="scientific-grounding-heading"
-              className="text-xs sm:text-sm font-mono font-black uppercase tracking-wider text-[var(--ink-primary)] flex flex-wrap items-center gap-2"
+              className="text-xs sm:text-sm font-bold text-[var(--ink-primary)] font-sans flex flex-wrap items-center gap-2"
             >
               <span className="flex items-center gap-1.5 text-[var(--brand-primary)]">
                 <span>🔬</span>
                 <span>Scientific Grounding</span>
               </span>
-              <span className="text-[var(--ink-muted)] font-normal text-base">//</span>
-              <span className="text-[var(--ink-primary)]">Multi-Standard Sensor Calibration</span>
+              <span className="text-[var(--ink-secondary)]">Multi-Standard Sensor Calibration</span>
               <span aria-hidden="true" className="text-xs text-[var(--ink-muted)] group-open:rotate-180 transition-transform duration-200 ml-1">
                 ▼
               </span>
@@ -105,8 +104,8 @@ export function ScientificGrounding({ report }: ScientificGroundingProps) {
               Transparent mathematical comparison of regulatory averaging intervals, national standards, and CAMS grid physics.
             </p>
           </div>
-          <span className="text-xs font-mono font-bold text-[var(--brand-primary)] bg-[var(--surface-card)] px-3 py-1.5 rounded-lg border border-[var(--border-subtle)] self-start sm:self-auto shadow-2xs group-open:bg-[var(--brand-surface)] transition-colors">
-            OPEN SCIENCE AUDIT ▾
+          <span className="text-xs font-mono font-semibold text-[var(--brand-primary)] bg-[var(--surface-card)] px-3 py-1.5 rounded-lg border border-[var(--border-subtle)] self-start sm:self-auto shadow-2xs group-open:bg-[var(--brand-surface)] transition-colors">
+            Inspect Calibration ▾
           </span>
         </summary>
 
@@ -119,8 +118,8 @@ export function ScientificGrounding({ report }: ScientificGroundingProps) {
                   <span>🇮🇳</span>
                   <span>India CPCB PM2.5 Regulatory Benchmark</span>
                 </span>
-                <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-md bg-[var(--surface-subtle)] text-[var(--ink-primary)] border border-[var(--border-subtle)]">
-                  CPCB PM2.5 BENCHMARK: {cpcbComparison.estimatedAqiRange} ({cpcbComparison.equivalentCategory})
+                <span className="text-xs font-mono font-semibold px-2.5 py-1 rounded-md bg-[var(--surface-subtle)] text-[var(--ink-primary)] border border-[var(--border-subtle)]">
+                  CPCB Benchmark: {cpcbComparison.estimatedAqiRange} ({cpcbComparison.equivalentCategory})
                 </span>
               </div>
               <p className="text-xs text-[var(--ink-secondary)] leading-relaxed">

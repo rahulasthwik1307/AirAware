@@ -326,7 +326,7 @@ export function FamilyDailyBriefing({
 
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-mono font-bold uppercase tracking-wider text-[var(--ink-muted)]">
+              <span className="text-xs font-semibold text-[var(--ink-primary)] font-sans">
                 Smog Exposure Reduction
               </span>
               <span
@@ -354,7 +354,7 @@ export function FamilyDailyBriefing({
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
           {gaugeDeltaCValue > 0 && (
             <div className="flex-1 md:flex-initial p-2.5 px-3.5 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-card)] space-y-0.5">
-              <span className="text-[10px] font-mono text-[var(--ink-muted)] block uppercase tracking-wider">
+              <span className="text-[10px] font-mono text-[var(--ink-muted)] block">
                 Modelled Ambient Difference (ΔC)
               </span>
               <div className="flex items-baseline gap-1">

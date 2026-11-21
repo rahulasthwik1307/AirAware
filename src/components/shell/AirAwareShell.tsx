@@ -291,15 +291,15 @@ export function AirAwareShell() {
             </div>
 
             <div className="space-y-1 font-mono text-[10px] text-slate-500">
-              <span className="font-bold uppercase tracking-wider text-slate-700 block">Scientific Data Feeds</span>
+              <span className="font-semibold text-slate-800 block font-sans text-xs">Scientific Data Feeds</span>
               <p>Atmospheric Telemetry: Copernicus CAMS &amp; Open-Meteo Reanalysis</p>
               <p>Standards: Central Pollution Control Board (CPCB) &amp; WHO Guidelines</p>
             </div>
 
             <div className="space-y-1 font-mono text-[10px] text-slate-500 md:text-right">
-              <span className="font-bold uppercase tracking-wider text-slate-700 block">Privacy Guarantee</span>
+              <span className="font-semibold text-slate-800 block font-sans text-xs">Privacy Guarantee</span>
               <p>🔒 100% Local-First: All routines, habits &amp; notes stay on your device.</p>
-              <p>Zero tracking • ₹0 operational budget • Public health mission</p>
+              <p>Zero tracking, local-first open public health mission.</p>
             </div>
           </div>
         </div>

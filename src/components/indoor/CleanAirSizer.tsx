@@ -149,9 +149,8 @@ export function CleanAirSizer({
       {/* Down 1: Compact Turnover Rate & Capacity Strip */}
       <div className="rounded-xl border border-slate-200/90 bg-gradient-to-r from-slate-50 via-sky-50/20 to-slate-50 p-3 sm:p-3.5 space-y-2">
         <div className="flex items-center justify-between text-[11px] font-mono text-slate-600">
-          <span className="font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-sky-500" />
-            <span>Air Turnover Capacity</span>
+          <span className="font-semibold text-slate-800 font-sans">
+            Air Turnover Capacity
           </span>
           <span className="font-semibold text-slate-500">
             Room: <strong className="text-slate-900">{calc.roomVolumeM3} m³</strong> ({floorAreaM2}m² × {ceilingHeightM}m)
@@ -202,9 +201,8 @@ export function CleanAirSizer({
       {/* Down 2: Expanded Simulated Particle Clearance Kinetics Card - Absorbs empty space */}
       <div className="rounded-xl border border-slate-200/90 bg-white p-3 sm:p-3.5 space-y-2.5 shadow-2xs">
         <div className="flex items-center justify-between text-[11px] font-mono text-slate-600">
-          <span className="font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-emerald-500" />
-            <span>Simulated Particulate Clearance</span>
+          <span className="font-semibold text-slate-800 font-sans">
+            Simulated Particulate Clearance
           </span>
           <span className="text-emerald-700 font-bold text-[10.5px] bg-emerald-50 px-2.5 py-0.5 rounded border border-emerald-200">
             90% Drop in {t90} min

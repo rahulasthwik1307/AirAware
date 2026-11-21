@@ -31,9 +31,9 @@ export function AtmosphericWeatherCard({
         <div>
           <h3
             id="surface-weather-heading"
-            className="text-xs font-mono font-bold uppercase tracking-wider text-[var(--ink-primary)] flex items-center gap-2"
+            className="text-xs font-semibold text-[var(--ink-primary)] font-sans flex items-center gap-2"
           >
-            <span>Surface Meteorology • Atmospheric Context</span>
+            <span>Surface Meteorology &amp; Atmospheric Context</span>
             <span className="text-[9px] font-normal text-[var(--ink-muted)] bg-[var(--surface-card)] px-2 py-0.5 rounded border border-[var(--border-subtle)]">
               Open-Meteo Feed
             </span>
@@ -43,7 +43,7 @@ export function AtmosphericWeatherCard({
           </p>
         </div>
 
-        <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded border border-[var(--border-subtle)] bg-[var(--surface-card)] text-[var(--ink-secondary)] self-start sm:self-auto">
+        <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded border border-[var(--border-subtle)] bg-[var(--surface-card)] text-[var(--ink-secondary)] self-start sm:self-auto">
           Surface Observations
         </span>
       </div>

@@ -268,15 +268,15 @@ export function LocationSearch({
           <div className="flex items-center gap-2">
             <label
               htmlFor="location-search-input"
-              className="text-xs sm:text-sm font-bold tracking-wider text-[var(--ink-secondary)] uppercase font-mono"
+              className="text-xs sm:text-sm font-semibold text-[var(--ink-secondary)] font-sans"
             >
-              Location Discovery &amp; Global Grid
+              Location
             </label>
             {selectedLocation && (
               <span className="text-xs font-mono text-[var(--ink-muted)]">
                 ({selectedLocation.latitude.toFixed(2)}°N, {selectedLocation.longitude.toFixed(2)}°E)
                 {isDefaultLocation && (
-                  <span className="ml-1 text-amber-700 font-semibold">• Default starting reference (Not your detected location)</span>
+                  <span className="ml-1 text-amber-700 font-semibold">• Default reference</span>
                 )}
               </span>
             )}
@@ -386,13 +386,13 @@ export function LocationSearch({
             ) : (
               <span className="text-base" aria-hidden="true">📍</span>
             )}
-            <span>GPS LOCATE</span>
+            <span>Locate</span>
           </button>
         </div>
 
         {/* Global Quick-Pick Reference Cities */}
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          <span className="text-xs font-mono font-bold text-[var(--ink-muted)] uppercase tracking-wider mr-1">
+          <span className="text-xs font-mono font-medium text-[var(--ink-muted)] mr-1">
             Presets:
           </span>
           {QUICK_PICK_CITIES.map((city) => {

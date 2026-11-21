@@ -214,12 +214,12 @@ export function ForecastTimeline({
         </div>
       </div>
 
-      {/* Daily Family Routine Windows (PromptWars Urban Air Quality Guidance) */}
+      {/* Daily Family Routine Windows */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mb-3.5">
         <div className="p-3 rounded-xl border border-rose-200/80 bg-rose-50/60 text-slate-900 shadow-2xs">
           <div className="flex items-center gap-2 mb-1">
             <span className="text-base" aria-hidden="true">🌅</span>
-            <span className="font-mono text-[11px] font-bold tracking-wider text-rose-900 uppercase">
+            <span className="font-mono text-[11px] font-semibold text-rose-900">
               Morning Commute (07:00–09:30)
             </span>
           </div>
@@ -234,7 +234,7 @@ export function ForecastTimeline({
         <div className="p-3 rounded-xl border border-emerald-200/80 bg-emerald-50/60 text-slate-900 shadow-2xs">
           <div className="flex items-center gap-2 mb-1">
             <span className="text-base" aria-hidden="true">☀️</span>
-            <span className="font-mono text-[11px] font-bold tracking-wider text-emerald-900 uppercase">
+            <span className="font-mono text-[11px] font-semibold text-emerald-900">
               Midday Window (12:00–15:30)
             </span>
           </div>
@@ -249,7 +249,7 @@ export function ForecastTimeline({
         <div className="p-3 rounded-xl border border-amber-200/80 bg-amber-50/60 text-slate-900 shadow-2xs">
           <div className="flex items-center gap-2 mb-1">
             <span className="text-base" aria-hidden="true">🌙</span>
-            <span className="font-mono text-[11px] font-bold tracking-wider text-amber-900 uppercase">
+            <span className="font-mono text-[11px] font-semibold text-amber-900">
               Evening &amp; Night (18:00–23:00)
             </span>
           </div>
@@ -275,7 +275,7 @@ export function ForecastTimeline({
                   {activePoint.time.replace('T', ' ')}
                 </span>
                 <span
-                  className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${
+                  className={`text-[9px] font-semibold px-2 py-0.5 rounded border ${
                     isCurrentActive
                       ? 'bg-[var(--brand-surface)] text-[var(--brand-primary)] border-[var(--brand-primary)]/40'
                       : 'bg-[var(--surface-card)] text-[var(--ink-secondary)] border-[var(--border-subtle)]'

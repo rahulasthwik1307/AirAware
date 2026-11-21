@@ -133,14 +133,14 @@ export function FilterMaintenanceLog({
               <span className="text-xl sm:text-2xl font-black text-slate-900 font-mono block leading-none">
                 {100 - percentElapsed}%
               </span>
-              <span className="text-[9px] font-mono font-bold text-slate-500 uppercase tracking-wider mt-0.5">
+              <span className="text-[9px] font-mono font-medium text-slate-500 mt-0.5">
                 Life Left
               </span>
             </div>
           </div>
 
           <div className="space-y-1">
-            <span className="text-[10px] font-mono font-bold text-slate-600 uppercase tracking-wider block bg-white/80 px-2 py-0.5 rounded border border-slate-200/70 text-center">
+            <span className="text-[10px] font-mono font-semibold text-slate-600 block bg-white/80 px-2 py-0.5 rounded border border-slate-200/70 text-center">
               {filterLog.customIntervalMonths || 6}-Mo. HEPA Cycle
             </span>
             <div className="text-2xl sm:text-3xl font-black font-mono text-slate-900 leading-none">
@@ -210,7 +210,7 @@ export function FilterMaintenanceLog({
       {/* 3-Stage Visual Filtration Stack Diagram - Enriched & Aligned with Left Forecast Wave */}
       <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 sm:p-4 space-y-3 shadow-2xs">
         <div className="flex items-center justify-between text-[11px] font-mono text-slate-600">
-          <span className="font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+          <span className="font-semibold text-slate-800 font-sans flex items-center gap-1.5">
             <span>🔬</span>
             <span>3-Stage Filter Medium Mechanics</span>
           </span>

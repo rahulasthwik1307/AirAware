@@ -32,9 +32,8 @@ export function PollutionComparisonSplit() {
       {/* Header Controls & Mode Switcher */}
       <div className="flex items-center justify-between mb-3 px-1">
         <div className="flex items-center gap-2">
-          <span className="flex h-2 w-2 rounded-full bg-rose-500" />
-          <span className="text-[11px] font-sans font-bold uppercase tracking-wider text-slate-500">
-            AirAware Impact Simulator
+          <span className="text-xs font-semibold text-slate-700 font-sans">
+            Air Quality Comparison
           </span>
         </div>
 

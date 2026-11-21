@@ -115,7 +115,7 @@ function RadialArcGauge({
             textAnchor="middle"
             dominantBaseline="central"
             fill={isOver ? tierColor : 'var(--ink-muted)'}
-            className="text-[10px] font-mono font-bold uppercase tracking-wider"
+            className="text-[10px] font-mono font-semibold"
           >
             {isOver ? 'WHO Ref Exceeded' : 'Within WHO Limit'}
           </text>
@@ -167,7 +167,7 @@ function PollutantThreatRanking({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-3 border-b border-[var(--border-subtle)]">
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-xs font-mono font-bold uppercase tracking-wider text-[var(--brand-primary)] bg-[var(--brand-surface)] px-2.5 py-1 rounded-md border border-[var(--brand-primary)]/30">
+            <span className="text-xs font-mono font-semibold text-[var(--brand-primary)] bg-[var(--brand-surface)] px-2.5 py-1 rounded-md border border-[var(--brand-primary)]/30">
               📊 Pollutant Threat Ranking
             </span>
             <span className="text-xs font-mono text-[var(--ink-muted)]">
@@ -304,7 +304,7 @@ export function PollutantGrid({
               Model: {effectiveTimestamp}
             </span>
           )}
-          <span className="text-xs font-mono font-bold text-[var(--brand-primary)] bg-[var(--brand-surface)] px-2.5 py-1 rounded border border-[var(--brand-primary)]/30 uppercase">
+          <span className="text-xs font-mono font-semibold text-[var(--brand-primary)] bg-[var(--brand-surface)] px-2.5 py-1 rounded border border-[var(--brand-primary)]/30">
             Standard: {standardName}
           </span>
         </div>
@@ -394,7 +394,7 @@ export function PollutantGrid({
                     <div className="flex flex-wrap items-center justify-end gap-1.5 shrink-0">
                       {isDominant && (
                         <span
-                          className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[var(--brand-primary)] text-white uppercase tracking-wider shrink-0"
+                          className="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-[var(--brand-primary)] text-white shrink-0"
                           title={`Identified as Primary Driver based on highest sub-index (${highestSubIndex}) under ${standardName}, not raw concentration.`}
                         >
                           Primary Driver
@@ -410,7 +410,7 @@ export function PollutantGrid({
                         </span>
                       ) : tier ? (
                         <span
-                          className="px-2 py-0.5 rounded text-xs font-mono font-bold uppercase tracking-wider border whitespace-nowrap shrink-0"
+                          className="px-2 py-0.5 rounded text-xs font-mono font-semibold border whitespace-nowrap shrink-0"
                           title={tier.label}
                           style={{
                             color: tier.colorToken,
@@ -552,21 +552,21 @@ export function PollutantGrid({
 
                   <div className="mt-2.5 space-y-2 text-xs leading-relaxed text-[var(--ink-secondary)] bg-[var(--surface-subtle)]/80 p-3 rounded-xl border border-[var(--border-subtle)]/60 font-sans">
                     <div>
-                      <strong className="font-mono text-xs uppercase text-[var(--ink-primary)] block mb-0.5 tracking-wider font-bold">
+                      <strong className="font-sans text-xs text-[var(--ink-primary)] block mb-0.5 font-semibold">
                         Primary Sources
                       </strong>
                       <p>{edu.sources}</p>
                     </div>
 
                     <div>
-                      <strong className="font-mono text-xs uppercase text-[var(--ink-primary)] block mb-0.5 tracking-wider font-bold">
+                      <strong className="font-sans text-xs text-[var(--ink-primary)] block mb-0.5 font-semibold">
                         Health Considerations
                       </strong>
                       <p>{edu.healthEffects}</p>
                     </div>
 
                     <div>
-                      <strong className="font-mono text-xs uppercase text-[var(--ink-primary)] block mb-0.5 tracking-wider font-bold">
+                      <strong className="font-sans text-xs text-[var(--ink-primary)] block mb-0.5 font-semibold">
                         Seasonal &amp; Diurnal Behaviour
                       </strong>
                       <p>{edu.seasonalBehavior}</p>

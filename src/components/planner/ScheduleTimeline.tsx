@@ -426,7 +426,7 @@ export function ScheduleTimeline({
                           ? 'bg-emerald-500/25 text-emerald-950 dark:text-emerald-200 font-semibold'
                           : 'bg-slate-500/10 text-[var(--ink-muted)]'
                       }`}
-                      title={`${index.toString().padStart(2, '0')}:00 — ${pm25} μg/m³ PM₂.₅`}
+                      title={`${index.toString().padStart(2, '0')}:00 - ${pm25} μg/m³ PM₂.₅`}
                     >
                       <span className="select-none scale-90">
                         {Math.round(pm25)}

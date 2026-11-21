@@ -150,7 +150,7 @@ export function AppHeader({
                 🔔
               </span>
               {unreadAlertCount > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-rose-600 text-white font-mono text-[9px] font-bold shadow-xs animate-pulse">
+                <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-rose-600 text-white font-mono text-[9px] font-bold shadow-xs">
                   {unreadAlertCount}
                 </span>
               )}

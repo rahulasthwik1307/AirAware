@@ -351,10 +351,10 @@ export function ActionableHealthGuidance({
           </div>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs font-mono font-bold uppercase tracking-wider text-sky-800">
-                Active Location Advisory:
+              <span className="text-xs font-mono font-semibold text-sky-800">
+                Active Advisory:
               </span>
-              <strong className="text-sm sm:text-base font-extrabold text-slate-900">
+              <strong className="text-sm sm:text-base font-bold text-slate-900">
                 {location?.name || 'Selected City'}, {location?.country || 'India'}
               </strong>
               {providerAqi !== null && (
@@ -372,12 +372,12 @@ export function ActionableHealthGuidance({
               )}
             </div>
             <p className="text-xs text-slate-600 font-medium mt-0.5">
-              ⚡ Reactive Engine: These 4 protocols adapt dynamically to {location?.name || 'the active city'}&apos;s live pollution severity.
+              ⚡ These 4 protocols adapt to {location?.name || 'the active city'}&apos;s pollution severity.
             </p>
           </div>
         </div>
-        <span className="text-xs font-mono font-bold text-teal-800 bg-white px-2.5 py-1 rounded-lg border border-teal-200 shadow-2xs flex items-center gap-1.5 shrink-0 self-start sm:self-auto">
-          <span className="h-2 w-2 rounded-full bg-teal-500 animate-pulse" />
+        <span className="text-xs font-mono font-semibold text-teal-800 bg-white px-2.5 py-1 rounded-lg border border-teal-200 shadow-2xs flex items-center gap-1.5 shrink-0 self-start sm:self-auto">
+          <span className="h-2 w-2 rounded-full bg-teal-500" />
           <span>Live Synchronized</span>
         </span>
       </div>
@@ -403,7 +403,7 @@ export function ActionableHealthGuidance({
                   </div>
 
                   <span
-                    className={`text-xs font-mono font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg border shrink-0 ${getBadgeStyle(
+                    className={`text-xs font-mono font-semibold px-2.5 py-1 rounded-lg border shrink-0 ${getBadgeStyle(
                       card.badgeType
                     )}`}
                   >
@@ -417,8 +417,8 @@ export function ActionableHealthGuidance({
 
                 {/* Practical Household / Commuter Hack */}
                 <div className="mt-3 p-3 rounded-xl bg-amber-50/80 border border-amber-200/90 text-xs text-amber-950 font-sans space-y-1">
-                  <div className="font-bold flex items-center gap-1.5 text-amber-900 uppercase tracking-wide font-mono text-[11px]">
-                    <span>💡 PRACTICAL HOUSEHOLD HACK:</span>
+                  <div className="font-semibold flex items-center gap-1.5 text-amber-900 text-[11px]">
+                    <span>💡 Practical Tip</span>
                   </div>
                   <p className="leading-relaxed">
                     {card.practicalTip}
@@ -430,7 +430,7 @@ export function ActionableHealthGuidance({
               {card.targetWorkspace && onSelectWorkspace && (
                 <div className="pt-3 border-t border-[var(--border-subtle)]/70 flex items-center justify-between">
                   <span className="text-xs font-mono font-semibold text-[var(--ink-muted)]">
-                    Challenge 06 Action Plan
+                    Action Plan
                   </span>
                   <button
                     type="button"

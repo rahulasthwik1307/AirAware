@@ -74,7 +74,7 @@ export function AirshedPollutantBreakdownCard({
         </div>
         <div className="flex items-center justify-between gap-2 flex-wrap min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-bold uppercase tracking-wider bg-amber-50 text-amber-800 border border-amber-200 shrink-0">
+            <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-amber-50 text-amber-800 border border-amber-200 shrink-0">
               Tailpipe Chemistry
             </span>
             <p className="text-xs text-[var(--ink-secondary)] truncate">
@@ -290,7 +290,7 @@ export function AirshedPollutantBreakdownCard({
           /* Chemistry Flow View: The 4-Stage Inversion Smog Reactor */
           <div className="p-3.5 rounded-2xl bg-gradient-to-br from-slate-50 to-indigo-50/40 border border-slate-200 space-y-3">
             <div className="flex items-center justify-between text-xs pb-2 border-b border-slate-200">
-              <span className="font-mono font-bold text-slate-800 uppercase tracking-wider">
+              <span className="font-semibold text-slate-800 font-sans">
                 Winter Inversion Atmospheric Reaction Cascade
               </span>
               <span className="text-[10px] font-mono font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">

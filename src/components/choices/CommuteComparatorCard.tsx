@@ -106,7 +106,7 @@ export function CommuteComparatorCard({
           </button>
         </div>
         <div className="flex items-center gap-2 flex-wrap min-w-0">
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-bold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200 shrink-0">
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 shrink-0">
             Mode Shift Simulator
           </span>
           <p className="text-xs text-[var(--ink-secondary)] truncate">
@@ -117,8 +117,8 @@ export function CommuteComparatorCard({
 
       {/* Mode Tiles Selector */}
       <div className="space-y-2">
-        <label className="block text-xs font-bold font-mono uppercase tracking-wider text-[var(--ink-secondary)]">
-          Select Alternative Transport Mode
+        <label className="block text-xs font-semibold text-[var(--ink-secondary)] font-sans">
+          Alternative Transport Mode
         </label>
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
           {modesList.map((modeMeta) => {
@@ -172,7 +172,7 @@ export function CommuteComparatorCard({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2.5 border-b border-slate-200">
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <label htmlFor="commute-distance-range" className="text-xs font-bold text-slate-800 font-mono uppercase tracking-wider cursor-pointer">
+              <label htmlFor="commute-distance-range" className="text-xs font-semibold text-slate-800 font-sans cursor-pointer">
                 One-Way Distance:
               </label>
               <div className="flex items-baseline gap-1">

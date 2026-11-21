@@ -26,11 +26,11 @@ export function CommunityKpiStrip({
       {/* KPI 1: Active Regulatory GRAP Mandate */}
       <div className="p-4 rounded-2xl bg-gradient-to-br from-rose-50/90 via-white to-rose-50/50 border border-rose-200/90 shadow-2xs flex flex-col justify-between gap-2.5 transition-all hover:shadow-xs">
         <div className="flex items-center justify-between gap-2">
-          <span className="text-[11px] font-mono font-bold text-rose-800 uppercase tracking-wider flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-rose-600 animate-pulse" aria-hidden="true" />
+          <span className="text-[11px] font-semibold text-rose-900 font-sans flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-rose-600" aria-hidden="true" />
             Government Rules
           </span>
-          <span className="text-[10px] font-mono font-bold text-rose-800 bg-rose-100/90 px-2 py-0.5 rounded border border-rose-200 shrink-0">
+          <span className="text-[10px] font-mono font-semibold text-rose-800 bg-rose-100/90 px-2 py-0.5 rounded border border-rose-200 shrink-0">
             Active
           </span>
         </div>
@@ -56,13 +56,13 @@ export function CommunityKpiStrip({
       {/* KPI 2: Diurnal Ventilation Window */}
       <div className="p-4 rounded-2xl bg-gradient-to-br from-teal-50/90 via-white to-emerald-50/50 border border-teal-200/90 shadow-2xs flex flex-col justify-between gap-2.5 transition-all hover:shadow-xs">
         <div className="flex items-center justify-between gap-2">
-          <span className="text-[11px] font-mono font-bold text-teal-800 uppercase tracking-wider flex items-center gap-1.5">
+          <span className="text-[11px] font-semibold text-teal-900 font-sans flex items-center gap-1.5">
             <span>🪟</span> Safe Window Timing
           </span>
           <span
-            className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border shrink-0 ${
+            className={`text-[10px] font-mono font-semibold px-2 py-0.5 rounded border shrink-0 ${
               ventilationWindow.isOpenNow
-                ? 'bg-emerald-100 text-emerald-800 border-emerald-300 animate-pulse'
+                ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
                 : 'bg-slate-100 text-slate-700 border-slate-200'
             }`}
           >
@@ -88,10 +88,10 @@ export function CommunityKpiStrip({
       {/* KPI 3: Local Citizen Incident Journal */}
       <div className="p-4 rounded-2xl bg-gradient-to-br from-indigo-50/90 via-white to-violet-50/50 border border-indigo-200/90 shadow-2xs flex flex-col justify-between gap-2.5 transition-all hover:shadow-xs">
         <div className="flex items-center justify-between gap-2">
-          <span className="text-[11px] font-mono font-bold text-indigo-800 uppercase tracking-wider flex items-center gap-1.5">
+          <span className="text-[11px] font-semibold text-indigo-900 font-sans flex items-center gap-1.5">
             <span>🛡️</span> Community Reports
           </span>
-          <span className="text-[10px] font-mono font-bold text-indigo-800 bg-indigo-100/80 px-2 py-0.5 rounded border border-indigo-200 shrink-0">
+          <span className="text-[10px] font-mono font-semibold text-indigo-800 bg-indigo-100/80 px-2 py-0.5 rounded border border-indigo-200 shrink-0">
             Local-First
           </span>
         </div>

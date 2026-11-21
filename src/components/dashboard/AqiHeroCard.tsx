@@ -14,8 +14,8 @@ const MapLibreGlobe = dynamic(
     loading: () => (
       <div className="w-full h-[540px] sm:h-[620px] lg:h-[680px] rounded-3xl flex flex-col items-center justify-center bg-[#0F172A] text-slate-200 gap-3 border border-slate-800/90 shadow-[0_20px_50px_-12px_rgba(15,23,42,0.5)] select-none">
         <div className="h-9 w-9 animate-spin rounded-full border-3 border-teal-500 border-t-transparent" />
-        <span className="text-xs font-mono text-slate-400 font-bold uppercase tracking-widest">
-          Loading 3D Planetary Engine...
+        <span className="text-xs font-mono text-slate-400 font-medium">
+          Loading 3D Atmospheric Globe...
         </span>
       </div>
     ),
@@ -176,7 +176,7 @@ export function AqiHeroCard({
         <div className="flex items-center gap-2 sm:gap-3">
           <span className="inline-flex items-center gap-1.5 font-bold text-slate-800">
             <span
-              className="h-2 w-2 rounded-full animate-pulse"
+              className="h-2 w-2 rounded-full"
               style={{ backgroundColor: aqiColor }}
             />
             {feedLabel}
@@ -186,7 +186,7 @@ export function AqiHeroCard({
             {coordinates.latitude.toFixed(2)}°N, {coordinates.longitude.toFixed(2)}°E
           </span>
           {isLoading && (
-            <span className="hidden sm:inline-flex items-center gap-1 text-[10px] text-amber-800 bg-amber-50 border border-amber-300 px-2 py-0.5 rounded-full animate-pulse">
+            <span className="hidden sm:inline-flex items-center gap-1 text-[10px] text-amber-800 bg-amber-50 border border-amber-300 px-2 py-0.5 rounded-full">
               <span>🔄 Updating modelled atmospheric feed...</span>
             </span>
           )}
@@ -205,11 +205,14 @@ export function AqiHeroCard({
           {/* Left Column: Focused Intelligence Deck (5/12) */}
           <div className="lg:col-span-5 flex flex-col justify-between gap-4 z-10">
             {/* Title & Active Region */}
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-mono font-bold uppercase tracking-widest text-sky-600">
-                  Global Environmental Intelligence
-                </span>
+                <h1
+                  id="hero-aqi-heading"
+                  className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-slate-900 font-sans"
+                >
+                  Air Quality Index
+                </h1>
                 <div
                   role="radiogroup"
                   aria-label="Active Air Quality Index Standard"
@@ -222,7 +225,7 @@ export function AqiHeroCard({
                     onClick={() => onSwitchStandard('US_EPA')}
                     className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
                       activeStandard === 'US_EPA'
-                        ? 'bg-sky-600 text-white shadow-xs font-black'
+                        ? 'bg-sky-600 text-white shadow-xs font-bold'
                         : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
@@ -235,7 +238,7 @@ export function AqiHeroCard({
                     onClick={() => onSwitchStandard('EUROPEAN_EAQI')}
                     className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
                       activeStandard === 'EUROPEAN_EAQI'
-                        ? 'bg-sky-600 text-white shadow-xs font-black'
+                        ? 'bg-sky-600 text-white shadow-xs font-bold'
                         : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
@@ -243,14 +246,6 @@ export function AqiHeroCard({
                   </button>
                 </div>
               </div>
-
-              {/* Clean, Uniform Typography */}
-              <h1
-                id="hero-aqi-heading"
-                className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-900 font-sans"
-              >
-                Air Quality Index
-              </h1>
 
               <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm font-mono text-slate-600 pt-0.5">
                 <span className="tabular-nums font-semibold">{localTime || 'Modelled estimate'}</span>
@@ -271,10 +266,10 @@ export function AqiHeroCard({
                   <div className="flex items-center gap-2">
                     <span className="text-lg" aria-hidden="true">🇮🇳</span>
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-800">
-                        India CPCB NAQI:
+                      <span className="text-xs font-mono font-semibold text-emerald-800">
+                        CPCB NAQI:
                       </span>
-                      <strong className="text-sm font-extrabold text-emerald-950">
+                      <strong className="text-sm font-bold text-emerald-950">
                         {report.cpcbComparison.equivalentCategory}
                       </strong>
                       <span className="text-xs font-mono text-emerald-700 font-semibold">
@@ -282,7 +277,7 @@ export function AqiHeroCard({
                       </span>
                     </div>
                   </div>
-                  <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-md bg-white text-emerald-800 border border-emerald-200 shrink-0 shadow-2xs">
+                  <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded-md bg-white text-emerald-800 border border-emerald-200 shrink-0 shadow-2xs">
                     CAMS PM₂.₅ Model
                   </span>
                 </div>
@@ -299,8 +294,8 @@ export function AqiHeroCard({
               {/* Header inside card */}
               <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-mono font-bold tracking-wider uppercase text-slate-500">
-                    Main Statistics &amp; Severity
+                  <span className="text-xs font-semibold text-slate-700 font-sans">
+                    Current Air Quality
                   </span>
                 </div>
                 {tier && (
@@ -312,7 +307,7 @@ export function AqiHeroCard({
                       color: tier.colorToken,
                     }}
                   >
-                    <span className="h-2 w-2 rounded-full animate-ping" style={{ backgroundColor: tier.colorToken }} />
+                    <span className="h-2 w-2 rounded-full" style={{ backgroundColor: tier.colorToken }} />
                     {tier.label}
                   </span>
                 )}
@@ -361,7 +356,7 @@ export function AqiHeroCard({
                         : '🌿'}
                     </span>
                     <span
-                      className="text-[9px] font-mono font-black uppercase mt-1 px-1.5 py-0.5 rounded border shadow-2xs tracking-wider leading-none"
+                      className="text-[9px] font-mono font-bold uppercase mt-1 px-1.5 py-0.5 rounded border shadow-2xs leading-none"
                       style={{
                         color: aqiColor,
                         backgroundColor: `${aqiColor}12`,
@@ -426,7 +421,7 @@ export function AqiHeroCard({
                   }}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-bold flex items-center gap-1.5 uppercase tracking-wide">
+                    <span className="font-bold flex items-center gap-1.5">
                       <span>🏛️</span>
                       <span>{grapInfo.stage}</span>
                     </span>
@@ -446,36 +441,36 @@ export function AqiHeroCard({
               {/* Surface Meteorological Context Matrix (4 Clean Elevated Metric Tiles) */}
               <div className="pt-2.5 border-t border-slate-100 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-mono font-bold tracking-wider uppercase text-slate-500">
-                    Surface Weather Context (2m / 10m)
+                  <span className="text-xs font-semibold text-slate-700 font-sans">
+                    Surface Weather (2m / 10m)
                   </span>
-                  <span className="px-2 py-0.5 rounded text-[11px] font-mono font-bold border bg-slate-100 text-slate-700 border-slate-300">
+                  <span className="px-2 py-0.5 rounded text-[11px] font-mono font-medium border bg-slate-100 text-slate-700 border-slate-300">
                     Modelled Surface Feed
                   </span>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-mono">
                   <div className="bg-slate-50 p-2 rounded-xl border border-slate-200/80 text-center">
-                    <span className="text-slate-500 block text-[11px] font-bold">🔬 DOMINANT</span>
-                    <span className="text-slate-900 font-black text-xs sm:text-sm uppercase truncate">
+                    <span className="text-slate-500 block text-[11px] font-semibold">🔬 Dominant</span>
+                    <span className="text-slate-900 font-bold text-xs sm:text-sm uppercase truncate">
                       {dominantPollutant ? dominantPollutant.toUpperCase() : 'PM2.5'}
                     </span>
                   </div>
                   <div className="bg-slate-50 p-2 rounded-xl border border-slate-200/80 text-center">
-                    <span className="text-slate-500 block text-[11px] font-bold">🌡️ TEMP</span>
-                    <span className="text-slate-900 font-black text-xs sm:text-sm tabular-nums">
+                    <span className="text-slate-500 block text-[11px] font-semibold">🌡️ Temp</span>
+                    <span className="text-slate-900 font-bold text-xs sm:text-sm tabular-nums">
                       {weather?.temperature !== null && weather?.temperature !== undefined ? `${weather.temperature.toFixed(1)}°C` : '--'}
                     </span>
                   </div>
                   <div className="bg-slate-50 p-2 rounded-xl border border-slate-200/80 text-center">
-                    <span className="text-slate-500 block text-[11px] font-bold">💧 HUMIDITY</span>
-                    <span className="text-slate-900 font-black text-xs sm:text-sm tabular-nums">
+                    <span className="text-slate-500 block text-[11px] font-semibold">💧 Humidity</span>
+                    <span className="text-slate-900 font-bold text-xs sm:text-sm tabular-nums">
                       {weather?.humidity !== null && weather?.humidity !== undefined ? `${weather.humidity}%` : '--'}
                     </span>
                   </div>
                   <div className="bg-slate-50 p-2 rounded-xl border border-slate-200/80 text-center">
-                    <span className="text-slate-500 block text-[11px] font-bold">💨 WIND</span>
-                    <span className="text-slate-900 font-black text-xs sm:text-sm truncate tabular-nums">
+                    <span className="text-slate-500 block text-[11px] font-semibold">💨 Wind</span>
+                    <span className="text-slate-900 font-bold text-xs sm:text-sm truncate tabular-nums">
                       {weather?.windDirectionCardinal || 'N'} {weather?.windSpeed !== null && weather?.windSpeed !== undefined ? `${weather.windSpeed.toFixed(1)}k` : '--'}
                     </span>
                   </div>
@@ -503,10 +498,9 @@ export function AqiHeroCard({
             {/* Visual Viewport Header with 2D / 3D Mode Toggle */}
             <div className="w-full flex items-center justify-between px-2 mb-2">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-mono font-bold tracking-widest text-slate-600 uppercase">
-                  Indo-Gangetic Airshed Dispersion • 3D Atmospheric Model View
+                <span className="text-xs font-semibold text-slate-700 font-sans">
+                  Airshed Dispersion
                 </span>
-                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
               </div>
 
               {/* View Switcher: 3D Earth Globe vs Accessible 2D Global Grid */}
@@ -520,7 +514,7 @@ export function AqiHeroCard({
                   onClick={() => setViewMode('3d')}
                   className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
                     viewMode === '3d'
-                      ? 'bg-sky-600 text-white shadow-xs font-black'
+                      ? 'bg-sky-600 text-white shadow-xs font-semibold'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
@@ -531,7 +525,7 @@ export function AqiHeroCard({
                   onClick={() => setViewMode('grid')}
                   className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
                     viewMode === 'grid'
-                      ? 'bg-sky-600 text-white shadow-xs font-black'
+                      ? 'bg-sky-600 text-white shadow-xs font-semibold'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
@@ -716,8 +710,8 @@ export function AqiHeroCard({
         <div className="mt-8 pt-6 border-t border-slate-200/80 space-y-3">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs font-mono text-slate-600">
             <div className="flex items-center gap-2">
-              <span className="font-bold uppercase tracking-wider text-slate-700">
-                Index Spectrum Range &amp; Active Needle
+              <span className="font-semibold text-slate-700 font-sans">
+                Index Scale &amp; Position
               </span>
               <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 text-slate-600 border border-slate-300">
                 {activeStandard === 'EUROPEAN_EAQI' ? 'European EAQI (0–100+ Scale)' : 'US EPA AQI (0–500 Scale)'}

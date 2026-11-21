@@ -20,14 +20,13 @@ export function ProvenanceFooter({ report }: ProvenanceFooterProps) {
           <div className="flex flex-wrap items-center gap-2">
             <h2
               id="provenance-heading"
-              className="text-xs sm:text-sm font-mono font-black uppercase tracking-wider text-[var(--ink-primary)] flex flex-wrap items-center gap-2"
+              className="text-xs sm:text-sm font-bold text-[var(--ink-primary)] font-sans flex flex-wrap items-center gap-2"
             >
               <span className="flex items-center gap-1.5 text-[var(--brand-primary)]">
                 <span>🌐</span>
                 <span>Scientific Data Provenance</span>
               </span>
-              <span className="text-[var(--ink-muted)] font-normal text-base">//</span>
-              <span className="text-[var(--ink-primary)]">Attribution &amp; Model Domain</span>
+              <span className="text-[var(--ink-secondary)]">Attribution &amp; Model Domain</span>
               <span aria-hidden="true" className="text-xs text-[var(--ink-muted)] group-open:rotate-180 transition-transform duration-200 ml-1">
                 ▼
               </span>
@@ -39,10 +38,10 @@ export function ProvenanceFooter({ report }: ProvenanceFooterProps) {
 
           <div className="flex items-center gap-2 text-xs font-mono text-[var(--ink-muted)]">
             <span className="group-open:hidden">
-              Copernicus CAMS IFS &bull; Open-Meteo &bull; Click for dataset disclosure ▾
+              Copernicus CAMS IFS and Open-Meteo disclosure ▾
             </span>
-            <span className="hidden group-open:inline text-[var(--brand-primary)] font-bold">
-              PROVENANCE DISCLOSED ▴
+            <span className="hidden group-open:inline text-[var(--brand-primary)] font-semibold">
+              Hide Details ▴
             </span>
           </div>
         </summary>

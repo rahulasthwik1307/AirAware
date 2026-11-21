@@ -254,7 +254,7 @@ export function AirQualityDashboard({ onSelectWorkspace }: AirQualityDashboardPr
           <span className="text-2xl select-none" aria-hidden="true">
             ⚠️
           </span>
-          <h3 className="text-sm font-bold font-mono text-[var(--aqi-unhealthy)] mt-2 uppercase tracking-wide">
+          <h3 className="text-sm font-semibold font-mono text-[var(--aqi-unhealthy)] mt-2 tracking-wide">
             Atmospheric Forecast Offline
           </h3>
           <p className="text-xs text-[var(--ink-secondary)] mt-1.5 max-w-md mx-auto">
@@ -281,16 +281,16 @@ export function AirQualityDashboard({ onSelectWorkspace }: AirQualityDashboardPr
           </div>
           <h3
             id="welcome-discovery-heading"
-            className="text-xl sm:text-2xl font-extrabold text-[var(--ink-primary)] tracking-tight font-sans"
+            className="text-xl sm:text-2xl font-bold text-[var(--ink-primary)] tracking-tight font-sans"
           >
             Global Environmental Intelligence
           </h3>
           <p className="mt-2 text-xs sm:text-sm text-[var(--ink-secondary)] max-w-xl mx-auto leading-relaxed">
             Current modelled environmental estimates across 6 criteria pollutants, 24-hour predictive
-            surface meteorology, interactive 3D planetary atmospheric model view, and transparent public science standards.
+            surface meteorology, and transparent public science standards.
           </p>
-          <p className="mt-4 text-xs font-mono font-bold text-[var(--brand-primary)] uppercase tracking-wider">
-            Enter a city name above or select a preset to explore modelled air-quality data.
+          <p className="mt-3 text-xs font-medium text-[var(--brand-primary)]">
+            Enter a city name above or select a preset to explore air quality.
           </p>
         </section>
       )}
