@@ -43,21 +43,21 @@ export function IncidentJournalCard({
             </span>
             <h2
               id="incident-journal-heading"
-              className="text-base sm:text-lg font-bold text-[var(--ink-primary)] truncate font-sans tracking-tight"
+              className="text-base sm:text-lg font-bold text-[var(--ink-primary)] font-sans tracking-tight"
             >
-              Active Incident Journal ({incidents.length})
+              Citizen Incident Reports
             </h2>
           </div>
           <span className="text-[10px] font-mono font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 shrink-0">
-            Export Ready
+            {incidents.length} Saved on Device
           </span>
         </div>
         <div className="flex items-center gap-2 flex-wrap min-w-0">
           <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-bold uppercase tracking-wider bg-slate-100 text-slate-800 border border-slate-200 shrink-0">
-            Regulatory Pre-fill
+            Complaint Pre-fill
           </span>
-          <p className="text-xs text-[var(--ink-secondary)] truncate">
-            Review locally logged observations. Copy formatted CPCB complaint dossiers with one click.
+          <p className="text-xs text-[var(--ink-secondary)] leading-relaxed">
+            Review reports recorded on this phone or browser. Download or copy complaint details with one click.
           </p>
         </div>
       </div>
@@ -127,8 +127,8 @@ export function IncidentJournalCard({
                   <div className="pt-1">
                     <img
                       src={incident.photoDataUrl}
-                      alt="Incident evidence preview"
-                      className="w-24 h-16 object-cover rounded-lg border border-slate-200 shadow-2xs"
+                      alt="Incident photo preview"
+                      className="max-w-[220px] max-h-36 object-contain rounded-lg border border-slate-200 bg-slate-50 p-1 shadow-2xs"
                     />
                   </div>
                 )}

@@ -21,31 +21,42 @@ export function PollutionIncidentReporterCard({
   const [locationName, setLocationName] = useState(defaultLocationName);
   const [severity, setSeverity] = useState<IncidentSeverity>('HIGH');
   const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
+  const [photoInfo, setPhotoInfo] = useState<{ name: string; sizeMb: string } | null>(null);
+  const [photoError, setPhotoError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Compress photo client-side using HTML5 Canvas (<80 KB, strips EXIF metadata)
+  // Auto-format & scale photo client-side using HTML5 Canvas (preserves full aspect ratio, max 3MB support)
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setPhotoError(null);
+
+    // Support photos up to 3MB
+    if (file.size > 3 * 1024 * 1024) {
+      setPhotoError('Please select a photo under 3MB.');
+      return;
+    }
+
+    const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
+    setPhotoInfo({ name: file.name, sizeMb });
 
     const reader = new FileReader();
     reader.onload = (event) => {
       const img = new Image();
       img.onload = () => {
         const canvas = document.createElement('canvas');
-        const maxDimension = 600;
+        // Auto-scale maintaining exact aspect ratio without cropping any detail
+        const maxDimension = 960;
         let width = img.width;
         let height = img.height;
 
-        if (width > height) {
-          if (width > maxDimension) {
+        if (width > maxDimension || height > maxDimension) {
+          if (width > height) {
             height = Math.round((height * maxDimension) / width);
             width = maxDimension;
-          }
-        } else {
-          if (height > maxDimension) {
+          } else {
             width = Math.round((width * maxDimension) / height);
             height = maxDimension;
           }
@@ -56,7 +67,8 @@ export function PollutionIncidentReporterCard({
         const ctx = canvas.getContext('2d');
         if (ctx) {
           ctx.drawImage(img, 0, 0, width, height);
-          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.65);
+          // Export high-quality balanced JPEG (<150KB for local storage)
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
           setPhotoDataUrl(compressedDataUrl);
         }
       };
@@ -85,6 +97,8 @@ export function PollutionIncidentReporterCard({
     setTitle('');
     setDescription('');
     setPhotoDataUrl(null);
+    setPhotoInfo(null);
+    setPhotoError(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
     setShowSuccessToast(true);
     setTimeout(() => setShowSuccessToast(false), 4000);
@@ -117,7 +131,7 @@ export function PollutionIncidentReporterCard({
             </span>
             <h2
               id="incident-reporter-heading"
-              className="text-base sm:text-lg font-bold text-[var(--ink-primary)] truncate font-sans tracking-tight"
+              className="text-base sm:text-lg font-bold text-[var(--ink-primary)] font-sans tracking-tight"
             >
               Citizen Pollution Incident Reporter
             </h2>
@@ -140,7 +154,7 @@ export function PollutionIncidentReporterCard({
           <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-bold uppercase tracking-wider bg-indigo-50 text-indigo-800 border border-indigo-200 shrink-0">
             Local-First Journal
           </span>
-          <p className="text-xs text-[var(--ink-secondary)] truncate">
+          <p className="text-xs text-[var(--ink-secondary)] leading-relaxed">
             Document visible emissions. Stored 100% locally on your device with CPCB Sameer pre-fill.
           </p>
         </div>
@@ -185,7 +199,7 @@ export function PollutionIncidentReporterCard({
                   }`}
                 >
                   <span className="text-base shrink-0">{meta.icon}</span>
-                  <span className="text-[11px] leading-tight truncate">{meta.label}</span>
+                  <span className="text-[11px] leading-snug break-words">{meta.label}</span>
                 </button>
               );
             })}
@@ -262,30 +276,52 @@ export function PollutionIncidentReporterCard({
             </div>
           </div>
 
-          {/* Photo Attachment (Canvas Compressed) */}
+          {/* Photo Attachment (Auto-sized, supports up to 3MB) */}
           <div>
-            <label htmlFor="incident-photo" className="block text-xs font-mono font-bold uppercase tracking-wider text-slate-700 mb-1 cursor-pointer">
-              Photo Evidence (Optional)
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label htmlFor="incident-photo" className="text-xs font-mono font-bold uppercase tracking-wider text-slate-700 cursor-pointer">
+                Attach Photo (Optional)
+              </label>
+              <span className="text-[10px] font-mono text-slate-400">Max 3MB</span>
+            </div>
             <input
               id="incident-photo"
               ref={fileInputRef}
               type="file"
               accept="image/*"
-              aria-label="Upload photo evidence of pollution incident"
+              aria-label="Upload photo of pollution incident"
               onChange={handlePhotoSelect}
               className="text-xs file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border file:border-slate-300 file:bg-slate-50 file:text-[11px] file:font-semibold file:cursor-pointer text-slate-500 cursor-pointer w-full"
             />
+            {photoError && (
+              <p className="text-[11px] text-rose-600 mt-1 font-mono font-semibold">{photoError}</p>
+            )}
             {photoDataUrl && (
-              <div className="mt-1 flex items-center gap-2">
-                <span className="text-[10px] font-mono text-emerald-700">✓ Compressed (&lt;80KB, EXIF stripped)</span>
-                <button
-                  type="button"
-                  onClick={() => setPhotoDataUrl(null)}
-                  className="text-[10px] text-rose-600 hover:underline cursor-pointer"
-                >
-                  Remove
-                </button>
+              <div className="mt-2 p-2.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="font-mono text-emerald-800 font-bold flex items-center gap-1">
+                    ✓ Photo attached ({photoInfo?.sizeMb} MB auto-sized)
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPhotoDataUrl(null);
+                      setPhotoInfo(null);
+                      setPhotoError(null);
+                      if (fileInputRef.current) fileInputRef.current.value = '';
+                    }}
+                    className="text-rose-600 hover:text-rose-800 font-bold cursor-pointer transition-colors"
+                  >
+                    Remove
+                  </button>
+                </div>
+                <div className="flex justify-center bg-white rounded-lg p-1.5 border border-slate-200 shadow-2xs">
+                  <img
+                    src={photoDataUrl}
+                    alt="Uploaded incident preview"
+                    className="max-h-36 w-auto max-w-full object-contain rounded"
+                  />
+                </div>
               </div>
             )}
           </div>

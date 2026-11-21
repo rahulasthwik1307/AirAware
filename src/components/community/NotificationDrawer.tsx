@@ -41,7 +41,7 @@ export function NotificationDrawer({
       role="dialog"
       aria-modal="true"
       aria-label="Notification Centre"
-      className="fixed inset-0 z-50 flex justify-end bg-slate-900/50 backdrop-blur-xs animate-fadeIn"
+      className="fixed inset-0 z-50 flex justify-end bg-slate-900/60 animate-fadeIn"
     >
       {/* Click outside to close */}
       <div className="flex-1" onClick={onClose} aria-hidden="true" />

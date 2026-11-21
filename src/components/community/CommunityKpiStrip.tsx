@@ -28,18 +28,18 @@ export function CommunityKpiStrip({
         <div className="flex items-center justify-between">
           <span className="text-[11px] font-mono font-bold text-rose-800 uppercase tracking-wider flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-rose-600 animate-pulse" aria-hidden="true" />
-            CAQM Airshed Mandate
+            Government Pollution Rules
           </span>
           <span className="text-[10px] font-mono font-bold text-rose-800 bg-rose-100/70 px-2 py-0.5 rounded border border-rose-200">
-            Official
+            Active
           </span>
         </div>
         <div>
           <h3 className="text-base sm:text-lg font-black text-rose-950 font-sans tracking-tight">
-            {activeGrapStage}
+            {activeGrapStage} (Very Poor Air)
           </h3>
           <p className="text-[11px] text-rose-800/90 leading-snug mt-0.5">
-            Emergency mitigation restrictions in effect across municipal airshed.
+            Emergency rules active: Generator ban, carpool advice &amp; extra metro runs.
           </p>
         </div>
       </div>
@@ -48,7 +48,7 @@ export function CommunityKpiStrip({
       <div className="p-4 rounded-2xl bg-gradient-to-br from-teal-50/80 via-white to-emerald-50/40 border border-teal-200/90 shadow-2xs flex flex-col justify-between gap-1.5 transition-all hover:shadow-xs">
         <div className="flex items-center justify-between">
           <span className="text-[11px] font-mono font-bold text-teal-800 uppercase tracking-wider flex items-center gap-1.5">
-            <span>🪟</span> Diurnal Airing Window
+            <span>🪟</span> Safe Window Timing
           </span>
           <span
             className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${
@@ -57,7 +57,7 @@ export function CommunityKpiStrip({
                 : 'bg-slate-100 text-slate-700 border-slate-200'
             }`}
           >
-            {ventilationWindow.isOpenNow ? 'ACTIVE NOW' : 'SEALED'}
+            {ventilationWindow.isOpenNow ? 'SAFE TO AIR' : 'KEEP CLOSED'}
           </span>
         </div>
         <div>
@@ -68,8 +68,8 @@ export function CommunityKpiStrip({
           </div>
           <p className="text-[11px] text-slate-600 leading-snug mt-0.5">
             {ventilationWindow.isOpenNow
-              ? 'Solar thermal ceiling elevated. Safe for 15-min cross-ventilation.'
-              : `Inversion lid compressed (<150m). Keep home sealed until afternoon.`}
+              ? 'Warm afternoon sunlight lifts smog. Safe for 15-min cross-ventilation.'
+              : 'Cold ground inversion traps smog below 150m. Keep home sealed until afternoon.'}
           </p>
         </div>
       </div>
@@ -78,7 +78,7 @@ export function CommunityKpiStrip({
       <div className="p-4 rounded-2xl bg-gradient-to-br from-indigo-50/80 via-white to-violet-50/40 border border-indigo-200/90 shadow-2xs flex flex-col justify-between gap-1.5 transition-all hover:shadow-xs">
         <div className="flex items-center justify-between">
           <span className="text-[11px] font-mono font-bold text-indigo-800 uppercase tracking-wider flex items-center gap-1.5">
-            <span>🛡️</span> Incident Journal
+            <span>🛡️</span> Community Reports
           </span>
           <span className="text-[10px] font-mono font-bold text-indigo-800 bg-indigo-100/70 px-2 py-0.5 rounded border border-indigo-200">
             Local-First
@@ -90,11 +90,11 @@ export function CommunityKpiStrip({
               {incidentCount}
             </span>
             <span className="text-xs font-bold text-indigo-800">
-              {incidentCount === 1 ? 'incident' : 'incidents'} logged
+              {incidentCount === 1 ? 'Report' : 'Reports'} Saved on Device
             </span>
           </div>
           <p className="text-[11px] text-indigo-800/90 leading-snug mt-0.5">
-            Stored securely on this device. Ready for CPCB Sameer export.
+            Saved safely on this device. Ready to export to pollution board.
           </p>
         </div>
       </div>

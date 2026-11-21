@@ -19,10 +19,13 @@ export function AirshedAlertFeedCard({
   onNavigateWorkspace,
   onAskCopilot,
 }: AirshedAlertFeedCardProps) {
-  const [filter, setFilter] = useState<'ALL' | AlertCategory>('ALL');
+  const [filter, setFilter] = useState<'ALL' | 'UNREAD' | AlertCategory>('ALL');
+
+  const unreadAlertsCount = alerts.filter((a) => !a.isRead).length;
 
   const filteredAlerts = alerts.filter((alert) => {
     if (filter === 'ALL') return true;
+    if (filter === 'UNREAD') return !alert.isRead;
     return alert.category === filter;
   });
 
@@ -88,20 +91,20 @@ export function AirshedAlertFeedCard({
             </span>
             <h2
               id="airshed-alerts-heading"
-              className="text-base sm:text-lg font-bold text-[var(--ink-primary)] truncate font-sans tracking-tight"
+              className="text-base sm:text-lg font-bold text-[var(--ink-primary)] font-sans tracking-tight"
             >
-              Verified Atmospheric &amp; Regulatory Alert Stream
+              Verified Smog &amp; Environmental Alerts
             </h2>
           </div>
           <button
             type="button"
             onClick={() =>
               onAskCopilot(
-                'What are the mandatory restrictions under the current CAQM GRAP stage in Delhi NCR? How should our housing society and family handle morning inversion smog?'
+                'What are the mandatory restrictions under the current emergency air quality stage? How should our housing society and family handle morning inversion smog?'
               )
             }
             className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-lg bg-[var(--surface-subtle)] hover:bg-[var(--surface-card)] text-[var(--brand-primary)] border border-[var(--border-subtle)] hover:border-[var(--brand-primary)]/40 shadow-2xs transition-colors shrink-0 cursor-pointer"
-            title="Ask Copilot about active alerts and GRAP restrictions"
+            title="Ask Copilot about active alerts and rules"
           >
             <span className="text-sm">🤖</span>
             <span>Ask Copilot</span>
@@ -112,8 +115,8 @@ export function AirshedAlertFeedCard({
             <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-bold uppercase tracking-wider bg-rose-50 text-rose-800 border border-rose-200 shrink-0">
               Live Airshed Bulletins
             </span>
-            <p className="text-xs text-[var(--ink-secondary)] truncate">
-              Authoritative triggers derived from Copernicus CAMS, CPCB NAQI, and CAQM mandates.
+            <p className="text-xs text-[var(--ink-secondary)] leading-relaxed">
+              Authoritative triggers derived from Copernicus CAMS, CPCB National Standards, and State Airshed Mandates.
             </p>
           </div>
           <button
@@ -139,6 +142,19 @@ export function AirshedAlertFeedCard({
         >
           All Alerts ({alerts.length})
         </button>
+        {unreadAlertsCount > 0 && (
+          <button
+            type="button"
+            onClick={() => setFilter('UNREAD')}
+            className={`px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer shrink-0 ${
+              filter === 'UNREAD'
+                ? 'bg-emerald-700 text-white shadow-2xs'
+                : 'bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100'
+            }`}
+          >
+            ● Unread ({unreadAlertsCount})
+          </button>
+        )}
         <button
           type="button"
           onClick={() => setFilter('GRAP_REGULATORY')}
@@ -148,7 +164,7 @@ export function AirshedAlertFeedCard({
               : 'bg-rose-50 text-rose-800 border border-rose-200 hover:bg-rose-100'
           }`}
         >
-          🚨 GRAP Mandates
+          🚨 Government Rules
         </button>
         <button
           type="button"
@@ -159,7 +175,7 @@ export function AirshedAlertFeedCard({
               : 'bg-teal-50 text-teal-800 border border-teal-200 hover:bg-teal-100'
           }`}
         >
-          🪟 Airing Windows
+          🪟 Safe Window Timing
         </button>
         <button
           type="button"
@@ -216,10 +232,14 @@ export function AirshedAlertFeedCard({
                 <button
                   type="button"
                   onClick={() => onMarkRead(alert.id)}
-                  className="text-[10px] font-mono text-slate-400 hover:text-slate-700 shrink-0 self-start sm:self-auto cursor-pointer"
-                  title="Toggle read status"
+                  className={`px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold transition-all cursor-pointer shrink-0 self-start sm:self-auto ${
+                    alert.isRead
+                      ? 'text-slate-500 bg-slate-100 hover:bg-slate-200 border border-slate-200'
+                      : 'text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 shadow-2xs'
+                  }`}
+                  title={alert.isRead ? 'Click to mark unread' : 'Mark alert as read'}
                 >
-                  {alert.isRead ? 'Mark Unread' : 'Dismiss'}
+                  {alert.isRead ? '✓ Read' : 'Mark Read'}
                 </button>
               </div>
 
@@ -227,7 +247,7 @@ export function AirshedAlertFeedCard({
               <div className="mt-2.5 pt-2.5 border-t border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
                 <div className="flex items-center gap-1.5 min-w-0">
                   <span className="font-bold text-slate-800 shrink-0 text-[11px]">Action:</span>
-                  <p className="text-slate-600 truncate text-[11px]">{alert.actionableStep}</p>
+                  <p className="text-slate-700 text-[11px] leading-relaxed">{alert.actionableStep}</p>
                 </div>
                 <button
                   type="button"

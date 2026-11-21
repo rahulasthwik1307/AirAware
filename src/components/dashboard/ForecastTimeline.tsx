@@ -267,7 +267,7 @@ export function ForecastTimeline({
           {/* Selected-Time Inspection Panel (Clean, Stable, Never Flickering) */}
           <div
             aria-live="polite"
-            className="mb-2.5 p-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-subtle)]/90 backdrop-blur-md text-xs font-mono shadow-xs"
+            className="mb-2.5 p-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-subtle)] text-xs font-mono shadow-xs"
           >
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex flex-wrap items-center gap-2">

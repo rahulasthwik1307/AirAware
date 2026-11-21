@@ -160,7 +160,7 @@ export function AqiHeroCard({
       }}
     >
       {/* Current Modelled Atmospheric Feed Ribbon */}
-      <div className="flex flex-wrap items-center justify-between border-b border-slate-200/80 bg-white/75 backdrop-blur-md px-6 py-2.5 sm:px-8 text-[11px] font-mono text-slate-600">
+      <div className="flex flex-wrap items-center justify-between border-b border-slate-200/80 bg-white px-6 py-2.5 sm:px-8 text-[11px] font-mono text-slate-600">
         <div className="flex items-center gap-2 sm:gap-3">
           <span className="inline-flex items-center gap-1.5 font-bold text-slate-800">
             <span
@@ -279,7 +279,7 @@ export function AqiHeroCard({
 
             {/* Flagship Atmospheric Intelligence Card (Sleek, Compact Height & Highly Visual) */}
             <div
-              className="rounded-3xl bg-white/95 backdrop-blur-xl border border-slate-200/90 p-5 sm:p-5.5 shadow-md hover:shadow-lg transition-all space-y-3.5"
+              className="rounded-3xl bg-white border border-slate-200/90 p-5 sm:p-5.5 shadow-md hover:shadow-lg transition-all space-y-3.5"
               style={{
                 boxShadow: `0 14px 32px -12px ${aqiColor}22`,
               }}
@@ -532,7 +532,7 @@ export function AqiHeroCard({
 
             {/* View Mode 2: Accessible 2D Reference Grid (Focused on Indian Hotspots + International Reference) */}
             {viewMode === 'grid' && (
-              <div className="w-full h-[540px] sm:h-[620px] lg:h-[680px] rounded-3xl border border-slate-200/90 bg-white/95 p-5 sm:p-6 overflow-y-auto space-y-4 shadow-lg backdrop-blur-xl">
+              <div className="w-full h-[540px] sm:h-[620px] lg:h-[680px] rounded-3xl border border-slate-200/90 bg-white p-5 sm:p-6 overflow-y-auto space-y-4 shadow-lg">
                 <div className="border-b border-slate-200/80 pb-3">
                   <div className="flex items-center justify-between">
                     <h3 className="text-base font-bold font-sans text-slate-900 flex items-center gap-2">

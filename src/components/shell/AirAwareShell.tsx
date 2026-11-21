@@ -96,54 +96,28 @@ export function AirAwareShell() {
             </span>
           </div>
 
-          {/* Quick Action Navigation & Platform Attribution */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[11px] font-mono font-bold text-[var(--ink-muted)] uppercase tracking-wider">
-                Quick Actions:
-              </span>
-              <button
-                type="button"
-                onClick={() => setActiveWorkspace('air-intelligence')}
-                className="px-2.5 py-1 text-[11px] font-medium rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-subtle)] hover:bg-[var(--surface-card)] hover:text-[var(--brand-primary)] cursor-pointer transition-colors"
-              >
-                🌅 Forecast &amp; Smog Windows
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveWorkspace('indoor-air')}
-                className="px-2.5 py-1 text-[11px] font-medium rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-subtle)] hover:bg-[var(--surface-card)] hover:text-[var(--brand-primary)] cursor-pointer transition-colors"
-              >
-                🏠 Indoor Air Hacks
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveWorkspace('family-planner')}
-                className="px-2.5 py-1 text-[11px] font-medium rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-subtle)] hover:bg-[var(--surface-card)] hover:text-[var(--brand-primary)] cursor-pointer transition-colors"
-              >
-                🛡️ Family Daily Routines
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveWorkspace('cleaner-choices')}
-                className="px-2.5 py-1 text-[11px] font-medium rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-subtle)] hover:bg-[var(--surface-card)] hover:text-[var(--brand-primary)] cursor-pointer transition-colors"
-              >
-                🌱 Cleaner Choices
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveWorkspace('community-alerts')}
-                className="px-2.5 py-1 text-[11px] font-medium rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-subtle)] hover:bg-[var(--surface-card)] hover:text-[var(--brand-primary)] cursor-pointer transition-colors"
-              >
-                📢 Community &amp; Alerts
-              </button>
+          {/* Authoritative Environmental Platform Provenance */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t border-slate-100 text-[11px]">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="flex h-5 w-5 items-center justify-center rounded-md bg-[var(--brand-primary)] text-white text-[11px] font-black">A</span>
+                <span className="font-bold text-slate-900 font-sans text-xs">AirAware Intelligence</span>
+              </div>
+              <p className="text-slate-500 leading-relaxed">
+                Empowering families and housing societies to navigate severe winter smog with low-emission routines and verified indoor hacks.
+              </p>
             </div>
 
-            <div className="text-[11px] text-[var(--ink-muted)] font-mono sm:text-right">
-              <p>Copernicus CAMS &amp; Open-Meteo Environmental Synthesis</p>
-              <p className="text-[10px] text-[var(--ink-muted)]/80 mt-0.5">
-                Local-first privacy: your health data stays on this device
-              </p>
+            <div className="space-y-1 font-mono text-[10px] text-slate-500">
+              <span className="font-bold uppercase tracking-wider text-slate-700 block">Scientific Data Feeds</span>
+              <p>Atmospheric Telemetry: Copernicus CAMS &amp; Open-Meteo Reanalysis</p>
+              <p>Standards: Central Pollution Control Board (CPCB) &amp; WHO Guidelines</p>
+            </div>
+
+            <div className="space-y-1 font-mono text-[10px] text-slate-500 md:text-right">
+              <span className="font-bold uppercase tracking-wider text-slate-700 block">Privacy Guarantee</span>
+              <p>🔒 100% Local-First: All routines, habits &amp; notes stay on your device.</p>
+              <p>Zero tracking • ₹0 operational budget • Public health mission</p>
             </div>
           </div>
         </div>

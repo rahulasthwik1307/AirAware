@@ -489,7 +489,7 @@ export function MapLibreGlobe({
         <span class="absolute w-8 h-8 rounded-full animate-ping opacity-75" style="background-color: ${aqiColor}"></span>
         <span class="w-4 h-4 rounded-full border-2 border-white shadow-xl ring-2 ring-slate-900" style="background-color: ${aqiColor}"></span>
       </div>
-      <div class="mt-1 px-2.5 py-0.5 rounded-full font-mono font-black text-white text-[11px] shadow-xl border border-white/40 backdrop-blur-md flex items-center gap-1.5 whitespace-nowrap" style="background-color: ${aqiColor}">
+      <div class="mt-1 px-2.5 py-0.5 rounded-full font-mono font-black text-white text-[11px] shadow-xl border border-white/40 flex items-center gap-1.5 whitespace-nowrap" style="background-color: ${aqiColor}">
         <span>${selectedLocation.name}</span>
         <span class="opacity-90">[${currentAqi ?? '--'}]</span>
       </div>
@@ -563,7 +563,7 @@ export function MapLibreGlobe({
       el.className = 'group relative flex items-center gap-1 cursor-pointer transition-transform hover:scale-110';
       el.innerHTML = `
         <span class="w-2.5 h-2.5 rounded-full border border-white shadow-md" style="background-color: ${cityColor}"></span>
-        <span class="px-1.5 py-0.2 rounded-full font-mono font-bold text-white text-[10px] shadow-md border border-white/30 backdrop-blur-sm" style="background-color: ${cityColor}EE">
+        <span class="px-1.5 py-0.2 rounded-full font-mono font-bold text-white text-[10px] shadow-md border border-white/30" style="background-color: ${cityColor}EE">
           ${c.name} [${cityAqi}]
         </span>
       `;
@@ -679,7 +679,7 @@ export function MapLibreGlobe({
       <div className="absolute top-4 inset-x-4 flex items-center justify-between z-20 pointer-events-none">
         {/* Left: 3D Globe vs 2D Mercator Toggle */}
         <div
-          className="inline-flex p-1 rounded-xl backdrop-blur-md shadow-lg text-[11px] font-mono font-bold pointer-events-auto bg-slate-900/85 border border-slate-700/80 text-slate-300"
+          className="inline-flex p-1 rounded-xl shadow-lg text-[11px] font-mono font-bold pointer-events-auto bg-slate-900 border border-slate-700/80 text-slate-300"
         >
           <button
             type="button"
@@ -709,7 +709,7 @@ export function MapLibreGlobe({
         <div className="flex items-center gap-2 pointer-events-auto">
           {/* Style Switcher */}
           <div
-            className="inline-flex p-1 rounded-xl backdrop-blur-md shadow-lg text-[11px] font-mono font-bold bg-slate-900/85 border border-slate-700/80"
+            className="inline-flex p-1 rounded-xl shadow-lg text-[11px] font-mono font-bold bg-slate-900 border border-slate-700/80"
           >
             <button
               type="button"
@@ -753,7 +753,7 @@ export function MapLibreGlobe({
           <button
             type="button"
             onClick={handleResetNorth}
-            className="w-8 h-8 rounded-xl backdrop-blur-md shadow-lg flex items-center justify-center transition-all font-mono font-bold text-xs cursor-pointer bg-slate-900/85 border border-slate-700/80 text-slate-300 hover:text-white hover:bg-slate-800"
+            className="w-8 h-8 rounded-xl shadow-lg flex items-center justify-center transition-all font-mono font-bold text-xs cursor-pointer bg-slate-900 border border-slate-700/80 text-slate-300 hover:text-white hover:bg-slate-800"
             title="Reset North & Pitch"
             aria-label="Reset North"
           >
@@ -767,7 +767,7 @@ export function MapLibreGlobe({
         <div
           role="dialog"
           aria-label="Environmental Intelligence Preview"
-          className="absolute top-14 right-3 sm:right-5 max-w-[230px] w-full p-2.5 rounded-2xl backdrop-blur-xl shadow-[0_16px_36px_-6px_rgba(0,0,0,0.85)] z-30 animate-fadeIn pointer-events-auto transition-all bg-slate-900/95 border border-slate-700/80 text-white select-none"
+          className="absolute top-14 right-3 sm:right-5 max-w-[230px] w-full p-2.5 rounded-2xl shadow-[0_16px_36px_-6px_rgba(0,0,0,0.85)] z-30 animate-fadeIn pointer-events-auto transition-all bg-slate-900 border border-slate-700/80 text-white select-none"
         >
           {/* Header Row: City / Place Name, Coordinates & Close */}
           <div className="flex items-center justify-between gap-1.5 pb-1 mb-1 border-b border-slate-800/80">
@@ -875,7 +875,7 @@ export function MapLibreGlobe({
       {/* Bottom Floating Controls Bar */}
       <div className="absolute bottom-4 inset-x-4 flex items-center justify-between z-20 pointer-events-none">
         {/* Left: Action Buttons (Auto-Rotate & Focus Active) */}
-        <div className="flex items-center gap-1.5 p-1 rounded-xl backdrop-blur-md shadow-lg text-[11px] font-mono font-bold pointer-events-auto bg-slate-900/85 border border-slate-700/80">
+        <div className="flex items-center gap-1.5 p-1 rounded-xl shadow-lg text-[11px] font-mono font-bold pointer-events-auto bg-slate-900 border border-slate-700/80">
           <button
             type="button"
             onClick={() => setUserPaused((p) => !p)}
@@ -897,7 +897,7 @@ export function MapLibreGlobe({
         </div>
 
         {/* Center: Real-Time HUD Coordinates & Zoom Level */}
-        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl backdrop-blur-md shadow-lg text-[10px] font-mono bg-slate-900/85 border border-slate-700/80 text-slate-300">
+        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl shadow-lg text-[10px] font-mono bg-slate-900 border border-slate-700/80 text-slate-300">
           <span className="font-bold text-sky-300 tabular-nums">
             {cursorCoords ? `${cursorCoords.lat}°N, ${cursorCoords.lng}°E` : 'Explore Globe'}
           </span>
@@ -908,7 +908,7 @@ export function MapLibreGlobe({
         </div>
 
         {/* Right: Zoom + / - Controls */}
-        <div className="flex items-center gap-1 p-1 rounded-xl backdrop-blur-md shadow-lg text-[11px] font-mono pointer-events-auto bg-slate-900/85 border border-slate-700/80">
+        <div className="flex items-center gap-1 p-1 rounded-xl shadow-lg text-[11px] font-mono pointer-events-auto bg-slate-900 border border-slate-700/80">
           <button
             type="button"
             onClick={() => handleZoom(1)}

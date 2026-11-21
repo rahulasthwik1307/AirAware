@@ -851,7 +851,7 @@ export function InteractiveEarthGlobe({
 
               {/* Numbered AQI Badge Bubble */}
               <div
-                className={`px-2 py-0.5 rounded-full font-mono font-black text-white shadow-xl border border-white/40 backdrop-blur-md flex items-center gap-1 ${
+                className={`px-2 py-0.5 rounded-full font-mono font-black text-white shadow-xl border border-white/40 flex items-center gap-1 ${
                   pin.isActive ? 'text-xs ring-2 ring-white/80' : 'text-[11px]'
                 }`}
                 style={{ backgroundColor: `${pin.colorHex}F0` }}
@@ -873,7 +873,7 @@ export function InteractiveEarthGlobe({
             top: `${Math.min(Math.max(activeDisplayPoint.screenY - 90, 20), dimensions.height - 180)}px`,
           }}
         >
-          <div className="rounded-2xl bg-white/95 backdrop-blur-xl border border-slate-200/90 p-4 shadow-2xl text-left min-w-[220px] max-w-[270px] animate-fadeIn text-slate-900">
+          <div className="rounded-2xl bg-white border border-slate-200/90 p-4 shadow-2xl text-left min-w-[220px] max-w-[270px] animate-fadeIn text-slate-900">
             <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-2 mb-2">
               <span className="text-xs font-mono font-bold text-slate-800 truncate">
                 {activeDisplayPoint.name}
@@ -940,7 +940,7 @@ export function InteractiveEarthGlobe({
       {/* Bottom Controls Bar: Mode Pills & Zoom */}
       <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between z-20 pointer-events-auto">
         {/* 3D GLOBE / ROTATE MODE PILL */}
-        <div className="inline-flex items-center rounded-xl bg-white/90 backdrop-blur-md border border-slate-200/90 p-1 shadow-md text-[11px] font-mono text-slate-700">
+        <div className="inline-flex items-center rounded-xl bg-white border border-slate-200 p-1 shadow-md text-[11px] font-mono text-slate-700">
           <button
             type="button"
             onClick={() => setIsRotating(!isRotating)}
@@ -967,7 +967,7 @@ export function InteractiveEarthGlobe({
         </div>
 
         {/* ZOOM CONTROLS */}
-        <div className="flex items-center gap-1 bg-white/90 backdrop-blur-md border border-slate-200/90 rounded-xl p-1 shadow-md text-[11px] font-mono text-slate-700">
+        <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-xl p-1 shadow-md text-[11px] font-mono text-slate-700">
           <span className="px-2 text-[10px] uppercase font-bold text-slate-400">Zoom</span>
           <button
             type="button"

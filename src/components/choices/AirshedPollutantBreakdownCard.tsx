@@ -41,7 +41,7 @@ export function AirshedPollutantBreakdownCard({
 
   return (
     <article
-      className="p-5 sm:p-6 rounded-3xl bg-[var(--surface-card)] border border-[var(--border-subtle)] shadow-xs flex flex-col justify-between gap-4 transition-shadow hover:shadow-md"
+      className="p-5 sm:p-6 rounded-3xl bg-[var(--surface-card)] border border-[var(--border-subtle)] shadow-xs flex flex-col justify-between gap-3.5 transition-shadow hover:shadow-md h-full"
       aria-labelledby="airshed-pollutants-heading"
     >
       {/* Header: Uniform 2-Row Layout with Copilot Trigger */}
@@ -111,190 +111,241 @@ export function AirshedPollutantBreakdownCard({
       </div>
 
       {/* Main Interactive Data Visualization Section */}
-      {activeTab === 'CHARTS' ? (
-        <div className="space-y-3.5">
-          {/* Pollutant 1: CO2e - Greenhouse Gas */}
-          <div className="p-3 rounded-2xl bg-slate-50/80 border border-slate-200 space-y-2">
-            <div className="flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2">
-                <span className="text-base">🌍</span>
-                <div>
-                  <span className="font-bold text-slate-900">Greenhouse Gases (CO₂e)</span>
-                  <span className="text-[10px] text-slate-500 block font-mono">Planetary Climate Driver</span>
-                </div>
-              </div>
-              <span className="font-mono font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 text-xs">
-                -{co2ReductionPct}% ({commute.avoidedKgCo2eWeekly} kg avoided)
+      <div className="flex-1 flex flex-col justify-start gap-3">
+        {/* Top Visual Impact Overview Strip */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 p-3 rounded-2xl bg-gradient-to-br from-slate-50 to-emerald-50/50 border border-slate-200 shadow-2xs">
+          <div className="flex items-center gap-2.5">
+            <div className="relative w-10 h-10 flex items-center justify-center shrink-0">
+              <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                <path
+                  className="text-slate-200"
+                  strokeWidth="3.5"
+                  stroke="currentColor"
+                  fill="none"
+                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                />
+                <path
+                  className="text-emerald-500 transition-all duration-700 ease-out"
+                  strokeDasharray={`${co2ReductionPct}, 100`}
+                  strokeWidth="3.5"
+                  strokeLinecap="round"
+                  stroke="currentColor"
+                  fill="none"
+                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                />
+              </svg>
+              <span className="absolute text-[10px] font-mono font-black text-slate-800">
+                {co2ReductionPct}%
               </span>
             </div>
-
-            {/* High-Contrast Comparative Horizontal Bars */}
-            <div className="space-y-1.5 pt-1">
-              {/* Baseline */}
-              <div className="flex items-center gap-2 text-[11px] font-mono">
-                <span className="w-16 shrink-0 text-slate-500 text-[10px]">Solo Car</span>
-                <div className="flex-1 h-3 bg-slate-200 rounded-full overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-rose-400 to-amber-400 rounded-full w-full" />
-                </div>
-                <span className="w-14 shrink-0 text-right font-bold text-slate-800">{baselineCo2} kg</span>
-              </div>
-              {/* Alternative */}
-              <div className="flex items-center gap-2 text-[11px] font-mono">
-                <span className="w-16 shrink-0 font-bold text-emerald-700 text-[10px] truncate">{altMeta.shortLabel}</span>
-                <div className="flex-1 h-3 bg-slate-200 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-500"
-                    style={{ width: `${co2AltWidth}%` }}
-                  />
-                </div>
-                <span className="w-14 shrink-0 text-right font-bold text-emerald-900">{altCo2} kg</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Pollutant 2: NOx - Smog Precursor */}
-          <div className="p-3 rounded-2xl bg-amber-50/40 border border-amber-200/90 space-y-2">
-            <div className="flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2">
-                <span className="text-base">💨</span>
-                <div>
-                  <span className="font-bold text-amber-950">Nitrogen Oxides (NOx)</span>
-                  <span className="text-[10px] text-amber-700 block font-mono">Primary Winter Smog &amp; Ozone Precursor</span>
-                </div>
-              </div>
-              <span className="font-mono font-bold text-amber-800 bg-amber-100/70 px-2 py-0.5 rounded-full border border-amber-300 text-xs">
-                -{noxReductionPct}% ({noxAvoidedGrams}g avoided)
+            <div>
+              <span className="text-[10px] font-mono font-bold text-slate-500 uppercase block">Emission Cut</span>
+              <span className="text-xs font-bold text-slate-900 leading-tight block">
+                {co2ReductionPct === 0 ? 'Fossil Baseline' : `-${commute.avoidedKgCo2eWeekly} kg CO₂e`}
               </span>
             </div>
-
-            {/* High-Contrast Comparative Horizontal Bars */}
-            <div className="space-y-1.5 pt-1">
-              {/* Baseline */}
-              <div className="flex items-center gap-2 text-[11px] font-mono">
-                <span className="w-16 shrink-0 text-slate-500 text-[10px]">Solo Car</span>
-                <div className="flex-1 h-3 bg-amber-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-amber-500 to-orange-400 rounded-full w-full" />
-                </div>
-                <span className="w-14 shrink-0 text-right font-bold text-amber-950">{baselineNox} g</span>
-              </div>
-              {/* Alternative */}
-              <div className="flex items-center gap-2 text-[11px] font-mono">
-                <span className="w-16 shrink-0 font-bold text-emerald-700 text-[10px] truncate">{altMeta.shortLabel}</span>
-                <div className="flex-1 h-3 bg-amber-100 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-500"
-                    style={{ width: `${noxAltWidth}%` }}
-                  />
-                </div>
-                <span className="w-14 shrink-0 text-right font-bold text-emerald-900">{altNox} g</span>
-              </div>
-            </div>
-            <p className="text-[10px] text-amber-800 leading-snug">
-              *Reacts with airborne ammonia under cold winter inversions to produce hazardous secondary ammonium nitrate aerosol.
-            </p>
           </div>
 
-          {/* Pollutant 3: PM2.5 Tailpipe Exhaust - Ultrafine Combustion Soot */}
-          <div className="p-3 rounded-2xl bg-violet-50/40 border border-violet-200/90 space-y-2">
-            <div className="flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2">
-                <span className="text-base">🔬</span>
-                <div>
-                  <span className="font-bold text-violet-950">Tailpipe PM₂.₅ Soot</span>
-                  <span className="text-[10px] text-violet-700 block font-mono">Ultrafine Sidewalk Breathing Zone Carcinogen</span>
-                </div>
-              </div>
-              <span className="font-mono font-bold text-violet-800 bg-violet-100/70 px-2 py-0.5 rounded-full border border-violet-300 text-xs">
-                -{pmReductionPct}% ({pmAvoidedGrams}g avoided)
+          <div className="p-2 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-0.5">
+            <span className="text-[10px] font-mono font-bold text-amber-800 uppercase block">Smog Precursor NOx</span>
+            <div className="flex items-baseline gap-1">
+              <span className="text-sm font-black font-mono text-amber-950">
+                {noxAvoidedGrams > 0 ? `-${noxAvoidedGrams}g` : '0g'}
               </span>
+              <span className="text-[10px] text-slate-500 font-mono">avoided/wk</span>
             </div>
-
-            {/* High-Contrast Comparative Horizontal Bars */}
-            <div className="space-y-1.5 pt-1">
-              {/* Baseline */}
-              <div className="flex items-center gap-2 text-[11px] font-mono">
-                <span className="w-16 shrink-0 text-slate-500 text-[10px]">Solo Car</span>
-                <div className="flex-1 h-3 bg-violet-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-violet-500 to-purple-400 rounded-full w-full" />
-                </div>
-                <span className="w-14 shrink-0 text-right font-bold text-violet-950">{baselinePm} g</span>
-              </div>
-              {/* Alternative */}
-              <div className="flex items-center gap-2 text-[11px] font-mono">
-                <span className="w-16 shrink-0 font-bold text-emerald-700 text-[10px] truncate">{altMeta.shortLabel}</span>
-                <div className="flex-1 h-3 bg-violet-100 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-500"
-                    style={{ width: `${pmAltWidth}%` }}
-                  />
-                </div>
-                <span className="w-14 shrink-0 text-right font-bold text-emerald-900">{altPm} g</span>
-              </div>
-            </div>
-            <p className="text-[10px] text-violet-800 leading-snug">
-              *Combustion soot particles emitted at 0.5m sidewalk height, penetrating directly into deep alveolar lung tissue.
-            </p>
-          </div>
-        </div>
-      ) : (
-        /* Chemistry Flow View: The 4-Stage Inversion Smog Reactor */
-        <div className="p-3.5 rounded-2xl bg-gradient-to-br from-slate-50 to-indigo-50/40 border border-slate-200 space-y-3">
-          <div className="flex items-center justify-between text-xs pb-2 border-b border-slate-200">
-            <span className="font-mono font-bold text-slate-800 uppercase tracking-wider">
-              Winter Inversion Atmospheric Reaction Cascade
-            </span>
-            <span className="text-[10px] font-mono font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
-              Aerosol Chemistry
-            </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
-            {/* Step 1 */}
-            <div className="p-2.5 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-1">
-              <div className="flex items-center gap-1.5 font-bold text-slate-900 text-[11px]">
-                <span className="w-4 h-4 rounded-full bg-rose-500 text-white flex items-center justify-center text-[10px]">1</span>
-                <span>Cold-Start Tailpipe Injection</span>
-              </div>
-              <p className="text-[10px] text-slate-600 leading-relaxed">
-                Cold engine starts emit 4x higher NOx and unburnt hydrocarbons directly into roadside air at breathing height.
-              </p>
-            </div>
-
-            {/* Step 2 */}
-            <div className="p-2.5 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-1">
-              <div className="flex items-center gap-1.5 font-bold text-slate-900 text-[11px]">
-                <span className="w-4 h-4 rounded-full bg-amber-500 text-white flex items-center justify-center text-[10px]">2</span>
-                <span>Thermal Inversion Trapping</span>
-              </div>
-              <p className="text-[10px] text-slate-600 leading-relaxed">
-                Ground-level radiative cooling creates a thermal lid below 150m, sealing vehicle exhaust in the urban breathing dome.
-              </p>
-            </div>
-
-            {/* Step 3 */}
-            <div className="p-2.5 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-1">
-              <div className="flex items-center gap-1.5 font-bold text-slate-900 text-[11px]">
-                <span className="w-4 h-4 rounded-full bg-violet-500 text-white flex items-center justify-center text-[10px]">3</span>
-                <span>Secondary Ammonium Nitrate</span>
-              </div>
-              <p className="text-[10px] text-slate-600 leading-relaxed">
-                Trapped NOx oxidizes and binds with ambient ammonia (NH₃), forming secondary PM2.5 that worsens regional smog.
-              </p>
-            </div>
-
-            {/* Step 4 */}
-            <div className="p-2.5 rounded-xl bg-white border border-emerald-200 shadow-2xs space-y-1 bg-emerald-50/50">
-              <div className="flex items-center gap-1.5 font-bold text-emerald-950 text-[11px]">
-                <span className="w-4 h-4 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px]">4</span>
-                <span>Clean Transit Elimination</span>
-              </div>
-              <p className="text-[10px] text-emerald-900 leading-relaxed">
-                Shifting {commute.distanceKm} km to {altMeta.label} prevents {noxAvoidedGrams}g of NOx, stopping secondary particulate formation before it begins.
-              </p>
+          <div className="p-2 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-0.5">
+            <span className="text-[10px] font-mono font-bold text-violet-800 uppercase block">Sidewalk PM2.5</span>
+            <div className="flex items-baseline gap-1">
+              <span className="text-sm font-black font-mono text-violet-950">
+                {pmAvoidedGrams > 0 ? `-${pmAvoidedGrams}g` : '0g'}
+              </span>
+              <span className="text-[10px] text-slate-500 font-mono">avoided/wk</span>
             </div>
           </div>
         </div>
-      )}
+
+        {activeTab === 'CHARTS' ? (
+          <div className="space-y-2.5">
+            {/* Pollutant 1: CO2e - Greenhouse Gas */}
+            <div className="p-2.5 rounded-2xl bg-slate-50/80 border border-slate-200 space-y-1.5">
+              <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-base">🌍</span>
+                  <div>
+                    <span className="font-bold text-slate-900">Greenhouse Gases (CO₂e)</span>
+                    <span className="text-[10px] text-slate-500 block font-mono">Planetary Climate Driver</span>
+                  </div>
+                </div>
+                <span className="font-mono font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 text-xs">
+                  -{co2ReductionPct}% ({commute.avoidedKgCo2eWeekly} kg avoided)
+                </span>
+              </div>
+
+              {/* Comparative Horizontal Bars */}
+              <div className="space-y-1 pt-0.5">
+                <div className="flex items-center gap-2 text-[11px] font-mono">
+                  <span className="w-16 shrink-0 text-slate-500 text-[10px]">Solo Car</span>
+                  <div className="flex-1 h-2.5 bg-slate-200 rounded-full overflow-hidden">
+                    <div className="h-full bg-gradient-to-r from-rose-400 to-amber-400 rounded-full w-full" />
+                  </div>
+                  <span className="w-14 shrink-0 text-right font-bold text-slate-800">{baselineCo2} kg</span>
+                </div>
+                <div className="flex items-center gap-2 text-[11px] font-mono">
+                  <span className="w-16 shrink-0 font-bold text-emerald-700 text-[10px] truncate">{altMeta.shortLabel}</span>
+                  <div className="flex-1 h-2.5 bg-slate-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-500"
+                      style={{ width: `${co2AltWidth}%` }}
+                    />
+                  </div>
+                  <span className="w-14 shrink-0 text-right font-bold text-emerald-900">{altCo2} kg</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Pollutant 2: NOx - Smog Precursor */}
+            <div className="p-2.5 rounded-2xl bg-amber-50/40 border border-amber-200/90 space-y-1.5">
+              <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-base">💨</span>
+                  <div>
+                    <span className="font-bold text-amber-950">Nitrogen Oxides (NOx)</span>
+                    <span className="text-[10px] text-amber-700 block font-mono">Primary Winter Smog &amp; Ozone Precursor</span>
+                  </div>
+                </div>
+                <span className="font-mono font-bold text-amber-800 bg-amber-100/70 px-2 py-0.5 rounded-full border border-amber-300 text-xs">
+                  -{noxReductionPct}% ({noxAvoidedGrams}g avoided)
+                </span>
+              </div>
+
+              {/* Comparative Horizontal Bars */}
+              <div className="space-y-1 pt-0.5">
+                <div className="flex items-center gap-2 text-[11px] font-mono">
+                  <span className="w-16 shrink-0 text-slate-500 text-[10px]">Solo Car</span>
+                  <div className="flex-1 h-2.5 bg-amber-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-gradient-to-r from-amber-500 to-orange-400 rounded-full w-full" />
+                  </div>
+                  <span className="w-14 shrink-0 text-right font-bold text-amber-950">{baselineNox} g</span>
+                </div>
+                <div className="flex items-center gap-2 text-[11px] font-mono">
+                  <span className="w-16 shrink-0 font-bold text-emerald-700 text-[10px] truncate">{altMeta.shortLabel}</span>
+                  <div className="flex-1 h-2.5 bg-amber-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-500"
+                      style={{ width: `${noxAltWidth}%` }}
+                    />
+                  </div>
+                  <span className="w-14 shrink-0 text-right font-bold text-emerald-900">{altNox} g</span>
+                </div>
+              </div>
+              <p className="text-[10px] text-amber-800 leading-snug">
+                *Reacts with airborne ammonia under cold winter inversions to produce hazardous secondary ammonium nitrate aerosol.
+              </p>
+            </div>
+
+            {/* Pollutant 3: PM2.5 Tailpipe Exhaust - Ultrafine Combustion Soot */}
+            <div className="p-2.5 rounded-2xl bg-violet-50/40 border border-violet-200/90 space-y-1.5">
+              <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-base">🔬</span>
+                  <div>
+                    <span className="font-bold text-violet-950">Tailpipe PM₂.₅ Soot</span>
+                    <span className="text-[10px] text-violet-700 block font-mono">Ultrafine Sidewalk Breathing Zone Carcinogen</span>
+                  </div>
+                </div>
+                <span className="font-mono font-bold text-violet-800 bg-violet-100/70 px-2 py-0.5 rounded-full border border-violet-300 text-xs">
+                  -{pmReductionPct}% ({pmAvoidedGrams}g avoided)
+                </span>
+              </div>
+
+              {/* Comparative Horizontal Bars */}
+              <div className="space-y-1 pt-0.5">
+                <div className="flex items-center gap-2 text-[11px] font-mono">
+                  <span className="w-16 shrink-0 text-slate-500 text-[10px]">Solo Car</span>
+                  <div className="flex-1 h-2.5 bg-violet-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-gradient-to-r from-violet-500 to-purple-400 rounded-full w-full" />
+                  </div>
+                  <span className="w-14 shrink-0 text-right font-bold text-violet-950">{baselinePm} g</span>
+                </div>
+                <div className="flex items-center gap-2 text-[11px] font-mono">
+                  <span className="w-16 shrink-0 font-bold text-emerald-700 text-[10px] truncate">{altMeta.shortLabel}</span>
+                  <div className="flex-1 h-2.5 bg-violet-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-500"
+                      style={{ width: `${pmAltWidth}%` }}
+                    />
+                  </div>
+                  <span className="w-14 shrink-0 text-right font-bold text-emerald-900">{altPm} g</span>
+                </div>
+              </div>
+              <p className="text-[10px] text-violet-800 leading-snug">
+                *Combustion soot particles emitted at 0.5m sidewalk height, penetrating directly into deep alveolar lung tissue.
+              </p>
+            </div>
+          </div>
+        ) : (
+          /* Chemistry Flow View: The 4-Stage Inversion Smog Reactor */
+          <div className="p-3.5 rounded-2xl bg-gradient-to-br from-slate-50 to-indigo-50/40 border border-slate-200 space-y-3">
+            <div className="flex items-center justify-between text-xs pb-2 border-b border-slate-200">
+              <span className="font-mono font-bold text-slate-800 uppercase tracking-wider">
+                Winter Inversion Atmospheric Reaction Cascade
+              </span>
+              <span className="text-[10px] font-mono font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
+                Aerosol Chemistry
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+              {/* Step 1 */}
+              <div className="p-2.5 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-1">
+                <div className="flex items-center gap-1.5 font-bold text-slate-900 text-[11px]">
+                  <span className="w-4 h-4 rounded-full bg-rose-500 text-white flex items-center justify-center text-[10px]">1</span>
+                  <span>Cold-Start Tailpipe Injection</span>
+                </div>
+                <p className="text-[10px] text-slate-600 leading-relaxed">
+                  Cold engine starts emit 4x higher NOx and unburnt hydrocarbons directly into roadside air at breathing height.
+                </p>
+              </div>
+
+              {/* Step 2 */}
+              <div className="p-2.5 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-1">
+                <div className="flex items-center gap-1.5 font-bold text-slate-900 text-[11px]">
+                  <span className="w-4 h-4 rounded-full bg-amber-500 text-white flex items-center justify-center text-[10px]">2</span>
+                  <span>Thermal Inversion Trapping</span>
+                </div>
+                <p className="text-[10px] text-slate-600 leading-relaxed">
+                  Ground-level radiative cooling creates a thermal lid below 150m, sealing vehicle exhaust in the urban breathing dome.
+                </p>
+              </div>
+
+              {/* Step 3 */}
+              <div className="p-2.5 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-1">
+                <div className="flex items-center gap-1.5 font-bold text-slate-900 text-[11px]">
+                  <span className="w-4 h-4 rounded-full bg-violet-500 text-white flex items-center justify-center text-[10px]">3</span>
+                  <span>Secondary Ammonium Nitrate</span>
+                </div>
+                <p className="text-[10px] text-slate-600 leading-relaxed">
+                  Trapped NOx oxidizes and binds with ambient ammonia (NH₃), forming secondary PM2.5 that worsens regional smog.
+                </p>
+              </div>
+
+              {/* Step 4 */}
+              <div className="p-2.5 rounded-xl bg-white border border-emerald-200 shadow-2xs space-y-1 bg-emerald-50/50">
+                <div className="flex items-center gap-1.5 font-bold text-emerald-950 text-[11px]">
+                  <span className="w-4 h-4 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px]">4</span>
+                  <span>Clean Transit Elimination</span>
+                </div>
+                <p className="text-[10px] text-emerald-900 leading-relaxed">
+                  Shifting {commute.distanceKm} km to {altMeta.label} prevents {noxAvoidedGrams}g of NOx, stopping secondary particulate formation before it begins.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Atmospheric Science & Health Action Callout (Zero Empty Space) */}
       <div className="p-3 rounded-2xl bg-gradient-to-r from-amber-50/70 via-slate-50 to-emerald-50/70 border border-slate-200 text-xs space-y-1 shadow-2xs">

@@ -299,10 +299,7 @@ export function CommuteComparatorCard({
           <div className="space-y-1">
             <div className="flex justify-between text-xs items-center">
               <span className="font-bold text-slate-800 flex items-center gap-1.5">
-                <span className="text-sm">🚗</span> Solo Petrol Car (Baseline)
-                <span className="text-[10px] font-mono font-bold text-rose-800 bg-rose-50 px-1.5 py-0.2 rounded border border-rose-200">
-                  Fossil Baseline
-                </span>
+                <span className="text-sm">🚗</span> Solo Petrol Car
               </span>
               <span className="font-mono font-bold text-rose-950">
                 {commute.baselineKgCo2eWeekly} kg CO₂e

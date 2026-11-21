@@ -37,9 +37,9 @@ export function HistoricalAirshedTrendCard({
             </span>
             <h2
               id="historical-airshed-heading"
-              className="text-base sm:text-lg font-bold text-[var(--ink-primary)] truncate font-sans tracking-tight"
+              className="text-base sm:text-lg font-bold text-[var(--ink-primary)] font-sans tracking-tight"
             >
-              7-Day Airshed Trend &amp; Retrospective Inversion Wave
+              7-Day Air Quality Trend &amp; History
             </h2>
           </div>
           <span className="text-[10px] font-mono font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 shrink-0">
@@ -48,10 +48,10 @@ export function HistoricalAirshedTrendCard({
         </div>
         <div className="flex items-center gap-2 flex-wrap min-w-0">
           <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-bold uppercase tracking-wider bg-sky-50 text-sky-800 border border-sky-200 shrink-0">
-            Diurnal Trajectory
+            7-Day History
           </span>
-          <p className="text-xs text-[var(--ink-secondary)] truncate">
-            Evaluating winter stagnation episodes and diurnal inversion waves for {locationName}.
+          <p className="text-xs text-[var(--ink-secondary)] leading-relaxed">
+            Evaluating winter stagnation episodes and daily air quality trends for {locationName}.
           </p>
         </div>
       </div>

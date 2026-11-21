@@ -203,7 +203,7 @@ STATUS: Filed locally by resident for dispatch to municipal control room.
 export function formatRwaSocietyBulletin(
   locationName: string,
   aqi: number = 378,
-  grapStage: string = 'Stage III',
+  grapStage: string = 'Stage II',
   ventWindow: DiurnalVentilationWindow = calculateVentilationWindow(14)
 ): string {
   const dateStr = new Date().toLocaleDateString('en-IN', {
@@ -212,18 +212,18 @@ export function formatRwaSocietyBulletin(
     day: 'numeric',
   });
 
-  return `📢 *AIRAWARE RESIDENTIAL ADVISORY — ${locationName.toUpperCase()}*
-🗓️ *Date:* ${dateStr} | *Active CAQM Status:* ${grapStage}
+  return `📢 AIRAWARE RESIDENTIAL ADVISORY — ${locationName.toUpperCase()}
+🗓️ Date: ${dateStr} | Active Pollution Status: ${grapStage} (Very Poor Air)
 
-🚨 *Current Air Quality:* CPCB AQI ${aqi} (Hazardous Smog)
-⚠️ *Thermal Inversion Warning:* Surface smoke trapped below 150m.
+🚨 Current Air Quality: CPCB AQI ${aqi} (Hazardous Smog)
+⚠️ Weather Advisory: Surface smoke trapped near ground level (Inversion Lid <150m)
 
-🏢 *RESIDENT WELFARE ASSOCIATION (RWA) ACTION PROTOCOLS:*
-1. 🚫 *ZERO OPEN BURNING:* Please instruct society security guards & gardening staff to avoid dry leaf or waste burning. (Provide electric radiant heaters to gate staff).
-2. 🪟 *VENTILATION WINDOW:* Keep windows sealed during morning smog (7:00–10:00 AM). Safe ventilation window: ${ventWindow.windowStart} – ${ventWindow.windowEnd}.
-3. 🚸 *SCHOOL RUNS & SENIORS:* Toddlers and elderly residents should remain in HEPA-filtered rooms. Wear fitted N95 masks for unavoidable outdoor movement.
-4. 🚗 *TRANSIT CARPOOL:* Switch private car runs to shared society carpools or Delhi Metro.
+🏢 RESIDENT WELFARE ASSOCIATION (RWA) ACTION PROTOCOLS:
+1. 🚫 Zero Open Burning: Please instruct society security guards & gardening staff to avoid dry leaf or waste burning. (Provide electric radiant heaters to gate staff).
+2. 🪟 Safe Window Timing: Keep windows sealed during morning smog (7:00–10:00 AM). Safe ventilation window: ${ventWindow.windowStart} – ${ventWindow.windowEnd}.
+3. 🚸 Children & Seniors: Toddlers and elderly residents should remain in HEPA-filtered rooms. Wear fitted N95 masks for unavoidable outdoor movement.
+4. 🚗 Shared Commutes: Switch private car runs to shared society carpools or electric metro.
 
-🛡️ *Together for Cleaner Neighbourhood Air.*
+🛡️ Together for Cleaner Neighbourhood Air.
 Generated via AirAware Local Environmental Intelligence.`;
 }

@@ -85,8 +85,8 @@ describe('Community & Alerts Domain Tests', () => {
       const bulletin = formatRwaSocietyBulletin('Palm Grove RWA', 380, 'Stage III');
       expect(bulletin).toContain('AIRAWARE RESIDENTIAL ADVISORY — PALM GROVE RWA');
       expect(bulletin).toContain('CPCB AQI 380');
-      expect(bulletin).toContain('ZERO OPEN BURNING');
-      expect(bulletin).toContain('VENTILATION WINDOW');
+      expect(bulletin).toContain('Zero Open Burning');
+      expect(bulletin).toContain('Safe Window Timing');
     });
   });
 

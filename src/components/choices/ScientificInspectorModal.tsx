@@ -30,7 +30,7 @@ export function ScientificInspectorModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/75 animate-fadeIn"
       role="dialog"
       aria-modal="true"
       aria-labelledby="inspector-modal-title"

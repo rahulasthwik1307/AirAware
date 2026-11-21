@@ -34,7 +34,7 @@ export function AppHeader({
   onOpenNotifications,
 }: AppHeaderProps) {
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-[var(--border-subtle)] bg-[var(--surface-card)]/95 backdrop-blur-md">
+    <header className="sticky top-0 z-40 w-full border-b border-[var(--border-subtle)] bg-[var(--surface-card)] shadow-xs">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Brand Logo & Subtitle */}
         <div className="flex items-center gap-3 shrink-0">
