@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { AlertItem } from '@/domain/community/types';
 import { WorkspaceKey } from '@/domain/types';
 
@@ -23,6 +24,22 @@ export function NotificationDrawer({
   onMarkAllRead,
   onNavigateWorkspace,
 }: NotificationDrawerProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Lock body scroll when drawer is open
+  useEffect(() => {
+    if (!isOpen) return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [isOpen]);
+
   // Handle escape key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -34,14 +51,14 @@ export function NotificationDrawer({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
-  return (
+  const drawerContent = (
     <div
       role="dialog"
       aria-modal="true"
       aria-label="Notification Centre"
-      className="fixed inset-0 z-50 flex justify-end bg-slate-900/60 animate-fadeIn"
+      className="fixed inset-0 z-[100] flex justify-end bg-slate-900/40 animate-fadeIn"
     >
       {/* Click outside to close */}
       <div className="flex-1" onClick={onClose} aria-hidden="true" />
@@ -160,4 +177,6 @@ export function NotificationDrawer({
       </div>
     </div>
   );
+
+  return createPortal(drawerContent, document.body);
 }

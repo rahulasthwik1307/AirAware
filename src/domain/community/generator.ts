@@ -213,7 +213,7 @@ export function formatRwaSocietyBulletin(
   });
 
   return `📢 AIRAWARE RESIDENTIAL ADVISORY — ${locationName.toUpperCase()}
-🗓️ Date: ${dateStr} | Active Pollution Status: ${grapStage} (Very Poor Air)
+🗓️ Date: ${dateStr} | Active Pollution Status: ${grapStage}
 
 🚨 Current Air Quality: CPCB AQI ${aqi} (Hazardous Smog)
 ⚠️ Weather Advisory: Surface smoke trapped near ground level (Inversion Lid <150m)
@@ -226,4 +226,53 @@ export function formatRwaSocietyBulletin(
 
 🛡️ Together for Cleaner Neighbourhood Air.
 Generated via AirAware Local Environmental Intelligence.`;
+}
+
+export function formatSocietyIncidentNotice(
+  incident: PollutionIncident,
+  societyName: string = 'Our Society'
+): string {
+  const meta = INCIDENT_CATEGORIES[incident.category] || INCIDENT_CATEGORIES.OTHER;
+  const timeFormatted = new Date(incident.timestamp).toLocaleTimeString('en-IN', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+  return `📢 POLLUTION ALERT — ${societyName.toUpperCase()}
+
+⚠️ Urgent Issue: ${meta.icon} ${incident.title}
+📍 Location: ${incident.locationName} (${timeFormatted})
+
+📝 Observation:
+${incident.description}
+
+🚨 Requested Action for Residents & Facility Team:
+1. Please instruct security / facility supervisor to investigate and safely extinguish the smoke or dust source immediately.
+2. For night security guards: Ensure electric radiant heaters are operational so guards do not burn garbage or dry leaves for warmth.
+3. Keep nearby balcony doors and apartment windows facing this area sealed.
+
+🛡️ Shared via AirAware Local Community Intelligence.`;
+}
+
+export function formatMunicipalComplaint(incident: PollutionIncident): string {
+  const meta = INCIDENT_CATEGORIES[incident.category] || INCIDENT_CATEGORIES.OTHER;
+  const dateStr = new Date(incident.timestamp).toLocaleString('en-IN', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  });
+
+  return `🚨 MUNICIPAL AIR POLLUTION COMPLAINT
+(Under Section 19 of Air Act 1981 / CPCB Mandate)
+
+• Incident Ref: #${incident.id.toUpperCase().slice(0, 10)}
+• Category: ${meta.label} (${meta.cpcbClassification})
+• Time: ${dateStr}
+• Location: ${incident.locationName}${incident.coordinates ? ` (GPS: ${incident.coordinates.latitude.toFixed(5)}, ${incident.coordinates.longitude.toFixed(5)})` : ''}
+
+• Violation Description:
+${incident.description}
+
+• Evidence: ${incident.photoDataUrl ? 'Photographic proof recorded' : 'Resident visual observation'}
+
+Requesting immediate municipal ward inspection and challan under CAQM / CPCB guidelines.`;
 }

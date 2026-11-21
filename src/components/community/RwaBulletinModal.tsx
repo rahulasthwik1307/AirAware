@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 interface RwaBulletinModalProps {
   readonly isOpen: boolean;
@@ -18,8 +19,36 @@ export function RwaBulletinModal({
   const [societyName, setSocietyName] = useState(defaultSocietyName);
   const [copied, setCopied] = useState(false);
   const [viewMode, setViewMode] = useState<'FORMATTED' | 'RAW'>('FORMATTED');
+  const [mounted, setMounted] = useState(false);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (!isOpen) return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [isOpen]);
+
+  // Handle ESC key to dismiss
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
+  if (!isOpen || !mounted) return null;
 
   const bulletinText = onGenerateBulletin(societyName);
 
@@ -36,14 +65,19 @@ export function RwaBulletinModal({
     window.open(`https://api.whatsapp.com/send?text=${encoded}`, '_blank');
   };
 
-  return (
+  const modalContent = (
     <div
       role="dialog"
       aria-modal="true"
       aria-labelledby="rwa-modal-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto bg-slate-900/75 animate-fadeIn"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 overflow-y-auto bg-slate-900/40 animate-fadeIn"
     >
-      <div className="relative w-full max-w-xl my-auto rounded-3xl bg-white border border-slate-200 shadow-2xl p-5 sm:p-6 space-y-4 max-h-[85vh] flex flex-col justify-between">
+      <div className="relative w-full max-w-xl my-auto rounded-3xl bg-white border border-slate-200 shadow-2xl p-5 sm:p-6 space-y-4 max-h-[85vh] flex flex-col justify-between pointer-events-auto">
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
           <div className="flex items-center gap-2.5">
@@ -229,4 +263,6 @@ export function RwaBulletinModal({
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }

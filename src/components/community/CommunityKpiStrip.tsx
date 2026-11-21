@@ -36,7 +36,7 @@ export function CommunityKpiStrip({
         </div>
         <div>
           <h3 className="text-base sm:text-lg font-black text-rose-950 font-sans tracking-tight">
-            {activeGrapStage} (Very Poor Air)
+            {activeGrapStage}
           </h3>
           <p className="text-[11px] text-rose-800/90 leading-snug mt-0.5">
             Emergency rules active: Generator ban, carpool advice &amp; extra metro runs.

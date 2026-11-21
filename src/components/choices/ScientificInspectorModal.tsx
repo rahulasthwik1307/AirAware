@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { TRANSIT_MODES } from '@/domain/choices/constants';
 
 interface ScientificInspectorModalProps {
@@ -12,6 +13,22 @@ export function ScientificInspectorModal({
   isOpen,
   onClose,
 }: ScientificInspectorModalProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (!isOpen) return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [isOpen]);
+
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape') {
@@ -24,18 +41,23 @@ export function ScientificInspectorModal({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   const modes = Object.values(TRANSIT_MODES);
 
-  return (
+  const modalContent = (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/75 animate-fadeIn"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 overflow-y-auto bg-slate-900/40 animate-fadeIn"
       role="dialog"
       aria-modal="true"
       aria-labelledby="inspector-modal-title"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
     >
-      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl bg-white border border-slate-200 shadow-2xl p-6 space-y-5">
+      <div className="relative w-full max-w-2xl my-auto max-h-[88vh] overflow-y-auto rounded-3xl bg-white border border-slate-200 shadow-2xl p-6 space-y-5 pointer-events-auto">
         {/* Modal Header */}
         <div className="flex items-start justify-between gap-4 pb-4 border-b border-slate-200">
           <div>
@@ -133,4 +155,6 @@ export function ScientificInspectorModal({
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }

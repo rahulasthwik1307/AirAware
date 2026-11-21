@@ -80,10 +80,10 @@ export function useCommunityAlerts({
 
   // Active GRAP Stage
   const activeGrapStage = useMemo(() => {
-    if (aqi >= 450) return 'GRAP Stage IV (Severe+)';
-    if (aqi >= 400) return 'GRAP Stage III (Severe)';
-    if (aqi >= 300) return 'GRAP Stage II (Very Poor)';
-    if (aqi >= 200) return 'GRAP Stage I (Poor)';
+    if (aqi >= 450) return 'Emergency Stage 4: Severe+ Air';
+    if (aqi >= 400) return 'Emergency Stage 3: Severe Air';
+    if (aqi >= 300) return 'Emergency Stage 2: Very Poor Air';
+    if (aqi >= 200) return 'Emergency Stage 1: Poor Air';
     return 'Standard Air Quality (Normal)';
   }, [aqi]);
 

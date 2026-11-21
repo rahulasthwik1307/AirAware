@@ -4,6 +4,8 @@ import {
   generateAirshedAlerts,
   formatCpcbSameerDossier,
   formatRwaSocietyBulletin,
+  formatSocietyIncidentNotice,
+  formatMunicipalComplaint,
 } from '../generator';
 import {
   loadCommunityState,
@@ -87,6 +89,46 @@ describe('Community & Alerts Domain Tests', () => {
       expect(bulletin).toContain('CPCB AQI 380');
       expect(bulletin).toContain('Zero Open Burning');
       expect(bulletin).toContain('Safe Window Timing');
+    });
+  });
+
+  describe('formatSocietyIncidentNotice', () => {
+    it('formats an actionable notice for apartment WhatsApp groups with night guard heater reminder', () => {
+      const incident: PollutionIncident = {
+        id: 'inc-whatsapp-1',
+        category: 'WASTE_BURNING',
+        title: 'Open plastic burning near gate 2',
+        description: 'Smoke entering 1st floor balconies',
+        locationName: 'Green Meadows Tower B',
+        timestamp: '2026-11-20T21:30:00.000Z',
+        status: 'LOGGED_LOCALLY',
+        severity: 'HIGH',
+      };
+      const notice = formatSocietyIncidentNotice(incident, 'Green Meadows RWA');
+      expect(notice).toContain('POLLUTION ALERT — GREEN MEADOWS RWA');
+      expect(notice).toContain('Open plastic burning near gate 2');
+      expect(notice).toContain('radiant heaters');
+    });
+  });
+
+  describe('formatMunicipalComplaint', () => {
+    it('formats a formal complaint for municipal helplines with legal reference and coordinates', () => {
+      const incident: PollutionIncident = {
+        id: 'inc-muni-1',
+        category: 'CONSTRUCTION_DUST',
+        title: 'Uncovered dry cement unloading',
+        description: 'Piles of dust blowing into main road without water sprinkling',
+        locationName: 'Plot 44, Okhla Phase 3',
+        coordinates: { latitude: 28.5355, longitude: 77.2731 },
+        timestamp: '2026-11-20T11:15:00.000Z',
+        status: 'LOGGED_LOCALLY',
+        severity: 'HIGH',
+      };
+      const complaint = formatMunicipalComplaint(incident);
+      expect(complaint).toContain('MUNICIPAL AIR POLLUTION COMPLAINT');
+      expect(complaint).toContain('Plot 44, Okhla Phase 3');
+      expect(complaint).toContain('GPS: 28.53550, 77.27310');
+      expect(complaint).toContain('Air Act 1981');
     });
   });
 
