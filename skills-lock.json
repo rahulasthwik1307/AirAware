@@ -232,6 +232,13 @@
       "skillPath": "skills/engineering/to-spec/SKILL.md",
       "computedHash": "eb934b5eda9523c7853a2741544bd4721ee1bea471f5a04f8397827f67bdbdda"
     },
+    "unslop-ui": {
+      "source": "felipebasurto/unslop-ui",
+      "commit": "32279dec96ef20a4a0ac47a5b113e48dda6b3b6e",
+      "sourceType": "github",
+      "skillPath": "skills/unslop-ui/SKILL.md",
+      "computedHash": "74b57b260bfd1677a9047af209344d4fa5004929608ffa8b395f007c7cc45051"
+    },
     "variant-analysis": {
       "source": "trailofbits/skills",
       "commit": "149d7b21f4067765b82e67029730b42d228ef4b4",

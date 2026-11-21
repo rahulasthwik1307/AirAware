@@ -360,10 +360,11 @@ export function OnboardingModal({
         <div className="space-y-3 pb-4 border-b border-slate-100">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-mono font-bold tracking-widest uppercase text-teal-800 bg-teal-50 px-2.5 py-0.5 rounded border border-teal-200">
-                Quick Setup
+              <span className="text-xs font-sans font-bold text-slate-900">
+                Personalize Setup
               </span>
-              <span className="text-xs font-mono text-slate-500 font-semibold">
+              <span className="text-xs font-sans text-slate-400">•</span>
+              <span className="text-xs font-sans text-slate-500 font-medium">
                 Step {step} of 3
               </span>
             </div>
@@ -453,8 +454,8 @@ export function OnboardingModal({
                   {/* Auto-suggest dropdown for any city */}
                   {searchResults.length > 0 && (
                     <div className="absolute top-full left-0 right-0 mt-1 z-30 rounded-xl border border-slate-200 bg-white shadow-lg overflow-hidden py-1 max-h-48 overflow-y-auto">
-                      <div className="px-3 py-1 text-[10px] font-mono uppercase tracking-wider text-slate-400 border-b border-slate-100">
-                        Resolved Airshed Locations
+                      <div className="px-3 py-1 text-[11px] font-sans font-semibold text-slate-500 border-b border-slate-100">
+                        Locations found
                       </div>
                       {searchResults.map((result) => (
                         <button
@@ -535,8 +536,8 @@ export function OnboardingModal({
             {/* Active Selected Location Confirmation Card */}
             <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div className="space-y-0.5">
-                <span className="font-mono text-[10px] uppercase font-bold tracking-wider text-slate-400 block">
-                  Selected Target Airshed
+                <span className="text-[11px] font-sans font-semibold text-slate-500 block">
+                  Selected Location
                 </span>
                 <span className="font-bold text-slate-900 text-sm">
                   {selectedLocation.name}
@@ -645,7 +646,7 @@ export function OnboardingModal({
                         <span className="text-sm font-bold text-slate-900">
                           {goal.title}
                         </span>
-                        <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
+                        <span className="text-[11px] font-sans font-semibold text-teal-800 bg-teal-50 px-2.5 py-0.5 rounded-md border border-teal-200">
                           {goal.tag}
                         </span>
                       </div>

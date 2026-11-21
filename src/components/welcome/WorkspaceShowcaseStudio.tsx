@@ -97,14 +97,6 @@ export function WorkspaceShowcaseStudio() {
       className="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-8 lg:p-10 shadow-sm"
     >
       <div className="flex flex-col gap-2 pb-6 border-b border-slate-100">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-mono font-bold tracking-widest uppercase text-teal-800 bg-teal-50 px-2.5 py-0.5 rounded border border-teal-200">
-            Platform Architecture
-          </span>
-          <span className="text-xs font-mono text-slate-500 font-medium">
-            Five Connected Intelligence Workspaces
-          </span>
-        </div>
         <h2
           id="workspace-studio-heading"
           className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 font-sans"
@@ -146,14 +138,12 @@ export function WorkspaceShowcaseStudio() {
       {/* Dynamic Split Presentation for Active Workspace */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center pt-8">
         {/* Left Column: Conceptual & Practical Deep-Dive (6 cols) */}
-        <div className="lg:col-span-6 space-y-4">
-          <div className="flex items-center gap-2 text-xs font-mono font-bold text-teal-800">
-            <span>WORKSPACE {activeWs.number}</span>
-            <span>•</span>
-            <span className="uppercase tracking-wider">{activeWs.subtitle}</span>
-          </div>
+        <div className="lg:col-span-6 space-y-3.5">
+          <span className="text-xs font-sans font-bold text-teal-800 uppercase tracking-wider block">
+            {activeWs.subtitle}
+          </span>
 
-          <h3 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 font-sans">
+          <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 font-sans">
             {activeWs.title}
           </h3>
 

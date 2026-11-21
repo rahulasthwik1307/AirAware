@@ -32,7 +32,7 @@ export function PollutionComparisonSplit() {
       {/* Header Controls & Mode Switcher */}
       <div className="flex items-center justify-between mb-3 px-1">
         <div className="flex items-center gap-2">
-          <span className="flex h-2.5 w-2.5 rounded-full bg-rose-500 animate-pulse" />
+          <span className="flex h-2 w-2 rounded-full bg-rose-500" />
           <span className="text-[11px] font-sans font-bold uppercase tracking-wider text-slate-500">
             AirAware Impact Simulator
           </span>
@@ -105,7 +105,7 @@ export function PollutionComparisonSplit() {
           {/* Right Floating Badge */}
           <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 flex flex-col items-end gap-1 pointer-events-none">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-950/85 backdrop-blur-md border border-emerald-400/40 px-2.5 py-1 sm:px-3.5 sm:py-1.5 text-[11px] sm:text-xs font-sans font-bold text-emerald-300 shadow-lg">
-              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
+              <span className="h-2 w-2 rounded-full bg-emerald-400" />
               18 AQI • PRISTINE
             </span>
             <span className="hidden sm:block rounded-lg bg-black/60 backdrop-blur-xs px-2.5 py-1 text-[11px] font-sans font-medium text-white shadow-sm">

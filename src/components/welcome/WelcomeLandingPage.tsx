@@ -36,7 +36,7 @@ export function WelcomeLandingPage({
             </div>
           </div>
 
-          {/* Improved Anchor Navigation Typography */}
+          {/* Anchor Navigation */}
           <nav aria-label="Landing page sections" className="hidden md:flex items-center gap-1">
             <a
               href="#workspaces"
@@ -58,14 +58,13 @@ export function WelcomeLandingPage({
             </a>
             <a
               href="#privacy-commitment"
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-sans font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200/80 hover:bg-emerald-100/80 transition-all ml-1"
+              className="px-3 py-1 rounded-full text-[12px] font-sans font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200/80 hover:bg-emerald-100/80 transition-all ml-1"
             >
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-600" />
               100% Private
             </a>
           </nav>
 
-          {/* Improved Navigation Action Buttons */}
+          {/* Direct Action Buttons */}
           <div className="flex items-center gap-3">
             <button
               type="button"
@@ -86,18 +85,13 @@ export function WelcomeLandingPage({
         </div>
       </header>
 
-      {/* Hero Section: 5:7 Split Grid (Left compact, Right major visual space) */}
+      {/* Hero Section: 5:7 Split Grid */}
       <section className="relative overflow-hidden pt-6 pb-16 sm:pt-10 sm:pb-20 border-b border-[var(--border-subtle)] bg-gradient-to-b from-white to-[var(--surface-ground)]">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center">
-            {/* Left 5 Columns: Punchy, Minimal Text & Direct Action */}
-            <div className="lg:col-span-5 space-y-5">
-              <div className="inline-flex items-center gap-2 rounded-full border border-teal-200 bg-teal-50/90 px-3.5 py-1 text-[11px] font-sans font-bold text-teal-800 shadow-2xs">
-                <span className="h-1.5 w-1.5 rounded-full bg-teal-600 animate-pulse" />
-                GLOBAL AIR INTELLIGENCE • ZERO SNOOPING
-              </div>
-
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-slate-900 font-sans leading-[1.12]">
+            {/* Left 5 Columns: Clear, Impactful Copy & Direct Action */}
+            <div className="lg:col-span-5 space-y-4">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-900 font-sans leading-[1.14]">
                 Protect your family from hazardous winter smog.
               </h1>
 
@@ -106,7 +100,7 @@ export function WelcomeLandingPage({
               </p>
 
               {/* Hero CTAs */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-1">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
                 <button
                   type="button"
                   onClick={onGetStarted}
@@ -124,19 +118,12 @@ export function WelcomeLandingPage({
               </div>
 
               {/* Fast Trust Indicators */}
-              <div className="pt-2 flex flex-wrap items-center gap-y-2 gap-x-5 text-xs font-sans font-medium text-slate-500">
-                <span className="inline-flex items-center gap-1.5">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                  100% Stored on Device
-                </span>
-                <span className="inline-flex items-center gap-1.5">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                  No Sign-Up or Cookies
-                </span>
-                <span className="inline-flex items-center gap-1.5">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                  ₹0 Public Mission
-                </span>
+              <div className="pt-3 flex flex-wrap items-center gap-y-2 gap-x-5 text-xs font-sans font-medium text-slate-500 border-t border-slate-200/80">
+                <span>100% Stored on Device</span>
+                <span>•</span>
+                <span>No Sign-Up or Cookies</span>
+                <span>•</span>
+                <span>₹0 Public Mission</span>
               </div>
             </div>
 
@@ -148,28 +135,22 @@ export function WelcomeLandingPage({
         </div>
       </section>
 
-      {/* How It Works Section: High-Impact Visual Cards (No Text Walls) */}
+      {/* How It Works Section: High-Impact Visual Comparison */}
       <section id="how-it-works" className="py-14 sm:py-18 border-b border-[var(--border-subtle)] bg-white">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 space-y-10">
-          <div className="max-w-2xl space-y-2">
-            <span className="text-xs font-sans font-bold uppercase tracking-wider text-teal-800 bg-teal-50 px-2.5 py-1 rounded-md border border-teal-200">
-              How It Works
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight font-sans">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 space-y-8">
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-sans">
               Why standard weather apps fail during smog season
             </h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Visual Card 1: Diurnal Timing */}
-            <div className="p-6 rounded-3xl border border-slate-200 bg-slate-50/60 hover:bg-slate-50 transition-all space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-sans font-bold text-teal-800 uppercase tracking-wider">
-                  01 / Dynamic Timing
-                </span>
-                <span className="h-2 w-2 rounded-full bg-amber-500" />
-              </div>
-              <h3 className="text-lg font-bold text-slate-900 font-sans leading-snug">
+            <div className="p-6 rounded-3xl border border-slate-200 bg-slate-50/60 hover:bg-slate-50 transition-all space-y-3.5">
+              <span className="text-xs font-sans font-bold text-teal-800 uppercase tracking-wider block">
+                Diurnal Timing
+              </span>
+              <h3 className="text-base sm:text-lg font-bold text-slate-900 font-sans leading-snug">
                 Peak morning smog hides behind 24-hour averages.
               </h3>
               <div className="p-3 rounded-2xl bg-white border border-slate-200 space-y-2 shadow-2xs">
@@ -182,21 +163,18 @@ export function WelcomeLandingPage({
                   <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-bold text-[11px]">Safe Window</span>
                 </div>
               </div>
-              <p className="text-xs font-sans font-semibold text-slate-700">
+              <p className="text-xs font-sans font-medium text-slate-600 leading-relaxed">
                 AirAware shifts runs, school commutes, and ventilation to natural solar dispersion windows.
               </p>
             </div>
 
             {/* Visual Card 2: Volumetric CADR */}
-            <div className="p-6 rounded-3xl border border-slate-200 bg-slate-50/60 hover:bg-slate-50 transition-all space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-sans font-bold text-teal-800 uppercase tracking-wider">
-                  02 / Indoor Physics
-                </span>
-                <span className="h-2 w-2 rounded-full bg-emerald-500" />
-              </div>
-              <h3 className="text-lg font-bold text-slate-900 font-sans leading-snug">
-                Generic &ldquo;stay inside&rdquo; advice fails without CADR room sizing.
+            <div className="p-6 rounded-3xl border border-slate-200 bg-slate-50/60 hover:bg-slate-50 transition-all space-y-3.5">
+              <span className="text-xs font-sans font-bold text-teal-800 uppercase tracking-wider block">
+                Indoor Physics
+              </span>
+              <h3 className="text-base sm:text-lg font-bold text-slate-900 font-sans leading-snug">
+                Generic advice fails without CADR room sizing.
               </h3>
               <div className="p-3 rounded-2xl bg-white border border-slate-200 space-y-2 shadow-2xs">
                 <div className="flex items-center justify-between text-xs font-sans">
@@ -208,20 +186,17 @@ export function WelcomeLandingPage({
                   <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-800 font-bold text-[11px]">ASHRAE 62.2</span>
                 </div>
               </div>
-              <p className="text-xs font-sans font-semibold text-slate-700">
+              <p className="text-xs font-sans font-medium text-slate-600 leading-relaxed">
                 Calculates exact purifier fan speed and filter runtime for your ceiling height and room volume.
               </p>
             </div>
 
             {/* Visual Card 3: Decisive Civic Action */}
-            <div className="p-6 rounded-3xl border border-slate-200 bg-slate-50/60 hover:bg-slate-50 transition-all space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-sans font-bold text-teal-800 uppercase tracking-wider">
-                  03 / Civic Power
-                </span>
-                <span className="h-2 w-2 rounded-full bg-indigo-500" />
-              </div>
-              <h3 className="text-lg font-bold text-slate-900 font-sans leading-snug">
+            <div className="p-6 rounded-3xl border border-slate-200 bg-slate-50/60 hover:bg-slate-50 transition-all space-y-3.5">
+              <span className="text-xs font-sans font-bold text-teal-800 uppercase tracking-wider block">
+                Community Action
+              </span>
+              <h3 className="text-base sm:text-lg font-bold text-slate-900 font-sans leading-snug">
                 Replace helpless anxiety with 1-tap neighborhood alerts.
               </h3>
               <div className="p-3 rounded-2xl bg-white border border-slate-200 space-y-2 shadow-2xs">
@@ -234,7 +209,7 @@ export function WelcomeLandingPage({
                   <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-800 font-bold text-[11px]">Formal Format</span>
                 </div>
               </div>
-              <p className="text-xs font-sans font-semibold text-slate-700">
+              <p className="text-xs font-sans font-medium text-slate-600 leading-relaxed">
                 Stop illegal garbage and dry-leaf fires with structured legal citations and instant dispatches.
               </p>
             </div>
@@ -242,14 +217,11 @@ export function WelcomeLandingPage({
         </div>
       </section>
 
-      {/* Visual Story Gallery: Life With Clean Air (Warm Ghibli Art) */}
+      {/* Visual Story Gallery: Life With Clean Air */}
       <section id="visual-stories" className="py-16 sm:py-20 border-b border-[var(--border-subtle)] bg-[var(--surface-ground)]">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 space-y-10">
-          <div className="max-w-2xl space-y-2">
-            <span className="text-xs font-sans font-bold uppercase tracking-wider text-teal-800 bg-teal-50 px-2.5 py-1 rounded-md border border-teal-200">
-              Visual Stories
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight font-sans">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 space-y-8">
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-sans">
               Everyday life protected by environmental intelligence
             </h2>
           </div>
@@ -265,9 +237,8 @@ export function WelcomeLandingPage({
                   className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-103"
                 />
                 <div className="absolute top-4 left-4">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/90 backdrop-blur-md px-3 py-1 text-xs font-sans font-bold text-teal-900 shadow-md">
-                    <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                    INDOOR AIR SANCTUARY
+                  <span className="rounded-full bg-white/90 backdrop-blur-md px-3 py-1 text-xs font-sans font-bold text-teal-900 shadow-md">
+                    Indoor Sanctuary
                   </span>
                 </div>
               </div>
@@ -298,9 +269,8 @@ export function WelcomeLandingPage({
                   className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-103"
                 />
                 <div className="absolute top-4 left-4">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/90 backdrop-blur-md px-3 py-1 text-xs font-sans font-bold text-teal-900 shadow-md">
-                    <span className="h-2 w-2 rounded-full bg-indigo-500" />
-                    COMMUNITY &amp; ALERTS
+                  <span className="rounded-full bg-white/90 backdrop-blur-md px-3 py-1 text-xs font-sans font-bold text-teal-900 shadow-md">
+                    Community Alerts
                   </span>
                 </div>
               </div>
@@ -324,14 +294,11 @@ export function WelcomeLandingPage({
         </div>
       </section>
 
-      {/* 5 Workspaces Architecture Studio (Interactive & High Polish) */}
+      {/* 5 Workspaces Architecture Studio */}
       <section id="workspaces" className="py-16 sm:py-20 border-b border-[var(--border-subtle)] bg-white">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 space-y-8">
-          <div className="max-w-2xl space-y-2">
-            <span className="text-xs font-sans font-bold uppercase tracking-wider text-teal-800 bg-teal-50 px-2.5 py-1 rounded-md border border-teal-200">
-              Five Dedicated Workspaces
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight font-sans">
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-sans">
               Comprehensive environmental intelligence for every domain
             </h2>
           </div>
@@ -341,14 +308,11 @@ export function WelcomeLandingPage({
         </div>
       </section>
 
-      {/* Sleek Open-Science Provenance Strip (No Dry Text) */}
+      {/* Open-Science Provenance Strip */}
       <section id="scientific-rigor" className="py-12 sm:py-16 border-b border-[var(--border-subtle)] bg-[var(--surface-ground)]">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 space-y-6">
-          <div className="text-center space-y-1">
-            <span className="text-xs font-sans font-bold uppercase tracking-wider text-teal-800">
-              Scientific Rigor &amp; Provenance
-            </span>
-            <h2 className="text-xl sm:text-2xl font-black text-slate-900 font-sans">
+          <div className="text-center">
+            <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 font-sans">
               Powered by authoritative atmospheric science
             </h2>
           </div>
@@ -390,17 +354,16 @@ export function WelcomeLandingPage({
         </div>
       </section>
 
-      {/* Local-First & Privacy Guarantee (High-Contrast Security Island) */}
+      {/* Local-First & Privacy Guarantee */}
       <section id="privacy-commitment" className="py-14 sm:py-18 border-b border-[var(--border-subtle)] bg-white">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
           <div className="rounded-3xl border border-emerald-200 bg-gradient-to-br from-emerald-50/60 to-teal-50/40 p-6 sm:p-10 shadow-xs">
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
               <div className="space-y-2 max-w-xl">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-sans font-bold text-emerald-800 bg-emerald-100 border border-emerald-300">
-                  <span className="h-2 w-2 rounded-full bg-emerald-600" />
-                  100% PRIVATE &amp; LOCAL-FIRST
+                <span className="text-xs font-sans font-bold text-emerald-800 uppercase tracking-wider block">
+                  100% Private &amp; Local-First
                 </span>
-                <h2 className="text-2xl sm:text-3xl font-black text-slate-900 font-sans">
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-sans">
                   Your health routines never touch a cloud server.
                 </h2>
                 <p className="text-sm font-sans text-slate-600 leading-relaxed">
@@ -429,8 +392,8 @@ export function WelcomeLandingPage({
 
       {/* Closing Call to Action */}
       <section className="py-16 sm:py-22 bg-gradient-to-b from-white to-slate-50">
-        <div className="mx-auto max-w-4xl px-4 text-center space-y-6">
-          <h2 className="text-3xl sm:text-4xl font-black text-slate-900 font-sans tracking-tight">
+        <div className="mx-auto max-w-4xl px-4 text-center space-y-5">
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 font-sans tracking-tight">
             Protect those who depend on you.
           </h2>
           <p className="text-base text-slate-600 font-sans max-w-lg mx-auto">
