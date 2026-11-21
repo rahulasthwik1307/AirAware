@@ -31,6 +31,18 @@ interface AqiHeroCardProps {
   readonly isDefaultLocation?: boolean;
 }
 
+function formatPollutantSymbol(code?: string | null): string {
+  if (!code) return 'PM₂.₅';
+  const clean = code.toLowerCase().trim();
+  if (clean.includes('pm2') || clean.includes('pm2_5') || clean.includes('pm2.5')) return 'PM₂.₅';
+  if (clean.includes('pm10')) return 'PM₁₀';
+  if (clean === 'o3' || clean.includes('ozone')) return 'O₃';
+  if (clean === 'no2') return 'NO₂';
+  if (clean === 'so2') return 'SO₂';
+  if (clean === 'co') return 'CO';
+  return code.toUpperCase().replace('_', '.');
+}
+
 export function AqiHeroCard({
   report,
   weather,
@@ -335,16 +347,36 @@ export function AqiHeroCard({
                       className="transition-all duration-700 ease-out"
                     />
                   </svg>
-                  {/* Center Numerical Value */}
-                  <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                    <span
-                      className="text-xl font-black font-mono leading-none tracking-tight tabular-nums"
-                      style={{ color: aqiColor }}
+                  {/* Center Visual Indicator (Option A: Severity Icon & Dominant Pollutant, No Duplicate Value) */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none select-none">
+                    <div
+                      className="w-9 h-9 rounded-full flex items-center justify-center transition-all shadow-2xs"
+                      style={{
+                        backgroundColor: `${aqiColor}15`,
+                        border: `1px solid ${aqiColor}25`,
+                      }}
                     >
-                      {hasAqi ? providerAqi : '--'}
-                    </span>
-                    <span className="text-[9px] font-mono text-slate-500 font-bold uppercase mt-0.5">
-                      AQI
+                      <span className="text-lg leading-none" aria-hidden="true">
+                        {providerAqi !== null && providerAqi > 300
+                          ? '🚨'
+                          : providerAqi !== null && providerAqi > 200
+                          ? '⚠️'
+                          : providerAqi !== null && providerAqi > 100
+                          ? '😷'
+                          : providerAqi !== null && providerAqi > 50
+                          ? '🌤️'
+                          : '🌿'}
+                      </span>
+                    </div>
+                    <span
+                      className="text-[10px] font-mono font-black uppercase mt-1 px-1.5 py-0.5 rounded border shadow-2xs tracking-wider"
+                      style={{
+                        color: aqiColor,
+                        backgroundColor: `${aqiColor}12`,
+                        borderColor: `${aqiColor}35`,
+                      }}
+                    >
+                      {formatPollutantSymbol(dominantPollutant)}
                     </span>
                   </div>
                 </div>

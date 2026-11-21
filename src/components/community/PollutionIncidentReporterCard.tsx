@@ -125,13 +125,13 @@ export function PollutionIncidentReporterCard({
       {/* Header */}
       <div className="flex flex-col gap-1.5 pb-3 border-b border-[var(--border-subtle)]">
         <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5 min-w-0">
+          <div className="flex items-center gap-2 min-w-0">
             <span className="text-xl shrink-0" aria-hidden="true">
               📸
             </span>
             <h2
               id="incident-reporter-heading"
-              className="text-base sm:text-lg font-bold text-[var(--ink-primary)] font-sans tracking-tight truncate"
+              className="text-base font-bold text-[var(--ink-primary)] font-sans tracking-tight whitespace-nowrap"
             >
               Report Pollution Incident
             </h2>

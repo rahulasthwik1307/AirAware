@@ -62,70 +62,68 @@ export function IncidentJournalCard({
     }
   };
 
-  const handleShareSocietyWhatsApp = (incident: PollutionIncident) => {
-    const text = formatSocietyIncidentNotice(incident);
-    const encoded = encodeURIComponent(text);
-    window.open(`https://api.whatsapp.com/send?text=${encoded}`, '_blank');
-  };
+  /**
+   * Unified WhatsApp & Grievance Dispatcher
+   * When photo is present: Triggers native OS share flyout with file + caption (Windows / Android / iOS).
+   * Fallback for desktop web: Copies image to clipboard, downloads photo file, and opens WhatsApp Web with pre-formatted text.
+   */
+  const handleShareIncident = async (incident: PollutionIncident, mode: 'SOCIETY' | 'MUNICIPAL') => {
+    const isMunicipal = mode === 'MUNICIPAL';
+    const text = isMunicipal ? formatMunicipalComplaint(incident) : formatSocietyIncidentNotice(incident);
+    if (isMunicipal) {
+      onUpdateStatus(incident.id, 'EXPORTED_CPCB');
+    }
 
-  const handleShareMunicipalWhatsApp = (incident: PollutionIncident) => {
-    const text = formatMunicipalComplaint(incident);
-    const encoded = encodeURIComponent(text);
-    onUpdateStatus(incident.id, 'EXPORTED_CPCB');
-    window.open(`https://api.whatsapp.com/send?text=${encoded}`, '_blank');
-  };
+    // When a photo is attached, try native share with file first
+    if (incident.photoDataUrl) {
+      if (typeof navigator !== 'undefined' && navigator.share) {
+        const file = dataUrlToFile(incident.photoDataUrl, `incident-${incident.id.slice(0, 8)}.jpg`);
+        if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({
+              title: incident.title,
+              text,
+              files: [file],
+            });
+            setShareStatus(`✓ Shared photo & ${isMunicipal ? 'municipal grievance' : 'society notice'} for #${incident.id.slice(0, 6)}`);
+            setTimeout(() => setShareStatus(null), 4000);
+            return;
+          } catch {
+            // User cancelled share flyout or OS rejected file; proceed to desktop clipboard fallback
+          }
+        }
+      }
 
-  const handleShareWithPhoto = async (incident: PollutionIncident) => {
-    if (!incident.photoDataUrl) {
-      handleShareSocietyWhatsApp(incident);
+      // Laptop / Desktop Fallback:
+      // 1. Copy image to system clipboard so user can press Ctrl+V in WhatsApp Web
+      try {
+        const res = await fetch(incident.photoDataUrl);
+        const blob = await res.blob();
+        if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.write) {
+          await navigator.clipboard.write([
+            new ClipboardItem({ [blob.type]: blob }),
+          ]);
+        }
+      } catch {
+        // Ignore clipboard write restrictions
+      }
+
+      // 2. Download photo file to user's downloads as backup
+      triggerPhotoDownload(incident.photoDataUrl, incident.id);
+
+      // 3. Open WhatsApp Web with the pre-formatted text
+      const encoded = encodeURIComponent(text);
+      window.open(`https://api.whatsapp.com/send?text=${encoded}`, '_blank');
+
+      // 4. Show friendly guidance toast
+      setShareStatus(`📸 Photo copied to clipboard & downloaded! In WhatsApp, press Ctrl+V to attach photo with text.`);
+      setTimeout(() => setShareStatus(null), 7000);
       return;
     }
 
-    const text = formatSocietyIncidentNotice(incident);
-
-    // If mobile Web Share with file support is available (Android / iOS)
-    if (typeof navigator !== 'undefined' && navigator.share) {
-      const file = dataUrlToFile(incident.photoDataUrl, `incident-${incident.id.slice(0, 8)}.jpg`);
-      if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
-        try {
-          await navigator.share({
-            title: incident.title,
-            text,
-            files: [file],
-          });
-          setShareStatus(`✓ Shared photo & notice for #${incident.id.slice(0, 6)}`);
-          setTimeout(() => setShareStatus(null), 4000);
-          return;
-        } catch {
-          // Continue to desktop clipboard fallback if user closed share sheet or unsupported
-        }
-      }
-    }
-
-    // Laptop & Desktop Fallback:
-    // 1. Copy image to system clipboard (so user can press Ctrl+V in WhatsApp Web)
-    try {
-      const res = await fetch(incident.photoDataUrl);
-      const blob = await res.blob();
-      if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.write) {
-        await navigator.clipboard.write([
-          new ClipboardItem({ [blob.type]: blob }),
-        ]);
-      }
-    } catch {
-      // Ignore clipboard write restrictions
-    }
-
-    // 2. Download photo file to user's downloads as backup
-    triggerPhotoDownload(incident.photoDataUrl, incident.id);
-
-    // 3. Open WhatsApp Web with the pre-formatted text
+    // No photo: open WhatsApp directly with pre-formatted text
     const encoded = encodeURIComponent(text);
     window.open(`https://api.whatsapp.com/send?text=${encoded}`, '_blank');
-
-    // 4. Show friendly guidance toast
-    setShareStatus(`📸 Photo copied to clipboard & downloaded! In WhatsApp, just press Ctrl+V to attach photo with text.`);
-    setTimeout(() => setShareStatus(null), 7000);
   };
 
   const handleDownloadPhoto = (incident: PollutionIncident) => {
@@ -143,13 +141,13 @@ export function IncidentJournalCard({
       {/* Header */}
       <div className="flex flex-col gap-1.5 pb-3 border-b border-[var(--border-subtle)]">
         <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5 min-w-0">
+          <div className="flex items-center gap-2 min-w-0">
             <span className="text-xl shrink-0" aria-hidden="true">
               📋
             </span>
             <h2
               id="incident-journal-heading"
-              className="text-base sm:text-lg font-bold text-[var(--ink-primary)] font-sans tracking-tight truncate"
+              className="text-base font-bold text-[var(--ink-primary)] font-sans tracking-tight whitespace-nowrap"
             >
               Saved Community Reports
             </h2>
@@ -282,38 +280,38 @@ export function IncidentJournalCard({
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {/* Action 1: Society WhatsApp */}
+                    {/* Action 1: Society WhatsApp (Photo + Text unified) */}
                     <button
                       type="button"
-                      onClick={() => handleShareSocietyWhatsApp(incident)}
+                      onClick={() => handleShareIncident(incident, 'SOCIETY')}
                       className="px-3 py-1.5 text-xs font-semibold rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs"
-                      title="Send polite alert to society WhatsApp group"
+                      title={incident.photoDataUrl ? 'Share photo and pre-formatted notice to society WhatsApp group' : 'Send notice to society WhatsApp group'}
                     >
                       <span>📢</span>
-                      <span>Alert Society WhatsApp</span>
+                      <span>{incident.photoDataUrl ? 'Alert Society (Photo + Text)' : 'Alert Society WhatsApp'}</span>
                     </button>
 
-                    {/* Action 2: Municipal Helpline WhatsApp */}
+                    {/* Action 2: Municipal Helpline WhatsApp (Photo + Text unified) */}
                     <button
                       type="button"
-                      onClick={() => handleShareMunicipalWhatsApp(incident)}
+                      onClick={() => handleShareIncident(incident, 'MUNICIPAL')}
                       className="px-3 py-1.5 text-xs font-semibold rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-900 border border-indigo-200 transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs"
-                      title="Forward official complaint to Municipal helpline"
+                      title={incident.photoDataUrl ? 'Forward official grievance with photo proof to municipal helpline' : 'Forward official complaint to municipal helpline'}
                     >
                       <span>📲</span>
-                      <span>Send Municipal Grievance</span>
+                      <span>{incident.photoDataUrl ? 'Municipal Grievance (Photo + Text)' : 'Send Municipal Grievance'}</span>
                     </button>
 
-                    {/* Action 3: One-Tap Photo + Text Share (Mobile & Desktop) */}
+                    {/* Action 3: Download Photo Backup (only if photo present) */}
                     {incident.photoDataUrl && (
                       <button
                         type="button"
-                        onClick={() => handleShareWithPhoto(incident)}
+                        onClick={() => handleDownloadPhoto(incident)}
                         className="px-3 py-1.5 text-xs font-semibold rounded-xl bg-teal-50 hover:bg-teal-100 text-teal-900 border border-teal-200 transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs sm:col-span-1"
-                        title="Share photo & text to WhatsApp (auto-copies photo on laptop)"
+                        title="Download photo evidence file to your device"
                       >
-                        <span>📸</span>
-                        <span>Share Photo + Text</span>
+                        <span>📥</span>
+                        <span>{downloadedId === incident.id ? '✓ Photo Saved' : 'Save Photo Backup'}</span>
                       </button>
                     )}
 
@@ -328,7 +326,7 @@ export function IncidentJournalCard({
                           ? 'bg-slate-900 text-white border-slate-900'
                           : 'bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-200'
                       }`}
-                      title="Copy full dossier for portals or emails"
+                      title="Copy full formal dossier for environmental portals or email complaints"
                     >
                       <span>📋</span>
                       <span>{copiedId === incident.id ? '✓ Copied to Clipboard!' : 'Copy Formal Dossier'}</span>

@@ -3,6 +3,14 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { CopilotResponse, WorkspaceContext, RoomContext } from './types';
 import { AirQualityReport, GeoLocation } from '@/domain/types';
+import {
+  CopilotChatSession,
+  loadChatSessions,
+  saveChatSessions,
+  createDefaultSession,
+  generateSessionTitle,
+  sanitizeChatString,
+} from './chat-storage';
 
 export interface CopilotChatMessage {
   readonly id: string;
@@ -22,21 +30,17 @@ interface UseAirCopilotOptions {
   readonly roomContext?: RoomContext | null;
 }
 
-const DEFAULT_WELCOME_MESSAGE: CopilotChatMessage = {
-  id: 'welcome-0',
-  sender: 'assistant',
-  text: 'Hello! I am your AirAware Copilot, an environmental intelligence assistant. Ask me anything about current air quality, outdoor ventilation timing, air purifier sizing, or practical family routines.',
-  timestamp: new Date().toISOString(),
-  source: 'deterministic',
-};
-
 export function useAirCopilot({
   activeWorkspace,
   report,
   location,
   roomContext,
 }: UseAirCopilotOptions) {
-  const [messages, setMessages] = useState<CopilotChatMessage[]>([DEFAULT_WELCOME_MESSAGE]);
+  const initialSession = createDefaultSession();
+  const [sessions, setSessions] = useState<CopilotChatSession[]>([initialSession]);
+  const [activeSessionId, setActiveSessionId] = useState<string>(initialSession.id);
+  const [isHydrated, setIsHydrated] = useState(false);
+
   const [inputQuery, setInputQuery] = useState('');
   const [isThinking, setIsThinking] = useState(false);
   const [cooldownSeconds, setCooldownSeconds] = useState<number | null>(null);
@@ -51,6 +55,27 @@ export function useAirCopilot({
 
   const inputQueryRef = useRef('');
   inputQueryRef.current = inputQuery;
+
+  // Hydrate from localStorage on client mount
+  useEffect(() => {
+    const loaded = loadChatSessions();
+    if (loaded && loaded.length > 0) {
+      setSessions(loaded);
+      setActiveSessionId(loaded[0].id);
+    }
+    setIsHydrated(true);
+  }, []);
+
+  // Save sessions to localStorage when updated (after hydration)
+  useEffect(() => {
+    if (isHydrated && sessions.length > 0) {
+      saveChatSessions(sessions);
+    }
+  }, [sessions, isHydrated]);
+
+  // Current active session & its messages
+  const activeSession = sessions.find((s) => s.id === activeSessionId) || sessions[0] || initialSession;
+  const messages = activeSession.messages;
 
   // Countdown timer for burst rate limit
   useEffect(() => {
@@ -71,21 +96,75 @@ export function useAirCopilot({
     };
   }, [cooldownSeconds]);
 
-  const resetConversation = useCallback(() => {
-    setMessages([
-      {
-        ...DEFAULT_WELCOME_MESSAGE,
-        id: `welcome-${Date.now()}`,
-        timestamp: new Date().toISOString(),
-      },
-    ]);
+  // Switch to another session
+  const switchSession = useCallback((sessionId: string) => {
+    setActiveSessionId(sessionId);
     setInputQuery('');
     setIsThinking(false);
   }, []);
 
+  // Create a brand new session thread
+  const createNewSession = useCallback((customTitle?: string) => {
+    const newSession = createDefaultSession(customTitle || 'New Conversation');
+    setSessions((prev) => [newSession, ...prev]);
+    setActiveSessionId(newSession.id);
+    setInputQuery('');
+    setIsThinking(false);
+    return newSession;
+  }, []);
+
+  // Delete a specific session
+  const deleteSession = useCallback(
+    (sessionId: string) => {
+      setSessions((prev) => {
+        const filtered = prev.filter((s) => s.id !== sessionId);
+        if (filtered.length === 0) {
+          const fresh = createDefaultSession();
+          setActiveSessionId(fresh.id);
+          return [fresh];
+        }
+        if (activeSessionId === sessionId) {
+          setActiveSessionId(filtered[0].id);
+        }
+        return filtered;
+      });
+    },
+    [activeSessionId]
+  );
+
+  // Clear all sessions (intentional complete reset)
+  const clearAllSessions = useCallback(() => {
+    const fresh = createDefaultSession();
+    setSessions([fresh]);
+    setActiveSessionId(fresh.id);
+    setInputQuery('');
+    setIsThinking(false);
+    saveChatSessions([fresh]);
+  }, []);
+
+  // Reset current active conversation messages
+  const resetConversation = useCallback(() => {
+    setSessions((prev) =>
+      prev.map((s) => {
+        if (s.id === activeSessionId) {
+          const fresh = createDefaultSession(s.title);
+          return {
+            ...s,
+            updatedAt: new Date().toISOString(),
+            messages: fresh.messages,
+          };
+        }
+        return s;
+      })
+    );
+    setInputQuery('');
+    setIsThinking(false);
+  }, [activeSessionId]);
+
+  // Send message
   const sendMessage = useCallback(
     async (queryToSend?: string, overrideRoomContext?: RoomContext | null) => {
-      const q = (queryToSend ?? inputQueryRef.current).trim();
+      const q = sanitizeChatString(queryToSend ?? inputQueryRef.current).trim();
       if (!q || isThinkingRef.current || (cooldownRef.current !== null && cooldownRef.current > 0)) {
         return;
       }
@@ -99,12 +178,27 @@ export function useAirCopilot({
         timestamp: new Date().toISOString(),
       };
 
-      setMessages((prev) => [...prev, userMsg]);
+      // If this is the first user message in the session, update the session title
+      setSessions((prev) =>
+        prev.map((s) => {
+          if (s.id === activeSessionId) {
+            const hasUserMessages = s.messages.some((m) => m.sender === 'user');
+            const title = !hasUserMessages ? generateSessionTitle(q) : s.title;
+            return {
+              ...s,
+              title,
+              updatedAt: new Date().toISOString(),
+              messages: [...s.messages, userMsg],
+            };
+          }
+          return s;
+        })
+      );
+
       setInputQuery('');
       setIsThinking(true);
 
-      // 2. Build verified privacy-safe payload (Zero PII)
-      // Defaults to realistic environmental baseline if report is still loading
+      // 2. Build verified privacy-safe payload with LIVE AQI context (Zero PII)
       const currentAqi = report?.providerAqi ?? 100;
       const currentCategory = (report?.tier?.label as any) ?? 'Moderate';
       const dominant = (report?.dominantPollutant as any) || 'pm25';
@@ -158,17 +252,22 @@ export function useAirCopilot({
           const seconds = retryAfter ? parseInt(retryAfter, 10) : 60;
           setCooldownSeconds(isNaN(seconds) ? 60 : seconds);
 
-          setMessages((prev) => [
-            ...prev,
-            {
-              id: `err-${Date.now()}`,
-              sender: 'assistant',
-              isError: true,
-              errorMessage: `Rate limit reached. Please wait ${seconds} seconds before asking another question.`,
-              timestamp: new Date().toISOString(),
-              source: 'deterministic',
-            },
-          ]);
+          const errMessage: CopilotChatMessage = {
+            id: `err-${Date.now()}`,
+            sender: 'assistant',
+            isError: true,
+            errorMessage: `Rate limit reached. Please wait ${seconds} seconds before asking another question.`,
+            timestamp: new Date().toISOString(),
+            source: 'deterministic',
+          };
+
+          setSessions((prev) =>
+            prev.map((s) =>
+              s.id === activeSessionId
+                ? { ...s, updatedAt: new Date().toISOString(), messages: [...s.messages, errMessage] }
+                : s
+            )
+          );
           return;
         }
 
@@ -180,38 +279,50 @@ export function useAirCopilot({
 
         const data: CopilotResponse = await res.json();
 
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: `assistant-${Date.now()}`,
-            sender: 'assistant',
-            response: data,
-            timestamp: new Date().toISOString(),
-            source: data.isDeterministicFallback ? 'deterministic' : source,
-          },
-        ]);
+        const assistantMsg: CopilotChatMessage = {
+          id: `assistant-${Date.now()}`,
+          sender: 'assistant',
+          response: data,
+          timestamp: new Date().toISOString(),
+          source: data.isDeterministicFallback ? 'deterministic' : source,
+        };
+
+        setSessions((prev) =>
+          prev.map((s) =>
+            s.id === activeSessionId
+              ? { ...s, updatedAt: new Date().toISOString(), messages: [...s.messages, assistantMsg] }
+              : s
+          )
+        );
       } catch (err: unknown) {
-        // Fallback message
         const errMsg = err instanceof Error ? err.message : 'Network connection interrupted. Please try asking your question again.';
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: `err-${Date.now()}`,
-            sender: 'assistant',
-            isError: true,
-            errorMessage: errMsg,
-            timestamp: new Date().toISOString(),
-            source: 'deterministic',
-          },
-        ]);
+        const errMessage: CopilotChatMessage = {
+          id: `err-${Date.now()}`,
+          sender: 'assistant',
+          isError: true,
+          errorMessage: errMsg,
+          timestamp: new Date().toISOString(),
+          source: 'deterministic',
+        };
+
+        setSessions((prev) =>
+          prev.map((s) =>
+            s.id === activeSessionId
+              ? { ...s, updatedAt: new Date().toISOString(), messages: [...s.messages, errMessage] }
+              : s
+          )
+        );
       } finally {
         setIsThinking(false);
       }
     },
-    [report, activeWorkspace, roomContext]
+    [report, activeWorkspace, roomContext, activeSessionId]
   );
 
   return {
+    sessions,
+    activeSessionId,
+    activeSession,
     messages,
     inputQuery,
     setInputQuery,
@@ -220,5 +331,9 @@ export function useAirCopilot({
     isDailyQuotaExhausted,
     sendMessage,
     resetConversation,
+    createNewSession,
+    switchSession,
+    deleteSession,
+    clearAllSessions,
   };
 }
