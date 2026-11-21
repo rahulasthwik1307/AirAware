@@ -75,12 +75,70 @@
   }
 
   .animate-fadeIn {
-    animation: fadeIn 0.35s ease-out forwards;
+    animation: fadeIn var(--duration-normal) var(--ease-out) forwards;
+  }
+
+  @keyframes workspaceEnter {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .workspace-enter {
+    animation: workspaceEnter var(--duration-normal) var(--ease-out) forwards;
+  }
+
+  @keyframes drawerSlideIn {
+    from {
+      transform: translateX(100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+
+  .drawer-slide-in,
+  .animate-slideLeft {
+    animation: drawerSlideIn var(--duration-smooth) var(--ease-drawer) forwards;
+  }
+
+  /* Tactile button press feedback: Emil Kowalski 140ms ease-out scale(0.97) */
+  .tactile-btn {
+    transition: transform var(--duration-fast) var(--ease-out), background-color var(--duration-fast) ease, border-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
+  }
+  .tactile-btn:active {
+    transform: scale(0.97);
+  }
+
+  /* Subtle card hover elevation for fine pointer devices */
+  @media (hover: hover) and (pointer: fine) {
+    .card-elevate {
+      transition: transform var(--duration-normal) var(--ease-out), box-shadow var(--duration-normal) var(--ease-out), border-color var(--duration-normal) var(--ease-out);
+    }
+    .card-elevate:hover {
+      transform: translateY(-2px);
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .animate-fadeIn {
+    .animate-fadeIn,
+    .workspace-enter,
+    .drawer-slide-in,
+    .animate-slideLeft {
       animation: none !important;
+      opacity: 1 !important;
+      transform: none !important;
+    }
+    .tactile-btn:active {
+      transform: none !important;
+    }
+    .card-elevate:hover {
+      transform: none !important;
     }
     .animate-pulse {
       animation: none !important;

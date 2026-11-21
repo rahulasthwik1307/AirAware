@@ -95,7 +95,7 @@ export function TheAirAwareHome({
                 key={room.id}
                 type="button"
                 onClick={() => onSelectRoom(room.id)}
-                className={`relative text-left p-3 sm:p-3.5 rounded-xl transition-all cursor-pointer border flex flex-col justify-between min-h-[88px] sm:min-h-[96px] ${
+                className={`relative text-left p-3 sm:p-3.5 rounded-xl transition-all cursor-pointer border flex flex-col justify-between min-h-[88px] sm:min-h-[96px] tactile-btn ${
                   isSelected
                     ? 'bg-white border-sky-500 shadow-md ring-2 ring-sky-500/20'
                     : 'bg-white/95 hover:bg-white border-slate-200/90 hover:border-sky-300 hover:shadow-xs'

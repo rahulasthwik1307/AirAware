@@ -77,7 +77,7 @@ export function WelcomeLandingPage({
             <button
               type="button"
               onClick={onGetStarted}
-              className="inline-flex items-center justify-center rounded-xl bg-[var(--brand-primary)] hover:bg-[var(--brand-hover)] text-white px-5 py-2 text-[13px] font-sans font-bold tracking-tight shadow-xs transition-all cursor-pointer hover:shadow-md active:scale-98"
+              className="inline-flex items-center justify-center rounded-xl bg-[var(--brand-primary)] hover:bg-[var(--brand-hover)] text-white px-5 py-2 text-[13px] font-sans font-bold tracking-tight shadow-xs transition-all cursor-pointer hover:shadow-md tactile-btn"
             >
               Get Started
             </button>
@@ -104,14 +104,14 @@ export function WelcomeLandingPage({
                 <button
                   type="button"
                   onClick={onGetStarted}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--brand-primary)] hover:bg-[var(--brand-hover)] text-white px-6 py-3.5 text-sm font-sans font-bold shadow-sm hover:shadow-md transition-all cursor-pointer active:scale-98"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--brand-primary)] hover:bg-[var(--brand-hover)] text-white px-6 py-3.5 text-sm font-sans font-bold shadow-sm hover:shadow-md transition-all cursor-pointer tactile-btn"
                 >
                   Get Started (60s Setup) →
                 </button>
                 <button
                   type="button"
                   onClick={onExploreDirectly}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 px-5 py-3.5 text-sm font-sans font-semibold shadow-xs transition-colors cursor-pointer"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 px-5 py-3.5 text-sm font-sans font-semibold shadow-xs transition-colors cursor-pointer tactile-btn"
                 >
                   Explore Anonymously
                 </button>
@@ -146,7 +146,7 @@ export function WelcomeLandingPage({
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Visual Card 1: Diurnal Timing */}
-            <div className="p-6 rounded-3xl border border-slate-200 bg-slate-50/60 hover:bg-slate-50 transition-all space-y-3.5">
+            <div className="p-6 rounded-3xl border border-slate-200 bg-slate-50/60 hover:bg-slate-50 transition-all card-elevate space-y-3.5">
               <span className="text-xs font-sans font-bold text-teal-800 uppercase tracking-wider block">
                 Diurnal Timing
               </span>
@@ -169,7 +169,7 @@ export function WelcomeLandingPage({
             </div>
 
             {/* Visual Card 2: Volumetric CADR */}
-            <div className="p-6 rounded-3xl border border-slate-200 bg-slate-50/60 hover:bg-slate-50 transition-all space-y-3.5">
+            <div className="p-6 rounded-3xl border border-slate-200 bg-slate-50/60 hover:bg-slate-50 transition-all card-elevate space-y-3.5">
               <span className="text-xs font-sans font-bold text-teal-800 uppercase tracking-wider block">
                 Indoor Physics
               </span>
@@ -192,7 +192,7 @@ export function WelcomeLandingPage({
             </div>
 
             {/* Visual Card 3: Decisive Civic Action */}
-            <div className="p-6 rounded-3xl border border-slate-200 bg-slate-50/60 hover:bg-slate-50 transition-all space-y-3.5">
+            <div className="p-6 rounded-3xl border border-slate-200 bg-slate-50/60 hover:bg-slate-50 transition-all card-elevate space-y-3.5">
               <span className="text-xs font-sans font-bold text-teal-800 uppercase tracking-wider block">
                 Community Action
               </span>
@@ -404,14 +404,14 @@ export function WelcomeLandingPage({
             <button
               type="button"
               onClick={onGetStarted}
-              className="w-full sm:w-auto inline-flex items-center justify-center rounded-xl bg-[var(--brand-primary)] hover:bg-[var(--brand-hover)] text-white px-8 py-3.5 text-sm font-sans font-bold shadow-md hover:shadow-lg transition-all cursor-pointer active:scale-98"
+              className="w-full sm:w-auto inline-flex items-center justify-center rounded-xl bg-[var(--brand-primary)] hover:bg-[var(--brand-hover)] text-white px-8 py-3.5 text-sm font-sans font-bold shadow-md hover:shadow-lg transition-all cursor-pointer tactile-btn"
             >
               Get Started (Personalize) →
             </button>
             <button
               type="button"
               onClick={onExploreDirectly}
-              className="w-full sm:w-auto inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-slate-800 px-6 py-3.5 text-sm font-sans font-semibold transition-colors cursor-pointer"
+              className="w-full sm:w-auto inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-slate-800 px-6 py-3.5 text-sm font-sans font-semibold transition-colors cursor-pointer tactile-btn"
             >
               Explore Without Setup
             </button>

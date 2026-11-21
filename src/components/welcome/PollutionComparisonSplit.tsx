@@ -1,18 +1,52 @@
 'use client';
 
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 
 export function PollutionComparisonSplit() {
   const [sliderPos, setSliderPos] = useState(50);
   const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const animFrameRef = useRef<number | null>(null);
 
   const handleMove = useCallback((clientX: number) => {
+    if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
     const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
     const percentage = Math.round((x / rect.width) * 100);
     setSliderPos(percentage);
+  }, []);
+
+  const animateToPosition = useCallback((targetPos: number) => {
+    if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+    const startPos = sliderPos;
+    const diff = targetPos - startPos;
+    if (Math.abs(diff) < 0.5) {
+      setSliderPos(targetPos);
+      return;
+    }
+    const startTime = performance.now();
+    const duration = 380; // ms
+
+    const step = (now: number) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(1, elapsed / duration);
+      // Kowalski ease-out curve: 1 - (1 - t)^3
+      const ease = 1 - Math.pow(1 - progress, 3);
+      setSliderPos(Math.round((startPos + diff * ease) * 10) / 10);
+
+      if (progress < 1) {
+        animFrameRef.current = requestAnimationFrame(step);
+      }
+    };
+
+    animFrameRef.current = requestAnimationFrame(step);
+  }, [sliderPos]);
+
+  useEffect(() => {
+    return () => {
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+    };
   }, []);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -41,8 +75,8 @@ export function PollutionComparisonSplit() {
         <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200">
           <button
             type="button"
-            onClick={() => setSliderPos(90)}
-            className={`px-2.5 py-1 rounded-md text-[11px] font-sans font-semibold transition-all cursor-pointer ${
+            onClick={() => animateToPosition(90)}
+            className={`px-2.5 py-1 rounded-md text-[11px] font-sans font-semibold transition-all cursor-pointer tactile-btn ${
               sliderPos >= 65
                 ? 'bg-rose-600 text-white shadow-xs'
                 : 'text-slate-600 hover:text-slate-900'
@@ -52,8 +86,8 @@ export function PollutionComparisonSplit() {
           </button>
           <button
             type="button"
-            onClick={() => setSliderPos(50)}
-            className={`px-2.5 py-1 rounded-md text-[11px] font-sans font-semibold transition-all cursor-pointer ${
+            onClick={() => animateToPosition(50)}
+            className={`px-2.5 py-1 rounded-md text-[11px] font-sans font-semibold transition-all cursor-pointer tactile-btn ${
               sliderPos > 35 && sliderPos < 65
                 ? 'bg-slate-900 text-white shadow-xs'
                 : 'text-slate-600 hover:text-slate-900'
@@ -63,8 +97,8 @@ export function PollutionComparisonSplit() {
           </button>
           <button
             type="button"
-            onClick={() => setSliderPos(10)}
-            className={`px-2.5 py-1 rounded-md text-[11px] font-sans font-semibold transition-all cursor-pointer ${
+            onClick={() => animateToPosition(10)}
+            className={`px-2.5 py-1 rounded-md text-[11px] font-sans font-semibold transition-all cursor-pointer tactile-btn ${
               sliderPos <= 35
                 ? 'bg-emerald-600 text-white shadow-xs'
                 : 'text-slate-600 hover:text-slate-900'

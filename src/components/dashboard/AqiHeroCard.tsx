@@ -1,10 +1,54 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { AirQualityReport, AqiStandardKey, GeoLocation } from '@/domain/types';
 import { WeatherData } from '@/app/api/weather/route';
 import { GLOBE_REFERENCE_CITIES } from '../globe/world-landmass';
+
+// Tactile number roll hook for smooth instrument calibration feel
+function useAnimatedNumber(target: number | null, durationMs = 450): number | null {
+  const [current, setCurrent] = useState<number | null>(target);
+  const prevRef = useRef<number | null>(target);
+
+  useEffect(() => {
+    if (target === null) {
+      setCurrent(null);
+      prevRef.current = null;
+      return;
+    }
+    const start = prevRef.current ?? 0;
+    prevRef.current = target;
+    if (start === target) {
+      setCurrent(target);
+      return;
+    }
+
+    if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setCurrent(target);
+      return;
+    }
+
+    const startTime = performance.now();
+    let frameId: number;
+
+    const tick = (now: number) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(1, elapsed / durationMs);
+      const ease = 1 - Math.pow(1 - progress, 3);
+      setCurrent(Math.round(start + (target - start) * ease));
+
+      if (progress < 1) {
+        frameId = requestAnimationFrame(tick);
+      }
+    };
+
+    frameId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frameId);
+  }, [target, durationMs]);
+
+  return current;
+}
 
 // Dynamically import MapLibre 3D Globe with SSR disabled to protect WebGL contexts
 const MapLibreGlobe = dynamic(
@@ -78,6 +122,8 @@ export function AqiHeroCard({
 
   const hasAqi = providerAqi !== null;
   const isIndia = location.countryCode === 'IN' || location.country.toLowerCase().includes('india');
+  const animatedAqi = useAnimatedNumber(hasAqi ? providerAqi : null);
+  const displayAqi = hasAqi ? (animatedAqi ?? providerAqi) : null;
 
   // Calculate percentage along the spectrum for the visual marker
   let spectrumPercent = 0;
@@ -223,7 +269,7 @@ export function AqiHeroCard({
                     role="radio"
                     aria-checked={activeStandard === 'US_EPA'}
                     onClick={() => onSwitchStandard('US_EPA')}
-                    className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
+                    className={`px-3 py-1 rounded-lg transition-all cursor-pointer tactile-btn ${
                       activeStandard === 'US_EPA'
                         ? 'bg-sky-600 text-white shadow-xs font-bold'
                         : 'text-slate-600 hover:text-slate-900'
@@ -236,7 +282,7 @@ export function AqiHeroCard({
                     role="radio"
                     aria-checked={activeStandard === 'EUROPEAN_EAQI'}
                     onClick={() => onSwitchStandard('EUROPEAN_EAQI')}
-                    className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
+                    className={`px-3 py-1 rounded-lg transition-all cursor-pointer tactile-btn ${
                       activeStandard === 'EUROPEAN_EAQI'
                         ? 'bg-sky-600 text-white shadow-xs font-bold'
                         : 'text-slate-600 hover:text-slate-900'
@@ -375,7 +421,7 @@ export function AqiHeroCard({
                       className="text-4xl sm:text-5xl font-black font-mono tracking-tight tabular-nums"
                       style={{ color: aqiColor }}
                     >
-                      {hasAqi ? providerAqi : '--'}
+                      {hasAqi ? displayAqi : '--'}
                     </span>
                     <span className="text-xs font-mono text-slate-500 font-bold tabular-nums">
                       / {activeStandard === 'EUROPEAN_EAQI'
@@ -512,7 +558,7 @@ export function AqiHeroCard({
                 <button
                   type="button"
                   onClick={() => setViewMode('3d')}
-                  className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
+                  className={`px-3 py-1 rounded-lg transition-all cursor-pointer tactile-btn ${
                     viewMode === '3d'
                       ? 'bg-sky-600 text-white shadow-xs font-semibold'
                       : 'text-slate-600 hover:text-slate-900'
@@ -523,7 +569,7 @@ export function AqiHeroCard({
                 <button
                   type="button"
                   onClick={() => setViewMode('grid')}
-                  className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
+                  className={`px-3 py-1 rounded-lg transition-all cursor-pointer tactile-btn ${
                     viewMode === 'grid'
                       ? 'bg-sky-600 text-white shadow-xs font-semibold'
                       : 'text-slate-600 hover:text-slate-900'
@@ -692,7 +738,7 @@ export function AqiHeroCard({
                           className={`w-full py-2 px-3 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer ${
                             isCurrent
                               ? 'bg-slate-100 text-slate-400 cursor-default'
-                              : 'bg-sky-600 hover:bg-sky-500 text-white shadow-xs'
+                              : 'bg-sky-600 hover:bg-sky-500 text-white shadow-xs tactile-btn'
                           }`}
                         >
                           {isCurrent ? 'Current Active Location' : 'Select as Active Location ↵'}

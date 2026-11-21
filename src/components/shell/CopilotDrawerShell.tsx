@@ -178,7 +178,7 @@ export function CopilotDrawerShell({
       />
 
       {/* Slide-Over Drawer Container */}
-      <div className="relative z-10 flex h-full w-full max-w-lg flex-col bg-white shadow-2xl border-l border-[var(--border-subtle)] text-[var(--ink-primary)]">
+      <div className="relative z-10 flex h-full w-full max-w-lg flex-col bg-white shadow-2xl border-l border-[var(--border-subtle)] text-[var(--ink-primary)] drawer-slide-in">
         {/* Drawer Header */}
         <div className="flex items-center justify-between border-b border-[var(--border-subtle)] px-4 py-3 sm:px-5 sm:py-4 bg-[var(--surface-subtle)]/70">
           <div className="flex items-center gap-2.5 min-w-0">
@@ -211,7 +211,7 @@ export function CopilotDrawerShell({
             <button
               type="button"
               onClick={() => setIsHistoryOpen((prev) => !prev)}
-              className={`px-2.5 py-1 text-xs font-mono rounded-lg border transition-all cursor-pointer flex items-center gap-1.5 ${
+              className={`px-2.5 py-1 text-xs font-mono rounded-lg border transition-all cursor-pointer tactile-btn flex items-center gap-1.5 ${
                 isHistoryOpen
                   ? 'bg-teal-700 text-white border-teal-700 shadow-2xs font-bold'
                   : 'text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-50 border-slate-200'
@@ -229,7 +229,7 @@ export function CopilotDrawerShell({
                 createNewSession();
                 setIsHistoryOpen(false);
               }}
-              className="px-2.5 py-1 text-xs font-mono font-bold rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 transition-all cursor-pointer flex items-center gap-1"
+              className="px-2.5 py-1 text-xs font-mono font-bold rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 transition-all cursor-pointer tactile-btn flex items-center gap-1"
               title="Start a new clean chat thread"
             >
               <span>+</span>
@@ -240,7 +240,7 @@ export function CopilotDrawerShell({
               ref={closeButtonRef}
               type="button"
               onClick={onClose}
-              className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border-subtle)] bg-white text-[var(--ink-muted)] hover:text-[var(--ink-primary)] hover:bg-[var(--surface-subtle)] transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] ml-1"
+              className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border-subtle)] bg-white text-[var(--ink-muted)] hover:text-[var(--ink-primary)] hover:bg-[var(--surface-subtle)] transition-all cursor-pointer tactile-btn focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] ml-1"
               aria-label="Close AI Copilot drawer"
             >
               ✕
@@ -404,7 +404,7 @@ export function CopilotDrawerShell({
                     type="button"
                     onClick={() => sendMessage(chip)}
                     disabled={isThinking || (cooldownSeconds !== null && cooldownSeconds > 0)}
-                    className="shrink-0 px-2.5 py-1 text-[11px] font-medium rounded-lg bg-white hover:bg-[var(--brand-surface)] text-[var(--ink-secondary)] hover:text-[var(--brand-primary)] border border-[var(--border-subtle)] hover:border-[var(--brand-primary)]/40 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none text-left shadow-2xs"
+                    className="shrink-0 px-2.5 py-1 text-[11px] font-medium rounded-lg bg-white hover:bg-[var(--brand-surface)] text-[var(--ink-secondary)] hover:text-[var(--brand-primary)] border border-[var(--border-subtle)] hover:border-[var(--brand-primary)]/40 transition-all cursor-pointer tactile-btn disabled:opacity-50 disabled:cursor-not-allowed select-none text-left shadow-2xs"
                   >
                     {chip}
                   </button>
@@ -437,7 +437,7 @@ export function CopilotDrawerShell({
                     isThinking ||
                     (cooldownSeconds !== null && cooldownSeconds > 0)
                   }
-                  className="px-4 py-2 bg-[var(--brand-primary)] hover:bg-[var(--brand-hover)] text-white text-xs font-mono font-bold rounded-xl shadow-xs transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                  className="px-4 py-2 bg-[var(--brand-primary)] hover:bg-[var(--brand-hover)] text-white text-xs font-mono font-bold rounded-xl shadow-xs transition-all cursor-pointer tactile-btn disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
                   aria-label="Send message to Copilot"
                 >
                   Send ➤

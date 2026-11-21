@@ -235,31 +235,33 @@ export function AirAwareShell() {
         id="main-content"
         className="flex-1 mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8"
       >
-        {activeWorkspace === 'air-intelligence' ? (
-          /* Live Global Air Intelligence Dashboard */
-          <AirQualityDashboard onSelectWorkspace={setActiveWorkspace} />
-        ) : activeWorkspace === 'family-planner' ? (
-          /* Production Phase 3 Family Daily Planner Workspace */
-          <FamilyPlannerWorkspace />
-        ) : activeWorkspace === 'indoor-air' ? (
-          /* Production Phase 4 Indoor Air Intelligence Workspace */
-          <IndoorAirWorkspace onOpenCopilotWithContext={handleOpenCopilotWithContext} />
-        ) : activeWorkspace === 'cleaner-choices' ? (
-          /* Production Phase 6 Cleaner Choices & Impact Workspace */
-          <CleanerChoicesWorkspace onAskCopilot={handleOpenCopilotWithContext} />
-        ) : activeWorkspace === 'community-alerts' ? (
-          /* Production Phase 7 Community Air Intelligence & Alerts Workspace */
-          <CommunityAlertsWorkspace
-            onSelectWorkspace={setActiveWorkspace}
-            onAskCopilot={handleOpenCopilotWithContext}
-          />
-        ) : (
-          /* Non-broken upcoming workspace placeholder */
-          <UpcomingWorkspacePlaceholder
-            workspace={activeWorkspace}
-            onReturnToLive={() => setActiveWorkspace('air-intelligence')}
-          />
-        )}
+        <div key={activeWorkspace} className="workspace-enter">
+          {activeWorkspace === 'air-intelligence' ? (
+            /* Live Global Air Intelligence Dashboard */
+            <AirQualityDashboard onSelectWorkspace={setActiveWorkspace} />
+          ) : activeWorkspace === 'family-planner' ? (
+            /* Production Phase 3 Family Daily Planner Workspace */
+            <FamilyPlannerWorkspace />
+          ) : activeWorkspace === 'indoor-air' ? (
+            /* Production Phase 4 Indoor Air Intelligence Workspace */
+            <IndoorAirWorkspace onOpenCopilotWithContext={handleOpenCopilotWithContext} />
+          ) : activeWorkspace === 'cleaner-choices' ? (
+            /* Production Phase 6 Cleaner Choices & Impact Workspace */
+            <CleanerChoicesWorkspace onAskCopilot={handleOpenCopilotWithContext} />
+          ) : activeWorkspace === 'community-alerts' ? (
+            /* Production Phase 7 Community Air Intelligence & Alerts Workspace */
+            <CommunityAlertsWorkspace
+              onSelectWorkspace={setActiveWorkspace}
+              onAskCopilot={handleOpenCopilotWithContext}
+            />
+          ) : (
+            /* Non-broken upcoming workspace placeholder */
+            <UpcomingWorkspacePlaceholder
+              workspace={activeWorkspace}
+              onReturnToLive={() => setActiveWorkspace('air-intelligence')}
+            />
+          )}
+        </div>
       </main>
 
       {/* Application Footer */}

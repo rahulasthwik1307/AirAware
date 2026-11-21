@@ -207,7 +207,7 @@ export function IncidentJournalCard({
           <button
             type="button"
             onClick={() => setSelectedCategory('ALL')}
-            className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer border ${
+            className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer border tactile-btn ${
               selectedCategory === 'ALL'
                 ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
                 : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
@@ -224,7 +224,7 @@ export function IncidentJournalCard({
                 key={catKey}
                 type="button"
                 onClick={() => setSelectedCategory(catKey)}
-                className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer border flex items-center gap-1 ${
+                className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer border flex items-center gap-1 tactile-btn ${
                   isSelected
                     ? 'bg-indigo-900 text-white border-indigo-900 shadow-2xs'
                     : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
@@ -324,7 +324,7 @@ export function IncidentJournalCard({
                     <button
                       type="button"
                       onClick={() => handleShareIncident(incident, 'SOCIETY')}
-                      className="px-3 py-1.5 text-xs font-semibold rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs"
+                      className="px-3 py-1.5 text-xs font-semibold rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs tactile-btn"
                       title="Send polite alert to society WhatsApp group"
                     >
                       <span>📢</span>
@@ -335,7 +335,7 @@ export function IncidentJournalCard({
                     <button
                       type="button"
                       onClick={() => handleShareIncident(incident, 'MUNICIPAL')}
-                      className="px-3 py-1.5 text-xs font-semibold rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-900 border border-indigo-200 transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs"
+                      className="px-3 py-1.5 text-xs font-semibold rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-900 border border-indigo-200 transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs tactile-btn"
                       title="Forward official complaint to Municipal helpline"
                     >
                       <span>📲</span>
@@ -347,7 +347,7 @@ export function IncidentJournalCard({
                       <button
                         type="button"
                         onClick={() => handleDownloadPhoto(incident)}
-                        className="px-3 py-1.5 text-xs font-semibold rounded-xl bg-teal-50 hover:bg-teal-100 text-teal-900 border border-teal-200 transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs sm:col-span-1"
+                        className="px-3 py-1.5 text-xs font-semibold rounded-xl bg-teal-50 hover:bg-teal-100 text-teal-900 border border-teal-200 transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs sm:col-span-1 tactile-btn"
                         title="Download photo evidence file to your device"
                       >
                         <span>📥</span>
@@ -359,7 +359,7 @@ export function IncidentJournalCard({
                     <button
                       type="button"
                       onClick={() => handleCopyCpcb(incident)}
-                      className={`px-3 py-1.5 text-xs font-mono font-semibold rounded-xl border transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs ${
+                      className={`px-3 py-1.5 text-xs font-mono font-semibold rounded-xl border transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs tactile-btn ${
                         incident.photoDataUrl ? 'sm:col-span-1' : 'sm:col-span-2'
                       } ${
                         copiedId === incident.id

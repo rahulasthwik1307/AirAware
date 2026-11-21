@@ -278,7 +278,7 @@ export function FamilyScheduleBoard({
                         <button
                           type="button"
                           onClick={() => onAdoptRecommendation(matchingRec)}
-                          className="px-3 py-1.5 rounded-xl bg-[var(--brand-primary)] hover:bg-[var(--brand-hover)] text-white text-xs font-mono font-bold shadow-xs transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
+                          className="px-3 py-1.5 rounded-xl bg-[var(--brand-primary)] hover:bg-[var(--brand-hover)] text-white text-xs font-mono font-bold shadow-xs transition-all cursor-pointer tactile-btn focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
                           aria-label={`Adopt suggested change for ${schedule.activityName}: ${matchingRec.title}`}
                         >
                           + Adopt Suggested Shift

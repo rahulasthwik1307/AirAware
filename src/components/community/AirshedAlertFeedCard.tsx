@@ -134,7 +134,7 @@ export function AirshedAlertFeedCard({
         <button
           type="button"
           onClick={() => setFilter('ALL')}
-          className={`px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer shrink-0 ${
+          className={`px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer shrink-0 tactile-btn ${
             filter === 'ALL'
               ? 'bg-slate-900 text-white shadow-2xs'
               : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -146,7 +146,7 @@ export function AirshedAlertFeedCard({
           <button
             type="button"
             onClick={() => setFilter('UNREAD')}
-            className={`px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer shrink-0 ${
+            className={`px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer shrink-0 tactile-btn ${
               filter === 'UNREAD'
                 ? 'bg-emerald-700 text-white shadow-2xs'
                 : 'bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100'
@@ -158,7 +158,7 @@ export function AirshedAlertFeedCard({
         <button
           type="button"
           onClick={() => setFilter('GRAP_REGULATORY')}
-          className={`px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer shrink-0 ${
+          className={`px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer shrink-0 tactile-btn ${
             filter === 'GRAP_REGULATORY'
               ? 'bg-rose-600 text-white shadow-2xs'
               : 'bg-rose-50 text-rose-800 border border-rose-200 hover:bg-rose-100'
@@ -169,7 +169,7 @@ export function AirshedAlertFeedCard({
         <button
           type="button"
           onClick={() => setFilter('VENTILATION_WINDOW')}
-          className={`px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer shrink-0 ${
+          className={`px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer shrink-0 tactile-btn ${
             filter === 'VENTILATION_WINDOW'
               ? 'bg-teal-700 text-white shadow-2xs'
               : 'bg-teal-50 text-teal-800 border border-teal-200 hover:bg-teal-100'
@@ -180,7 +180,7 @@ export function AirshedAlertFeedCard({
         <button
           type="button"
           onClick={() => setFilter('FAMILY_HEALTH')}
-          className={`px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer shrink-0 ${
+          className={`px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer shrink-0 tactile-btn ${
             filter === 'FAMILY_HEALTH'
               ? 'bg-amber-600 text-white shadow-2xs'
               : 'bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100'
@@ -232,7 +232,7 @@ export function AirshedAlertFeedCard({
                 <button
                   type="button"
                   onClick={() => onMarkRead(alert.id)}
-                  className={`px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold transition-all cursor-pointer shrink-0 self-start sm:self-auto ${
+                  className={`px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold transition-all cursor-pointer shrink-0 self-start sm:self-auto tactile-btn ${
                     alert.isRead
                       ? 'text-slate-500 bg-slate-100 hover:bg-slate-200 border border-slate-200'
                       : 'text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 shadow-2xs'
@@ -252,7 +252,7 @@ export function AirshedAlertFeedCard({
                 <button
                   type="button"
                   onClick={() => onNavigateWorkspace(alert.targetWorkspace)}
-                  className="px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold bg-white border border-slate-300 text-slate-800 hover:bg-slate-50 hover:border-slate-400 transition-colors shrink-0 shadow-2xs cursor-pointer"
+                  className="px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold bg-white border border-slate-300 text-slate-800 hover:bg-slate-50 hover:border-slate-400 transition-colors shrink-0 shadow-2xs cursor-pointer tactile-btn"
                 >
                   {getWorkspaceActionLabel(alert.targetWorkspace)}
                 </button>

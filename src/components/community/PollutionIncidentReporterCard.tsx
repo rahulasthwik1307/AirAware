@@ -192,7 +192,7 @@ export function PollutionIncidentReporterCard({
                   key={meta.category}
                   type="button"
                   onClick={() => setCategory(meta.category)}
-                  className={`p-2 rounded-xl border text-left transition-all cursor-pointer flex items-center gap-2 ${
+                  className={`p-2 rounded-xl border text-left transition-all cursor-pointer flex items-center gap-2 tactile-btn ${
                     isSelected
                       ? 'border-indigo-600 bg-indigo-50/80 ring-2 ring-indigo-500/20 shadow-2xs font-bold text-indigo-950'
                       : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
@@ -331,7 +331,7 @@ export function PollutionIncidentReporterCard({
         <button
           type="submit"
           disabled={isSubmitting || !description.trim()}
-          className="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold transition-all shadow-xs disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
+          className="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold transition-all shadow-xs disabled:opacity-50 cursor-pointer tactile-btn flex items-center justify-center gap-2"
         >
           <span>💾</span>
           <span>Save Incident to Local Device Journal</span>

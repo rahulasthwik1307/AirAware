@@ -84,7 +84,7 @@ export function NotificationDrawer({
               <button
                 type="button"
                 onClick={onMarkAllRead}
-                className="text-[11px] font-mono font-bold text-slate-500 hover:text-slate-900 cursor-pointer"
+                className="text-[11px] font-mono font-bold text-slate-500 hover:text-slate-900 cursor-pointer tactile-btn"
               >
                 Mark Read
               </button>
@@ -92,7 +92,7 @@ export function NotificationDrawer({
             <button
               type="button"
               onClick={onClose}
-              className="text-slate-400 hover:text-slate-700 p-1 text-lg cursor-pointer"
+              className="text-slate-400 hover:text-slate-700 p-1 text-lg cursor-pointer tactile-btn"
               aria-label="Close notifications panel"
             >
               ✕
@@ -159,7 +159,7 @@ export function NotificationDrawer({
                       onNavigateWorkspace(alert.targetWorkspace);
                       onClose();
                     }}
-                    className="px-2 py-0.5 text-[10px] font-mono font-bold rounded-md bg-white border border-slate-300 text-slate-800 hover:bg-slate-100 transition-colors shadow-2xs cursor-pointer"
+                    className="px-2 py-0.5 text-[10px] font-mono font-bold rounded-md bg-white border border-slate-300 text-slate-800 hover:bg-slate-100 transition-colors shadow-2xs cursor-pointer tactile-btn"
                   >
                     Open Workspace →
                   </button>

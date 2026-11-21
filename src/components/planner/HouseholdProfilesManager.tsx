@@ -358,7 +358,7 @@ export function HouseholdProfilesManager({
           <button
             type="button"
             onClick={() => onSelectViewFilter('ALL_FAMILY')}
-            className={`px-3.5 py-2 rounded-xl text-xs font-mono font-bold transition-all flex items-center gap-2 cursor-pointer shadow-2xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] ${
+            className={`px-3.5 py-2 rounded-xl text-xs font-mono font-bold transition-all flex items-center gap-2 cursor-pointer shadow-2xs tactile-btn focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] ${
               selectedViewFilter === 'ALL_FAMILY'
                 ? 'bg-[var(--brand-primary)] text-white shadow-xs'
                 : 'bg-[var(--surface-card)] text-[var(--ink-secondary)] hover:bg-[var(--surface-subtle)] border border-[var(--border-subtle)]'
@@ -385,7 +385,7 @@ export function HouseholdProfilesManager({
                 key={member.id}
                 type="button"
                 onClick={() => onSelectViewFilter(member.id)}
-                className={`px-3.5 py-2 rounded-xl text-xs font-medium transition-all flex items-center gap-2 cursor-pointer shadow-2xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] ${
+                className={`px-3.5 py-2 rounded-xl text-xs font-medium transition-all flex items-center gap-2 cursor-pointer shadow-2xs tactile-btn focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] ${
                   isSelected
                     ? 'bg-[var(--brand-surface)] text-[var(--brand-primary)] border border-[var(--brand-primary)] ring-2 ring-[var(--brand-primary)]/20 font-bold'
                     : 'bg-[var(--surface-card)] text-[var(--ink-primary)] hover:bg-[var(--surface-subtle)] border border-[var(--border-subtle)]'
@@ -417,7 +417,7 @@ export function HouseholdProfilesManager({
               setMemberFormError(null);
               setIsAddMemberOpen(true);
             }}
-            className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold shadow-xs transition-all flex items-center gap-1 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold shadow-xs transition-all flex items-center gap-1 cursor-pointer tactile-btn focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] ${
               members.length >= 4
                 ? 'bg-[var(--surface-subtle)] text-[var(--ink-muted)] cursor-not-allowed border border-[var(--border-subtle)]'
                 : 'bg-[var(--brand-primary)] hover:bg-[var(--brand-hover)] text-white'
@@ -431,7 +431,7 @@ export function HouseholdProfilesManager({
           <button
             type="button"
             onClick={onToggleSettings}
-            className={`px-3 py-1.5 rounded-xl text-xs font-mono font-medium transition-all border flex items-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-mono font-medium transition-all border flex items-center gap-1.5 cursor-pointer tactile-btn focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] ${
               isSettingsOpen
                 ? 'bg-[var(--surface-subtle)] text-[var(--ink-primary)] border-[var(--border-strong)]'
                 : 'bg-[var(--surface-card)] text-[var(--ink-secondary)] hover:text-[var(--ink-primary)] border-[var(--border-subtle)]'

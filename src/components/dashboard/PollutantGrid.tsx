@@ -366,7 +366,7 @@ export function PollutantGrid({
               key={key}
               data-pollutant={key}
               aria-label={`${edu.fullName} (${edu.chemicalFormula})`}
-              className={`flex flex-col justify-between rounded-2xl border bg-[var(--surface-card)] p-5 transition-all shadow-xs ${
+              className={`flex flex-col justify-between rounded-2xl border bg-[var(--surface-card)] p-5 transition-all shadow-xs card-elevate ${
                 isDominant
                   ? 'border-[var(--brand-primary)] ring-1 ring-[var(--brand-primary)]/30 shadow-sm'
                   : 'border-[var(--border-subtle)] hover:border-[var(--border-strong)]'

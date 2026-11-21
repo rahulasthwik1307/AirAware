@@ -98,7 +98,7 @@ export function CommuteComparatorCard({
                 `Compare solo car driving with ${TRANSIT_MODES[commute.alternativeMode].label} for a ${commute.distanceKm} km daily commute during winter smog season. Why does it reduce secondary aerosol pollution?`
               )
             }
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-lg bg-[var(--surface-subtle)] hover:bg-[var(--surface-card)] text-[var(--brand-primary)] border border-[var(--border-subtle)] hover:border-[var(--brand-primary)]/40 shadow-2xs transition-colors shrink-0 cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-lg bg-[var(--surface-subtle)] hover:bg-[var(--surface-card)] text-[var(--brand-primary)] border border-[var(--border-subtle)] hover:border-[var(--brand-primary)]/40 shadow-2xs transition-colors shrink-0 cursor-pointer tactile-btn"
             title="Ask Copilot about commute mode impact"
           >
             <span className="text-sm">🤖</span>
@@ -130,7 +130,7 @@ export function CommuteComparatorCard({
                 key={modeMeta.mode}
                 type="button"
                 onClick={() => onSelectAlternative(modeMeta.mode)}
-                className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-1.5 ${
+                className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-1.5 tactile-btn ${
                   isSelected
                     ? 'border-emerald-500 bg-emerald-50/60 ring-2 ring-emerald-500/20 shadow-2xs'
                     : isBaseline
@@ -201,7 +201,7 @@ export function CommuteComparatorCard({
                   key={preset}
                   type="button"
                   onClick={() => onDistanceChange(preset)}
-                  className={`px-2.5 py-1 text-xs font-mono font-bold rounded-lg transition-all cursor-pointer shadow-2xs ${
+                  className={`px-2.5 py-1 text-xs font-mono font-bold rounded-lg transition-all cursor-pointer shadow-2xs tactile-btn ${
                     isActive
                       ? 'bg-emerald-600 text-white ring-2 ring-emerald-500/30 scale-105'
                       : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:border-slate-300'

@@ -81,7 +81,7 @@ export function SustainableHabitHubCard({
           <button
             type="button"
             onClick={() => setFilter('ALL')}
-            className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
+            className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-colors cursor-pointer tactile-btn ${
               filter === 'ALL'
                 ? 'bg-slate-900 text-white'
                 : 'bg-[var(--surface-subtle)] text-[var(--ink-secondary)] hover:bg-slate-200'
@@ -92,7 +92,7 @@ export function SustainableHabitHubCard({
           <button
             type="button"
             onClick={() => setFilter('ADOPTED')}
-            className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
+            className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-colors cursor-pointer tactile-btn ${
               filter === 'ADOPTED'
                 ? 'bg-slate-900 text-white'
                 : 'bg-[var(--surface-subtle)] text-[var(--ink-secondary)] hover:bg-slate-200'
@@ -146,7 +146,7 @@ export function SustainableHabitHubCard({
                     <button
                       type="button"
                       onClick={() => onCompleteToday(habit.id)}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1 ${
+                      className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1 tactile-btn ${
                         isDoneToday
                           ? 'bg-emerald-600 text-white shadow-2xs'
                           : 'bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100'
@@ -158,7 +158,7 @@ export function SustainableHabitHubCard({
                     <button
                       type="button"
                       onClick={() => onToggleAdoption(habit.id)}
-                      className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-800 text-white hover:bg-slate-900 transition-colors cursor-pointer"
+                      className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-800 text-white hover:bg-slate-900 transition-colors cursor-pointer tactile-btn"
                     >
                       + Adopt Habit
                     </button>
@@ -183,7 +183,7 @@ export function SustainableHabitHubCard({
                           type="button"
                           onClick={() => onToggleDay(habit.id, idx)}
                           title={`${dayLabel} (${isCompleted ? 'Completed' : 'Missed'}) - Click to toggle`}
-                          className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-mono font-bold transition-all cursor-pointer ${
+                          className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-mono font-bold transition-all cursor-pointer tactile-btn ${
                             isCompleted
                               ? 'bg-emerald-500 text-white shadow-2xs scale-105'
                               : isToday

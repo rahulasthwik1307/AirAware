@@ -379,7 +379,7 @@ export function LocationSearch({
             onClick={handleGpsLocation}
             disabled={gpsLoading || isLoading}
             aria-label="Acquire coordinates from browser GPS"
-            className="w-full sm:w-auto h-11 px-4 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-card)] text-xs font-semibold text-[var(--ink-primary)] shadow-xs hover:bg-[var(--surface-subtle)] hover:border-[var(--border-strong)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]/40 disabled:opacity-50 transition-all flex items-center justify-center gap-2 cursor-pointer font-mono shrink-0"
+            className="w-full sm:w-auto h-11 px-4 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-card)] text-xs font-semibold text-[var(--ink-primary)] shadow-xs hover:bg-[var(--surface-subtle)] hover:border-[var(--border-strong)] tactile-btn focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]/40 disabled:opacity-50 transition-all flex items-center justify-center gap-2 cursor-pointer font-mono shrink-0"
           >
             {gpsLoading ? (
               <span className="h-3.5 w-3.5 rounded-full border-2 border-[var(--brand-primary)] border-t-transparent animate-spin" />
@@ -403,7 +403,7 @@ export function LocationSearch({
                 key={city.id}
                 type="button"
                 onClick={() => handleSelect(city)}
-                className={`text-xs font-mono px-3 py-1.5 rounded-lg border transition-all cursor-pointer ${
+                className={`text-xs font-mono px-3 py-1.5 rounded-lg border transition-all cursor-pointer tactile-btn ${
                   isCityActive
                     ? 'border-[var(--brand-primary)] bg-[var(--brand-surface)] text-[var(--brand-primary)] font-bold shadow-xs ring-1 ring-[var(--brand-primary)]/40'
                     : 'border-[var(--border-subtle)] bg-[var(--surface-card)] text-[var(--ink-secondary)] hover:border-[var(--border-strong)] hover:text-[var(--ink-primary)]'

@@ -102,7 +102,7 @@ export function AppHeader({
                 key={tab.key}
                 type="button"
                 onClick={() => onSelectWorkspace(tab.key)}
-                className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all cursor-pointer ${
+                className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all cursor-pointer tactile-btn ${
                   isActive
                     ? 'bg-white text-[var(--brand-primary)] shadow-xs border border-[var(--border-subtle)] font-bold'
                     : 'text-[var(--ink-secondary)] hover:text-[var(--ink-primary)] hover:bg-white/50'
@@ -130,7 +130,7 @@ export function AppHeader({
             <button
               type="button"
               onClick={onOpenWelcome}
-              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-[var(--surface-subtle)] hover:bg-[var(--surface-card)] text-[var(--ink-secondary)] hover:text-[var(--brand-primary)] text-xs font-mono font-semibold border border-[var(--border-subtle)] transition-all cursor-pointer shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-[var(--surface-subtle)] hover:bg-[var(--surface-card)] text-[var(--ink-secondary)] hover:text-[var(--brand-primary)] text-xs font-mono font-semibold border border-[var(--border-subtle)] transition-all cursor-pointer shadow-xs tactile-btn focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
               title="View Platform Overview & 5-Workspace Guide"
             >
               <span>Overview</span>
@@ -142,7 +142,7 @@ export function AppHeader({
             <button
               type="button"
               onClick={onOpenNotifications}
-              className="relative p-2 rounded-xl bg-[var(--surface-subtle)] hover:bg-[var(--surface-card)] text-[var(--ink-primary)] hover:text-[var(--brand-primary)] border border-[var(--border-subtle)] transition-all cursor-pointer shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
+              className="relative p-2 rounded-xl bg-[var(--surface-subtle)] hover:bg-[var(--surface-card)] text-[var(--ink-primary)] hover:text-[var(--brand-primary)] border border-[var(--border-subtle)] transition-all cursor-pointer shadow-xs tactile-btn focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
               aria-label={`View notifications (${unreadAlertCount} unread)`}
               title="Open Notifications"
             >
@@ -161,7 +161,7 @@ export function AppHeader({
           <button
             type="button"
             onClick={onOpenCopilot}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[var(--surface-subtle)] hover:bg-[var(--brand-surface)] text-[var(--ink-primary)] hover:text-[var(--brand-primary)] text-xs font-mono font-bold border border-[var(--border-subtle)] hover:border-[var(--brand-primary)]/40 transition-all cursor-pointer shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[var(--surface-subtle)] hover:bg-[var(--brand-surface)] text-[var(--ink-primary)] hover:text-[var(--brand-primary)] text-xs font-mono font-bold border border-[var(--border-subtle)] hover:border-[var(--brand-primary)]/40 transition-all cursor-pointer shadow-xs tactile-btn focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
             aria-label="Open AI Air Copilot panel"
           >
             <span className="text-sm select-none" aria-hidden="true">
