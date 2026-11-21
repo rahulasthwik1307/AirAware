@@ -5,6 +5,7 @@ import { useCommunityAlerts } from '@/domain/community/useCommunityAlerts';
 import { CommunityKpiStrip } from './CommunityKpiStrip';
 import { AirshedAlertFeedCard } from './AirshedAlertFeedCard';
 import { HistoricalAirshedTrendCard } from './HistoricalAirshedTrendCard';
+import { AirshedSourceAttributionCard } from './AirshedSourceAttributionCard';
 import { PollutionIncidentReporterCard } from './PollutionIncidentReporterCard';
 import { IncidentJournalCard } from './IncidentJournalCard';
 import { RwaBulletinModal } from './RwaBulletinModal';
@@ -72,6 +73,12 @@ export function CommunityAlertsWorkspace({
           <HistoricalAirshedTrendCard
             history={historicalTrend}
             locationName="New Delhi, India"
+          />
+
+          <AirshedSourceAttributionCard
+            locationName="New Delhi, India"
+            onNavigateWorkspace={onSelectWorkspace}
+            onAskCopilot={onAskCopilot}
           />
         </div>
 

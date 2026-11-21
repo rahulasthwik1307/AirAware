@@ -347,29 +347,21 @@ export function AqiHeroCard({
                       className="transition-all duration-700 ease-out"
                     />
                   </svg>
-                  {/* Center Visual Indicator (Option A: Severity Icon & Dominant Pollutant, No Duplicate Value) */}
+                  {/* Center Visual Indicator (Option A: Severity Icon & Dominant Pollutant, Balanced Centering) */}
                   <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none select-none">
-                    <div
-                      className="w-9 h-9 rounded-full flex items-center justify-center transition-all shadow-2xs"
-                      style={{
-                        backgroundColor: `${aqiColor}15`,
-                        border: `1px solid ${aqiColor}25`,
-                      }}
-                    >
-                      <span className="text-lg leading-none" aria-hidden="true">
-                        {providerAqi !== null && providerAqi > 300
-                          ? '🚨'
-                          : providerAqi !== null && providerAqi > 200
-                          ? '⚠️'
-                          : providerAqi !== null && providerAqi > 100
-                          ? '😷'
-                          : providerAqi !== null && providerAqi > 50
-                          ? '🌤️'
-                          : '🌿'}
-                      </span>
-                    </div>
+                    <span className="text-xl leading-none" aria-hidden="true">
+                      {providerAqi !== null && providerAqi > 300
+                        ? '🚨'
+                        : providerAqi !== null && providerAqi > 200
+                        ? '⚠️'
+                        : providerAqi !== null && providerAqi > 100
+                        ? '😷'
+                        : providerAqi !== null && providerAqi > 50
+                        ? '🌤️'
+                        : '🌿'}
+                    </span>
                     <span
-                      className="text-[10px] font-mono font-black uppercase mt-1 px-1.5 py-0.5 rounded border shadow-2xs tracking-wider"
+                      className="text-[9px] font-mono font-black uppercase mt-1 px-1.5 py-0.5 rounded border shadow-2xs tracking-wider leading-none"
                       style={{
                         color: aqiColor,
                         backgroundColor: `${aqiColor}12`,

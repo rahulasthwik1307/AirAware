@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { PollutionIncident } from '@/domain/community/types';
 import { INCIDENT_CATEGORIES } from '@/domain/community/constants';
 import { formatSocietyIncidentNotice, formatMunicipalComplaint } from '@/domain/community/generator';
@@ -51,6 +51,18 @@ export function IncidentJournalCard({
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [downloadedId, setDownloadedId] = useState<string | null>(null);
   const [shareStatus, setShareStatus] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
+
+  const filteredIncidents = useMemo(() => {
+    if (selectedCategory === 'ALL') return incidents;
+    return incidents.filter((inc) => inc.category === selectedCategory);
+  }, [incidents, selectedCategory]);
+
+  const incidentCategories = useMemo(() => {
+    const set = new Set<string>();
+    incidents.forEach((inc) => set.add(inc.category));
+    return Array.from(set);
+  }, [incidents]);
 
   const handleCopyCpcb = (incident: PollutionIncident) => {
     const text = onGenerateCpcbComplaint(incident);
@@ -189,16 +201,53 @@ export function IncidentJournalCard({
         </div>
       )}
 
-      {/* Incidents List */}
-      <div className="space-y-3.5">
-        {incidents.length === 0 ? (
+      {/* Category Filter Pills (if multiple categories present) */}
+      {incidents.length > 1 && (
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs select-none" role="tablist">
+          <button
+            type="button"
+            onClick={() => setSelectedCategory('ALL')}
+            className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer border ${
+              selectedCategory === 'ALL'
+                ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
+                : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
+            }`}
+          >
+            All ({incidents.length})
+          </button>
+          {incidentCategories.map((catKey) => {
+            const meta = INCIDENT_CATEGORIES[catKey as keyof typeof INCIDENT_CATEGORIES] || INCIDENT_CATEGORIES.OTHER;
+            const count = incidents.filter((i) => i.category === catKey).length;
+            const isSelected = selectedCategory === catKey;
+            return (
+              <button
+                key={catKey}
+                type="button"
+                onClick={() => setSelectedCategory(catKey)}
+                className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer border flex items-center gap-1 ${
+                  isSelected
+                    ? 'bg-indigo-900 text-white border-indigo-900 shadow-2xs'
+                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
+                }`}
+              >
+                <span>{meta.icon}</span>
+                <span>{meta.label.split(' ')[0]} ({count})</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Incidents List with Bounded Smooth Scroll */}
+      <div className="space-y-3.5 max-h-[560px] overflow-y-auto pr-1">
+        {filteredIncidents.length === 0 ? (
           <div className="p-8 rounded-2xl bg-slate-50 border border-dashed border-slate-300 text-center text-xs text-slate-500 space-y-1">
             <span className="text-2xl block">🌱</span>
             <p className="font-semibold text-slate-700">No local pollution incidents recorded yet.</p>
             <p className="text-[11px]">Use the form above to document illegal garbage burning, road dust, or smoky industrial chimneys.</p>
           </div>
         ) : (
-          incidents.map((incident) => {
+          filteredIncidents.map((incident) => {
             const meta = INCIDENT_CATEGORIES[incident.category] || INCIDENT_CATEGORIES.OTHER;
             const timeFormatted = new Date(incident.timestamp).toLocaleString('en-IN', {
               month: 'short',
@@ -252,23 +301,14 @@ export function IncidentJournalCard({
                   {incident.description}
                 </p>
 
-                {/* Photo Preview & Save Button */}
+                {/* Photo Preview (Clean, without duplicate download button) */}
                 {incident.photoDataUrl && (
-                  <div className="pt-1 flex items-end gap-3 flex-wrap">
+                  <div className="pt-1">
                     <img
                       src={incident.photoDataUrl}
                       alt="Incident photo evidence"
                       className="max-w-[200px] max-h-32 object-contain rounded-xl border border-slate-200 bg-slate-50 p-1 shadow-2xs"
                     />
-                    <button
-                      type="button"
-                      onClick={() => handleDownloadPhoto(incident)}
-                      className="px-2.5 py-1 text-[11px] font-mono font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition-colors cursor-pointer flex items-center gap-1 shadow-2xs"
-                      title="Save full photo to device storage"
-                    >
-                      <span>💾</span>
-                      <span>{downloadedId === incident.id ? '✓ Photo Saved!' : 'Download Photo'}</span>
-                    </button>
                   </div>
                 )}
 
@@ -280,26 +320,26 @@ export function IncidentJournalCard({
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {/* Action 1: Society WhatsApp (Photo + Text unified) */}
+                    {/* Action 1: Society WhatsApp */}
                     <button
                       type="button"
                       onClick={() => handleShareIncident(incident, 'SOCIETY')}
                       className="px-3 py-1.5 text-xs font-semibold rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs"
-                      title={incident.photoDataUrl ? 'Share photo and pre-formatted notice to society WhatsApp group' : 'Send notice to society WhatsApp group'}
+                      title="Send polite alert to society WhatsApp group"
                     >
                       <span>📢</span>
-                      <span>{incident.photoDataUrl ? 'Alert Society (Photo + Text)' : 'Alert Society WhatsApp'}</span>
+                      <span>Alert to Society</span>
                     </button>
 
-                    {/* Action 2: Municipal Helpline WhatsApp (Photo + Text unified) */}
+                    {/* Action 2: Municipal Helpline WhatsApp */}
                     <button
                       type="button"
                       onClick={() => handleShareIncident(incident, 'MUNICIPAL')}
                       className="px-3 py-1.5 text-xs font-semibold rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-900 border border-indigo-200 transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs"
-                      title={incident.photoDataUrl ? 'Forward official grievance with photo proof to municipal helpline' : 'Forward official complaint to municipal helpline'}
+                      title="Forward official complaint to Municipal helpline"
                     >
                       <span>📲</span>
-                      <span>{incident.photoDataUrl ? 'Municipal Grievance (Photo + Text)' : 'Send Municipal Grievance'}</span>
+                      <span>Municipal Grievance</span>
                     </button>
 
                     {/* Action 3: Download Photo Backup (only if photo present) */}
