@@ -9,6 +9,7 @@ interface AppHeaderProps {
   readonly onOpenCopilot: () => void;
   readonly unreadAlertCount?: number;
   readonly onOpenNotifications?: () => void;
+  readonly onOpenWelcome?: () => void;
 }
 
 interface WorkspaceTab {
@@ -32,32 +33,62 @@ export function AppHeader({
   onOpenCopilot,
   unreadAlertCount = 0,
   onOpenNotifications,
+  onOpenWelcome,
 }: AppHeaderProps) {
   return (
     <header className="sticky top-0 z-40 w-full border-b border-[var(--border-subtle)] bg-[var(--surface-card)] shadow-xs">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Brand Logo & Subtitle */}
-        <div className="flex items-center gap-3 shrink-0">
-          <div
-            className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--brand-primary)] to-[var(--brand-hover)] text-white font-black text-lg shadow-xs select-none"
-            aria-hidden="true"
+        {onOpenWelcome ? (
+          <button
+            type="button"
+            onClick={onOpenWelcome}
+            className="flex items-center gap-3 shrink-0 text-left cursor-pointer group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] rounded-xl -ml-1 p-1 hover:bg-slate-50 transition-colors"
+            title="View Platform Overview & 5-Workspace Guide"
           >
-            A
-          </div>
-          <div className="flex flex-col">
-            <div className="flex items-center gap-2">
-              <span className="text-base font-extrabold tracking-tight text-[var(--ink-primary)] font-sans">
-                AirAware
-              </span>
-              <span className="inline-flex items-center gap-1 rounded-full bg-[var(--brand-surface)] px-2 py-0.5 text-[10px] font-mono font-semibold text-[var(--brand-primary)] border border-[var(--border-subtle)]">
-                Open Science
+            <div
+              className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--brand-primary)] to-[var(--brand-hover)] text-white font-black text-lg shadow-xs select-none transition-transform group-hover:scale-105"
+              aria-hidden="true"
+            >
+              A
+            </div>
+            <div className="flex flex-col">
+              <div className="flex items-center gap-2">
+                <span className="text-base font-extrabold tracking-tight text-[var(--ink-primary)] font-sans">
+                  AirAware
+                </span>
+                <span className="inline-flex items-center rounded-full bg-[var(--brand-surface)] px-2 py-0.5 text-[10px] font-mono font-semibold text-[var(--brand-primary)] border border-[var(--border-subtle)]">
+                  Open Science
+                </span>
+              </div>
+              <span className="text-[11px] font-medium text-[var(--ink-muted)]">
+                Global Environmental Intelligence
               </span>
             </div>
-            <span className="text-[11px] font-medium text-[var(--ink-muted)]">
-              Global Environmental Intelligence
-            </span>
+          </button>
+        ) : (
+          <div className="flex items-center gap-3 shrink-0">
+            <div
+              className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--brand-primary)] to-[var(--brand-hover)] text-white font-black text-lg shadow-xs select-none"
+              aria-hidden="true"
+            >
+              A
+            </div>
+            <div className="flex flex-col">
+              <div className="flex items-center gap-2">
+                <span className="text-base font-extrabold tracking-tight text-[var(--ink-primary)] font-sans">
+                  AirAware
+                </span>
+                <span className="inline-flex items-center rounded-full bg-[var(--brand-surface)] px-2 py-0.5 text-[10px] font-mono font-semibold text-[var(--brand-primary)] border border-[var(--border-subtle)]">
+                  Open Science
+                </span>
+              </div>
+              <span className="text-[11px] font-medium text-[var(--ink-muted)]">
+                Global Environmental Intelligence
+              </span>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Desktop / Tablet Segmented Workspace Switcher */}
         <nav
@@ -92,8 +123,20 @@ export function AppHeader({
           })}
         </nav>
 
-        {/* Action Triggers: Notification Bell & Copilot */}
+        {/* Action Triggers: Overview, Notification Bell & Copilot */}
         <div className="flex items-center gap-2">
+          {/* Platform Overview / Welcome Tour Trigger */}
+          {onOpenWelcome && (
+            <button
+              type="button"
+              onClick={onOpenWelcome}
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-[var(--surface-subtle)] hover:bg-[var(--surface-card)] text-[var(--ink-secondary)] hover:text-[var(--brand-primary)] text-xs font-mono font-semibold border border-[var(--border-subtle)] transition-all cursor-pointer shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
+              title="View Platform Overview & 5-Workspace Guide"
+            >
+              <span>Overview</span>
+            </button>
+          )}
+
           {/* Universal Notification Bell */}
           {onOpenNotifications && (
             <button

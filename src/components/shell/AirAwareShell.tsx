@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { WorkspaceKey } from '@/domain/types';
 import { AppHeader } from './AppHeader';
 import { MobileBottomNav } from './MobileBottomNav';
@@ -14,6 +14,121 @@ import { CleanerChoicesWorkspace } from '@/components/choices/CleanerChoicesWork
 import { CommunityAlertsWorkspace } from '@/components/community/CommunityAlertsWorkspace';
 import { NotificationDrawer } from '@/components/community/NotificationDrawer';
 import { useCommunityAlerts } from '@/domain/community/useCommunityAlerts';
+import { WelcomeLandingPage } from '@/components/welcome/WelcomeLandingPage';
+import { OnboardingModal, OnboardingResult } from '@/components/welcome/OnboardingModal';
+import { HouseholdMember } from '@/domain/household/types';
+
+function createHouseholdMembersFromSensitivities(sensitivities: readonly string[]): HouseholdMember[] {
+  const members: HouseholdMember[] = [];
+  const now = new Date().toISOString();
+
+  if (sensitivities.includes('infants_children')) {
+    members.push({
+      id: 'member_child',
+      nickname: 'Aarav (Child)',
+      archetype: 'CHILD_STUDENT',
+      sensitivityTier: 'PEDIATRIC',
+      createdAt: now,
+      schedules: [
+        {
+          id: 'sch_school',
+          activityName: 'Morning School Transit',
+          activityType: 'SCHOOL_TRAVEL',
+          startTime: '07:30',
+          durationMinutes: 45,
+          commuteMode: 'PUBLIC_TRANSIT',
+          commuteDistanceKm: 6,
+        },
+      ],
+    });
+  }
+
+  if (sensitivities.includes('elderly_parents') && members.length < 4) {
+    members.push({
+      id: 'member_senior',
+      nickname: 'Dada / Dadi (Senior)',
+      archetype: 'SENIOR_VULNERABLE',
+      sensitivityTier: 'SENIOR',
+      createdAt: now,
+      schedules: [
+        {
+          id: 'sch_walk',
+          activityName: 'Morning Park Walk',
+          activityType: 'OUTDOOR_EXERCISE',
+          startTime: '06:45',
+          durationMinutes: 40,
+          commuteMode: 'WALKING',
+          commuteDistanceKm: 1.5,
+        },
+      ],
+    });
+  }
+
+  if (sensitivities.includes('asthma_respiratory') && members.length < 4) {
+    members.push({
+      id: 'member_respiratory',
+      nickname: 'Priya (Asthma Care)',
+      archetype: 'OUTDOOR_ENTHUSIAST',
+      sensitivityTier: 'RESPIRATORY',
+      createdAt: now,
+      schedules: [
+        {
+          id: 'sch_exercise',
+          activityName: 'Outdoor Jogging / Exercise',
+          activityType: 'OUTDOOR_EXERCISE',
+          startTime: '07:00',
+          durationMinutes: 45,
+          commuteMode: 'WALKING',
+          commuteDistanceKm: 3,
+        },
+      ],
+    });
+  }
+
+  if (sensitivities.includes('active_commuter') && members.length < 4) {
+    members.push({
+      id: 'member_commuter',
+      nickname: 'Rohan (Daily Commuter)',
+      archetype: 'WORKING_COMMUTER',
+      sensitivityTier: 'NONE',
+      createdAt: now,
+      schedules: [
+        {
+          id: 'sch_commute',
+          activityName: 'Morning Office Commute',
+          activityType: 'COMMUTE',
+          startTime: '08:30',
+          durationMinutes: 60,
+          commuteMode: 'PRIVATE_CAR',
+          commuteDistanceKm: 18,
+        },
+      ],
+    });
+  }
+
+  if ((members.length === 0 || sensitivities.includes('healthy_adult')) && members.length < 4) {
+    members.push({
+      id: 'member_general',
+      nickname: 'Family Household',
+      archetype: 'WORKING_COMMUTER',
+      sensitivityTier: 'NONE',
+      createdAt: now,
+      schedules: [
+        {
+          id: 'sch_errand',
+          activityName: 'Market & Neighborhood Errands',
+          activityType: 'ERRAND',
+          startTime: '10:00',
+          durationMinutes: 30,
+          commuteMode: 'WALKING',
+          commuteDistanceKm: 1,
+        },
+      ],
+    });
+  }
+
+  return members.slice(0, 4);
+}
 
 export function AirAwareShell() {
   const [activeWorkspace, setActiveWorkspace] = useState<WorkspaceKey>('air-intelligence');
@@ -21,6 +136,16 @@ export function AirAwareShell() {
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [copilotInitialPrompt, setCopilotInitialPrompt] = useState<string | null>(null);
   const [copilotRoomContext, setCopilotRoomContext] = useState<string | null>(null);
+
+  // Welcome page and onboarding questionnaire state
+  // Always display the Landing Page first whenever localhost:3000 opens!
+  const [isMounted, setIsMounted] = useState(false);
+  const [isWelcomeActive, setIsWelcomeActive] = useState(true);
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Community Alerts hook for header notification bell & global drawer
   const { alerts, unreadCount, markAlertRead, markAllAlertsRead } = useCommunityAlerts();
@@ -37,6 +162,62 @@ export function AirAwareShell() {
     setCopilotRoomContext(null);
   };
 
+  const handleCompleteOnboarding = (result: OnboardingResult) => {
+    try {
+      // 1. Save chosen location
+      localStorage.setItem('airaware_last_location', JSON.stringify(result.location));
+      window.dispatchEvent(new CustomEvent('airaware_location_changed'));
+
+      // 2. Pre-seed household profiles
+      const members = createHouseholdMembersFromSensitivities(result.householdSensitivities);
+      const householdState = {
+        version: 1,
+        updatedAt: new Date().toISOString(),
+        activeMemberId: members.length > 0 ? members[0].id : null,
+        members,
+      };
+      localStorage.setItem('airaware_household_v1', JSON.stringify(householdState));
+      window.dispatchEvent(new CustomEvent('airaware_household_updated'));
+
+      // 3. Mark onboarding completed
+      localStorage.setItem('airaware_onboarding_completed_v1', 'true');
+    } catch {
+      // Local storage fallback
+    }
+
+    setActiveWorkspace(result.initialWorkspace);
+    setIsOnboardingOpen(false);
+    setIsWelcomeActive(false);
+  };
+
+  const handleSkipWelcome = () => {
+    try {
+      localStorage.setItem('airaware_onboarding_completed_v1', 'true');
+    } catch {
+      // fallback
+    }
+    setIsOnboardingOpen(false);
+    setIsWelcomeActive(false);
+  };
+
+  // Render Welcome Landing Page whenever localhost:3000 opens or if summoned via Header Overview button
+  if (isWelcomeActive) {
+    return (
+      <>
+        <WelcomeLandingPage
+          onGetStarted={() => setIsOnboardingOpen(true)}
+          onExploreDirectly={handleSkipWelcome}
+        />
+        <OnboardingModal
+          isOpen={isOnboardingOpen}
+          onComplete={handleCompleteOnboarding}
+          onSkip={handleSkipWelcome}
+          onCancel={() => setIsOnboardingOpen(false)}
+        />
+      </>
+    );
+  }
+
   return (
     <div className="flex min-h-screen flex-col bg-[var(--surface-ground)] text-[var(--ink-primary)] pb-16 md:pb-0">
       {/* Universal Top Header */}
@@ -46,6 +227,7 @@ export function AirAwareShell() {
         onOpenCopilot={() => setIsCopilotOpen(true)}
         unreadAlertCount={unreadCount}
         onOpenNotifications={() => setIsNotificationOpen(true)}
+        onOpenWelcome={() => setIsWelcomeActive(true)}
       />
 
       {/* Main Content Area */}
@@ -147,6 +329,14 @@ export function AirAwareShell() {
         activeWorkspace={activeWorkspace}
         initialPrompt={copilotInitialPrompt}
         roomContext={copilotRoomContext ? { roomName: copilotRoomContext } : null}
+      />
+
+      {/* Global Onboarding & Personalization Questionnaire */}
+      <OnboardingModal
+        isOpen={isOnboardingOpen}
+        onComplete={handleCompleteOnboarding}
+        onSkip={handleSkipWelcome}
+        onCancel={() => setIsOnboardingOpen(false)}
       />
     </div>
   );
