@@ -36,6 +36,40 @@ export const VentilationEnum = z.enum([
 ]);
 export type VentilationAdvice = z.infer<typeof VentilationEnum>;
 
+export const HouseholdMemberSummarySchema = z.object({
+  id: z.string(),
+  nickname: z.string(),
+  archetype: z.string(),
+  sensitivityTier: z.string(),
+  schedules: z
+    .array(
+      z.object({
+        activityName: z.string(),
+        startTime: z.string(),
+        durationMinutes: z.number(),
+        commuteMode: z.string().optional(),
+      })
+    )
+    .optional(),
+});
+export type HouseholdMemberSummary = z.infer<typeof HouseholdMemberSummarySchema>;
+
+export const DailyPlanActionSchema = z.object({
+  period: z.enum(['morning', 'afternoon', 'evening']),
+  area: z.string(),
+  action: z.string(),
+  why: z.string(),
+  expectedImpact: z.string(),
+});
+export type DailyPlanAction = z.infer<typeof DailyPlanActionSchema>;
+
+export const TodayHouseholdPlanSchema = z.object({
+  morning: DailyPlanActionSchema,
+  afternoon: DailyPlanActionSchema,
+  evening: DailyPlanActionSchema,
+});
+export type TodayHouseholdPlan = z.infer<typeof TodayHouseholdPlanSchema>;
+
 // ==============================================================================
 // 1. Proactive Guidance Schemas (Dashboard Health & Action Cards)
 // ==============================================================================
@@ -56,15 +90,20 @@ export const GuidanceRequestSchema = z.object({
     primaryActivity: ActivityEnum.default('general'),
     locale: z.string().default('en'),
   }),
+  cityName: z.string().optional(),
+  householdMembers: z.array(HouseholdMemberSummarySchema).optional(),
+  scheduleSummary: z.string().optional(),
 });
 export type GuidanceRequest = z.infer<typeof GuidanceRequestSchema>;
 
 export const GuidanceResponseSchema = z.object({
   headline: z.string().min(5).max(100),
-  healthSummary: z.string().min(10).max(350),
-  actionRecommendations: z.array(z.string().min(5).max(150)).min(2).max(5),
-  sensitiveGroupAdvisory: z.string().min(5).max(250),
+  healthSummary: z.string().min(10).max(400),
+  actionRecommendations: z.array(z.string().min(5).max(250)).min(2).max(5),
+  sensitiveGroupAdvisory: z.string().min(5).max(300),
   ventilationRecommendation: VentilationEnum,
+  todayHouseholdPlan: TodayHouseholdPlanSchema.optional(),
+  modelName: z.string().optional(),
   isDeterministicFallback: z.boolean().default(false),
 });
 export type GuidanceResponse = z.infer<typeof GuidanceResponseSchema>;
@@ -112,8 +151,12 @@ export const CopilotRequestSchema = z.object({
       isSensitiveGroup: z.boolean().default(false),
       primaryActivity: ActivityEnum.default('general'),
       locale: z.string().default('en'),
+      vulnerabilityTiers: z.array(z.string()).optional(),
     })
     .default({ isSensitiveGroup: false, primaryActivity: 'general', locale: 'en' }),
+  cityName: z.string().optional(),
+  observationTime: z.string().optional(),
+  dataSource: z.string().optional(),
 });
 export type CopilotRequest = Omit<z.infer<typeof CopilotRequestSchema>, 'workspace'> & {
   workspace?: WorkspaceContext;

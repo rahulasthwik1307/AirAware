@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { classifyCpcbPm25 } from '@/domain/aqi/cpcb-benchmark';
+import { classifyCpcbPm25, calculateCpcbAqi } from '@/domain/aqi/cpcb-benchmark';
 import { normalizeAirQualityReport } from '@/domain/aqi/normalizer';
 import { RawOpenMeteoAirQualityResponse } from '@/domain/aqi/normalizer';
 import { GeoLocation } from '@/domain/types';
@@ -210,6 +210,46 @@ describe('India CPCB NAQI PM2.5 Benchmark Resolver', () => {
       const report = normalizeAirQualityReport(rawData, indianLocation);
       expect(report.cpcbComparison?.equivalentCategory).toBe('Satisfactory');
       expect(report.cpcbComparison?.estimatedAqiRange).toBe('51–100');
+    });
+  });
+
+  describe('calculateCpcbAqi Continuous AQI Calculator', () => {
+    it('calculates CPCB AQI correctly across breakpoints', () => {
+      // 0 -> 0 Good
+      expect(calculateCpcbAqi(0).aqi).toBe(0);
+      expect(calculateCpcbAqi(0).category).toBe('Good');
+
+      // 15 -> 25 Good
+      expect(calculateCpcbAqi(15).aqi).toBe(25);
+      expect(calculateCpcbAqi(15).category).toBe('Good');
+
+      // 30 -> 50 Good
+      expect(calculateCpcbAqi(30).aqi).toBe(50);
+      expect(calculateCpcbAqi(30).category).toBe('Good');
+
+      // 45 -> 75 Satisfactory
+      expect(calculateCpcbAqi(45).aqi).toBe(75);
+      expect(calculateCpcbAqi(45).category).toBe('Satisfactory');
+
+      // 75 -> 150 Moderate
+      expect(calculateCpcbAqi(75).aqi).toBe(150);
+      expect(calculateCpcbAqi(75).category).toBe('Moderate');
+
+      // 105 -> 250 Poor
+      expect(calculateCpcbAqi(105).aqi).toBe(250);
+      expect(calculateCpcbAqi(105).category).toBe('Poor');
+
+      // 185 -> 350 Very Poor
+      expect(calculateCpcbAqi(185).aqi).toBe(350);
+      expect(calculateCpcbAqi(185).category).toBe('Very Poor');
+
+      // 300 -> Severe (400-500)
+      expect(calculateCpcbAqi(300).aqi).toBeGreaterThanOrEqual(400);
+      expect(calculateCpcbAqi(300).category).toBe('Severe');
+
+      // Null/invalid
+      expect(calculateCpcbAqi(null).aqi).toBeNull();
+      expect(calculateCpcbAqi(null).category).toBe('Unavailable');
     });
   });
 });

@@ -27,14 +27,26 @@ class AiCacheManager {
 
   /**
    * Generates a normalized cache key for proactive guidance.
-   * Groups requests by category, dominant pollutant, and persona rather than raw numbers.
+   * Caches per (location, profile, hour) to avoid duplicate calls.
    */
   public getGuidanceKey(req: GuidanceRequest): string {
+    const currentHour = new Date().getHours();
+    const city = req.cityName ? req.cityName.toLowerCase().trim() : 'default';
+    const profile =
+      req.householdMembers && req.householdMembers.length > 0
+        ? req.householdMembers
+            .map((m) => `${m.id}_${m.sensitivityTier}`)
+            .sort()
+            .join(';')
+        : req.userContext.primaryActivity;
+
     return [
+      city,
+      profile,
+      `h:${currentHour}`,
       req.category,
       req.dominantPollutant,
       req.userContext.isSensitiveGroup ? 'sens:1' : 'sens:0',
-      req.userContext.primaryActivity,
       req.userContext.locale || 'en',
     ].join('|');
   }

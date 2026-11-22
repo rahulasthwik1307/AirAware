@@ -44,6 +44,23 @@ function formatBadgeTier(label: string): string {
   return label;
 }
 
+function formatDataAge(timestampStr?: string): string {
+  if (!timestampStr) return 'recent';
+  try {
+    const iso = timestampStr.includes('T') ? timestampStr : timestampStr.replace(' ', 'T');
+    const time = new Date(iso).getTime();
+    if (isNaN(time)) return 'recent';
+    const diffMs = Date.now() - time;
+    const diffMin = Math.round(diffMs / 60000);
+    if (diffMin < 1) return 'just now';
+    if (diffMin < 60) return `${diffMin}m ago`;
+    const diffHours = Math.floor(diffMin / 60);
+    return `${diffHours}h ${diffMin % 60}m ago`;
+  } catch {
+    return 'recent';
+  }
+}
+
 // Clean Radial Arc Speedometer with Zero Overlapping Text
 function RadialArcGauge({
   concentration,
@@ -301,11 +318,11 @@ export function PollutantGrid({
         <div className="flex flex-wrap items-center gap-1.5 self-start sm:self-auto shrink-0">
           {effectiveTimestamp && (
             <span className="text-xs font-mono text-[var(--ink-muted)] bg-[var(--surface-subtle)] px-2 py-1 rounded border border-[var(--border-subtle)]">
-              Model: {effectiveTimestamp}
+              Observation: {effectiveTimestamp} ({formatDataAge(modelTimestamp)})
             </span>
           )}
           <span className="text-xs font-mono font-semibold text-[var(--brand-primary)] bg-[var(--brand-surface)] px-2.5 py-1 rounded border border-[var(--brand-primary)]/30">
-            Standard: {standardName}
+            Modeled estimate (Copernicus CAMS via Open-Meteo, ~45 km grid)
           </span>
         </div>
       </div>

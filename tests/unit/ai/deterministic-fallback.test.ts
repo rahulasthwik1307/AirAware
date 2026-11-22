@@ -3,7 +3,7 @@ import {
   getDeterministicGuidance,
   getDeterministicCopilotAnswer,
 } from '@/lib/ai/deterministic-fallback';
-import { GuidanceRequest, CopilotRequest } from '@/lib/ai/types';
+import { GuidanceRequest, CopilotRequest, GuidanceResponseSchema } from '@/lib/ai/types';
 
 describe('Deterministic Offline Guidance Engine', () => {
   const baseWeather = {
@@ -81,6 +81,72 @@ describe('Deterministic Offline Guidance Engine', () => {
     expect(res.headline).toContain('Unhealthy');
     expect(res.sensitiveGroupAdvisory).toContain('Sensitive groups must avoid');
     expect(res.actionRecommendations.some((r) => r.includes('transit') || r.includes('respirator'))).toBe(true);
+  });
+
+  it('generates a personalized todayHouseholdPlan with morning/afternoon/evening covering 3 core areas and validates against GuidanceResponseSchema', () => {
+    const req: GuidanceRequest = {
+      aqi: 280,
+      category: 'Very Unhealthy',
+      dominantPollutant: 'pm25',
+      pollutantConcentration: 195.0,
+      pollutantUnit: 'µg/m³',
+      weather: baseWeather,
+      cityName: 'Delhi',
+      userContext: {
+        isSensitiveGroup: true,
+        primaryActivity: 'daily_commute',
+        locale: 'en',
+      },
+      householdMembers: [
+        {
+          id: 'mem-1',
+          nickname: 'Aarav',
+          archetype: 'pediatric',
+          sensitivityTier: 'pediatric',
+          schedules: [
+            {
+              activityName: 'outdoor_play',
+              startTime: '16:00',
+              durationMinutes: 120,
+              commuteMode: 'walk',
+            },
+          ],
+        },
+        {
+          id: 'mem-2',
+          nickname: 'Priya',
+          archetype: 'commuter',
+          sensitivityTier: 'commuter',
+          schedules: [
+            {
+              activityName: 'commute',
+              startTime: '09:00',
+              durationMinutes: 60,
+              commuteMode: 'metro',
+            },
+          ],
+        },
+      ],
+      scheduleSummary:
+        'Aarav (pediatric): 16:00-18:00 outdoor_play (Park). Priya (commuter): 09:00-10:00 commute (Office).',
+    };
+
+    const res = getDeterministicGuidance(req);
+    expect(res.todayHouseholdPlan).toBeDefined();
+    const plan = res.todayHouseholdPlan!;
+    expect(plan.morning.action).toBeTruthy();
+    expect(plan.morning.why).toBeTruthy();
+    expect(plan.morning.expectedImpact).toBeTruthy();
+    expect(plan.afternoon.action).toBeTruthy();
+    expect(plan.afternoon.why).toBeTruthy();
+    expect(plan.afternoon.expectedImpact).toBeTruthy();
+    expect(plan.evening.action).toBeTruthy();
+    expect(plan.evening.why).toBeTruthy();
+    expect(plan.evening.expectedImpact).toBeTruthy();
+
+    // Verify it fully validates against Zod schema
+    const parsed = GuidanceResponseSchema.safeParse(res);
+    expect(parsed.success).toBe(true);
   });
 
   it('generates 7-part Copilot response matching Master Spec §4.4', () => {

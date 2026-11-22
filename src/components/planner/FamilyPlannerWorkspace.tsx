@@ -1,8 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useSyncExternalStore } from 'react';
-import { GeoLocation, AirQualityReport } from '@/domain/types';
-import { normalizeAirQualityReport, RawOpenMeteoAirQualityResponse } from '@/domain/aqi/normalizer';
+import React, { useState, useMemo, useSyncExternalStore } from 'react';
+import { useAirQuality, DEFAULT_LOCATION } from '@/domain/aqi/useAirQuality';
 import {
   loadHouseholdState,
   getHouseholdServerSnapshot,
@@ -32,28 +31,7 @@ import { HouseholdProfilesManager } from './HouseholdProfilesManager';
 import { ScheduleTimeline } from './ScheduleTimeline';
 import { ActivePlanTracker } from './ActivePlanTracker';
 import { RecommendationCard } from './RecommendationCard';
-
-const DEFAULT_LOCATION: GeoLocation = {
-  id: 1273294,
-  name: 'New Delhi',
-  country: 'India',
-  countryCode: 'IN',
-  admin1: 'Delhi',
-  latitude: 28.6139,
-  longitude: 77.209,
-  timezone: 'Asia/Kolkata',
-};
-
-function getSavedLocation(): GeoLocation {
-  if (typeof window === 'undefined') return DEFAULT_LOCATION;
-  try {
-    const raw = localStorage.getItem('airaware_last_location');
-    if (raw) return JSON.parse(raw);
-  } catch {
-    // fallback
-  }
-  return DEFAULT_LOCATION;
-}
+import { HouseholdTodayPlanCard } from './HouseholdTodayPlanCard';
 
 export function FamilyPlannerWorkspace() {
   // Reactive Storage Synchronization via useSyncExternalStore
@@ -69,11 +47,9 @@ export function FamilyPlannerWorkspace() {
     getActivePlanServerSnapshot
   );
 
-  // Environmental Forecast State
-  const [location] = useState<GeoLocation>(getSavedLocation);
-  const [report, setReport] = useState<AirQualityReport | null>(null);
-  const [isLoadingForecast, setIsLoadingForecast] = useState(true);
-  const [forecastError, setForecastError] = useState<string | null>(null);
+  // Environmental Forecast State from shared hook (single source of truth)
+  const { location, report, isLoading: isLoadingForecast, error: forecastError } = useAirQuality();
+  const activeLocation = location ?? DEFAULT_LOCATION;
 
   // View Filter State: 'ALL_FAMILY' (default) or memberId
   const [selectedViewFilter, setSelectedViewFilter] = useState<string>('ALL_FAMILY');
@@ -93,43 +69,6 @@ export function FamilyPlannerWorkspace() {
     setIsAddScheduleModalOpen(false);
     setTargetMemberForSchedule(null);
   };
-
-  // Fetch Environmental Forecast for Location
-  useEffect(() => {
-    let isCancelled = false;
-    async function fetchForecast() {
-      setIsLoadingForecast(true);
-      setForecastError(null);
-      try {
-        const res = await fetch(
-          `/api/air-quality?latitude=${location.latitude}&longitude=${location.longitude}&timezone=${encodeURIComponent(
-            location.timezone
-          )}`
-        );
-        if (!res.ok) {
-          throw new Error(`Air quality API returned status ${res.status}`);
-        }
-        const rawData: RawOpenMeteoAirQualityResponse = await res.json();
-        if (!isCancelled) {
-          const normalized = normalizeAirQualityReport(rawData, location, 'US_EPA');
-          setReport(normalized);
-        }
-      } catch (err) {
-        if (!isCancelled) {
-          setForecastError(err instanceof Error ? err.message : 'Failed to fetch environmental forecast');
-        }
-      } finally {
-        if (!isCancelled) {
-          setIsLoadingForecast(false);
-        }
-      }
-    }
-
-    fetchForecast();
-    return () => {
-      isCancelled = true;
-    };
-  }, [location]);
 
   // Generate Deterministic Recommendations across all household members
   const householdRecommendations = useMemo(() => {
@@ -263,7 +202,7 @@ export function FamilyPlannerWorkspace() {
           {/* Active Context Indicators */}
           <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
             <span className="px-3 py-1.5 rounded-xl bg-[var(--surface-subtle)] text-[var(--ink-primary)] border border-[var(--border-subtle)]">
-              📍 {location.name}, {location.countryCode}
+              📍 {activeLocation.name}, {activeLocation.countryCode}
             </span>
             <span className="px-3 py-1.5 rounded-xl bg-[var(--brand-surface)] text-[var(--brand-primary)] border border-[var(--brand-primary)]/20">
               🔒 100% Local Storage
@@ -283,6 +222,13 @@ export function FamilyPlannerWorkspace() {
         isLoadingForecast={isLoadingForecast}
         forecastError={forecastError}
         onJumpToActions={handleJumpToActions}
+      />
+
+      {/* SECTION 1.5: TODAY'S PLAN FOR YOUR HOUSEHOLD (GENAI POWERED) */}
+      <HouseholdTodayPlanCard
+        report={report}
+        householdState={householdState}
+        location={activeLocation}
       />
 
       {/* SECTION 2: WHOLE FAMILY SELECTOR & SECTION 7: HOUSEHOLD SETTINGS */}

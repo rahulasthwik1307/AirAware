@@ -8,6 +8,9 @@ interface RwaBulletinModalProps {
   readonly onClose: () => void;
   readonly defaultSocietyName: string;
   readonly onGenerateBulletin: (societyName?: string) => string;
+  readonly aqi?: number;
+  readonly activeGrapStage?: string;
+  readonly locationName?: string;
 }
 
 export function RwaBulletinModal({
@@ -15,6 +18,9 @@ export function RwaBulletinModal({
   onClose,
   defaultSocietyName,
   onGenerateBulletin,
+  aqi,
+  activeGrapStage,
+  locationName,
 }: RwaBulletinModalProps) {
   const [societyName, setSocietyName] = useState(defaultSocietyName);
   const [copied, setCopied] = useState(false);
@@ -171,7 +177,7 @@ export function RwaBulletinModal({
         <div className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-amber-50/70 border border-amber-200/80 text-[11px] text-amber-900">
           <span className="flex items-center gap-1 font-mono">
             <span>🌦️</span>
-            <span>Synced with live CPCB AQI 378 &amp; CAMS thermal inversion model.</span>
+            <span>Synced with live AQI {aqi ?? '—'} &amp; CAMS atmospheric dispersion model.</span>
           </span>
           {customText !== null && (
             <button
@@ -195,11 +201,11 @@ export function RwaBulletinModal({
                   📢 Official Advisory
                 </span>
                 <span className="text-[10px] font-mono font-bold text-rose-800 bg-rose-100 px-2 py-0.5 rounded border border-rose-300">
-                  Stage 2: Very Poor Air
+                  {activeGrapStage || 'Active Air Advisory'}
                 </span>
               </div>
               <h4 className="text-sm font-bold text-slate-900">
-                {societyName.trim() || 'Green Meadows Apartment RWA'}
+                {societyName.trim() || `${locationName || 'Local'} Community RWA`}
               </h4>
               <p className="text-[11px] text-slate-600">
                 Actionable guidelines to safeguard residents, children, and seniors during winter smog.
@@ -210,8 +216,8 @@ export function RwaBulletinModal({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
               <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 space-y-0.5">
                 <span className="text-[10px] font-mono font-bold text-rose-800 uppercase block">Active Outdoor Air</span>
-                <span className="text-sm font-black text-rose-950">CPCB AQI 378 (Hazardous)</span>
-                <p className="text-[10px] text-rose-900">High concentrations of PM2.5 soot in the neighborhood.</p>
+                <span className="text-sm font-black text-rose-950">AQI {aqi ?? '—'} ({activeGrapStage || 'Advisory'})</span>
+                <p className="text-[10px] text-rose-900">Concentrations of fine soot in the neighborhood.</p>
               </div>
               <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 space-y-0.5">
                 <span className="text-[10px] font-mono font-bold text-amber-800 uppercase block">Weather Condition</span>

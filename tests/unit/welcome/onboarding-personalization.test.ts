@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { HouseholdStorageStateSchema } from '@/domain/household/schema';
+import { CITY_PRESETS } from '@/components/welcome/OnboardingModal';
 
 describe('Onboarding Personalization & Local-First Invariants', () => {
   it('validates pre-seeded household state adheres strictly to HouseholdStorageStateSchema', () => {
@@ -72,5 +73,14 @@ describe('Onboarding Personalization & Local-First Invariants', () => {
 
     const parseResult = HouseholdStorageStateSchema.safeParse(excessiveMembersState);
     expect(parseResult.success).toBe(false);
+  });
+
+  it('guarantees onboarding city presets are strictly India-first with no foreign cities', () => {
+    expect(CITY_PRESETS.length).toBeGreaterThanOrEqual(5);
+    for (const city of CITY_PRESETS) {
+      expect(city.countryCode).toBe('IN');
+      expect(city.country).toBe('India');
+      expect(city.name).not.toBe('London');
+    }
   });
 });

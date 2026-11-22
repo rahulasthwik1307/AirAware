@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { WorkspaceKey, AirQualityReport, GeoLocation } from '@/domain/types';
 import { RoomContext } from '@/lib/ai/types';
+import { HouseholdStorageState, HouseholdMember } from '@/domain/household/types';
 import { useAirCopilot, CopilotChatMessage } from '@/lib/ai/use-copilot';
 
 interface CopilotDrawerShellProps {
@@ -14,6 +15,8 @@ interface CopilotDrawerShellProps {
   readonly roomContext?: RoomContext | null;
   readonly report?: AirQualityReport | null;
   readonly location?: GeoLocation | null;
+  readonly householdState?: HouseholdStorageState | null;
+  readonly activeMember?: HouseholdMember | null;
 }
 
 const WORKSPACE_PROMPT_CHIPS: Record<WorkspaceKey, readonly string[]> = {
@@ -63,6 +66,8 @@ export function CopilotDrawerShell({
   roomContext,
   report,
   location,
+  householdState,
+  activeMember,
 }: CopilotDrawerShellProps) {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -94,6 +99,8 @@ export function CopilotDrawerShell({
     report,
     location,
     roomContext,
+    householdState,
+    activeMember,
   });
 
   // Handle focus trapping and Escape key

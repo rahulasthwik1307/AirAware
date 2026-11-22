@@ -187,7 +187,7 @@ export function WorkspaceShowcaseStudio() {
                   Dual Standard Converter
                 </span>
                 <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-rose-50 text-rose-800 border border-rose-200">
-                  Active Simulation
+                  Active Simulation (Illustration)
                 </span>
               </div>
 

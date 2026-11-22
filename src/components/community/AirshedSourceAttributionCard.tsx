@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { WorkspaceKey } from '@/domain/types';
+import { isDelhiNcrRegion } from '@/domain/community/generator';
 
 interface AirshedSourceAttributionCardProps {
   readonly locationName: string;
@@ -21,42 +22,6 @@ interface PollutionSource {
   readonly cpcbRule: string;
 }
 
-const SOURCES: readonly PollutionSource[] = [
-  {
-    id: 'biomass-waste',
-    label: 'Solid Waste & Biomass Burning',
-    percentage: 42,
-    color: '#E11D48',
-    bgTrackColor: '#FFE4E6',
-    icon: '🔥',
-    primaryPollutant: 'Elemental Black Carbon & Fine VOCs',
-    mitigationAction: 'Provide electric radiant heaters to gate guards; prohibit dry garden burning.',
-    cpcbRule: 'Air Act 1981 §19(5) Ban',
-  },
-  {
-    id: 'road-dust',
-    label: 'Road & Construction Dust (C&D)',
-    percentage: 33,
-    color: '#0284C7',
-    bgTrackColor: '#E0F2FE',
-    icon: '🏗️',
-    primaryPollutant: 'Coarse PM₁₀ & Respirable Silica',
-    mitigationAction: 'Enforce continuous tarpaulin sheet coverage & mechanical water misting.',
-    cpcbRule: 'C&D Waste Rules 2016',
-  },
-  {
-    id: 'vehicular',
-    label: 'Vehicular Tailpipe & Idling Smog',
-    percentage: 25,
-    color: '#6366F1',
-    bgTrackColor: '#EEF2FF',
-    icon: '🚗',
-    primaryPollutant: 'NOx Precursors & Ultrafine Particles',
-    mitigationAction: 'Switch to electric Delhi Metro transit; avoid cold engine idling at gates.',
-    cpcbRule: 'CAQM GRAP Stage II/III Mandate',
-  },
-];
-
 export function AirshedSourceAttributionCard({
   locationName,
   onNavigateWorkspace,
@@ -64,7 +29,48 @@ export function AirshedSourceAttributionCard({
 }: AirshedSourceAttributionCardProps) {
   const [activeSourceId, setActiveSourceId] = useState<string | null>(null);
 
-  const activeSource = SOURCES.find((s) => s.id === activeSourceId) ?? null;
+  const sources = useMemo(() => {
+    const isNcr = isDelhiNcrRegion(locationName);
+    return [
+      {
+        id: 'biomass-waste',
+        label: 'Solid Waste & Biomass Burning',
+        percentage: 42,
+        color: '#E11D48',
+        bgTrackColor: '#FFE4E6',
+        icon: '🔥',
+        primaryPollutant: 'Elemental Black Carbon & Fine VOCs',
+        mitigationAction: 'Provide electric radiant heaters to gate guards; prohibit dry garden burning.',
+        cpcbRule: 'Air Act 1981 §19(5) Ban',
+      },
+      {
+        id: 'road-dust',
+        label: 'Road & Construction Dust (C&D)',
+        percentage: 33,
+        color: '#0284C7',
+        bgTrackColor: '#E0F2FE',
+        icon: '🏗️',
+        primaryPollutant: 'Coarse PM₁₀ & Respirable Silica',
+        mitigationAction: 'Enforce continuous tarpaulin sheet coverage & mechanical water misting.',
+        cpcbRule: 'C&D Waste Rules 2016',
+      },
+      {
+        id: 'vehicular',
+        label: 'Vehicular Tailpipe & Idling Smog',
+        percentage: 25,
+        color: '#6366F1',
+        bgTrackColor: '#EEF2FF',
+        icon: '🚗',
+        primaryPollutant: 'NOx Precursors & Ultrafine Particles',
+        mitigationAction: isNcr
+          ? 'Switch to electric Delhi Metro transit; avoid cold engine idling at gates.'
+          : 'Switch to public rapid transit / electric bus; avoid cold engine idling at gates.',
+        cpcbRule: isNcr ? 'CAQM GRAP Stage II/III Mandate' : 'CPCB National Clean Air Program',
+      },
+    ];
+  }, [locationName]);
+
+  const activeSource = sources.find((s) => s.id === activeSourceId) ?? null;
 
   return (
     <article
@@ -116,7 +122,7 @@ export function AirshedSourceAttributionCard({
           <span>EST. INVERSION SHARE</span>
         </div>
 
-        {SOURCES.map((src) => {
+        {sources.map((src) => {
           const isSelected = activeSourceId === src.id;
           return (
             <div
@@ -178,7 +184,7 @@ export function AirshedSourceAttributionCard({
       <div className="p-3.5 rounded-2xl bg-gradient-to-br from-indigo-50/70 via-white to-teal-50/60 border border-indigo-200/80 space-y-2">
         <div className="flex items-center justify-between text-[11px] font-mono font-bold text-indigo-900">
           <span>NEIGHBORHOOD ACTION IMPACT</span>
-          <span className="text-emerald-700">✓ Verified Local Actions</span>
+          <span className="text-emerald-700">✓ Community Simulation</span>
         </div>
 
         <div className="grid grid-cols-3 gap-2 text-center">

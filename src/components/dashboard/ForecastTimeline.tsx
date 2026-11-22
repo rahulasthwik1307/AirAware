@@ -32,10 +32,29 @@ function getSplinePath(points: { x: number; y: number }[]): string {
   return d;
 }
 
+function formatDataAge(timestampStr?: string): string {
+  if (!timestampStr) return 'recent';
+  try {
+    const iso = timestampStr.includes('T') ? timestampStr : timestampStr.replace(' ', 'T');
+    const time = new Date(iso).getTime();
+    if (isNaN(time)) return 'recent';
+    const diffMs = Date.now() - time;
+    const diffMin = Math.round(diffMs / 60000);
+    if (diffMin < 1) return 'just now';
+    if (diffMin < 60) return `${diffMin}m ago`;
+    const diffHours = Math.floor(diffMin / 60);
+    return `${diffHours}h ${diffMin % 60}m ago`;
+  } catch {
+    return 'recent';
+  }
+}
+
 export function ForecastTimeline({
   forecast,
   activeStandard,
   modelMetadata,
+  modelTimestamp,
+  localTime,
 }: ForecastTimelineProps) {
   const [showTableView, setShowTableView] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
@@ -535,16 +554,16 @@ export function ForecastTimeline({
             {/* Scientific Provenance and Model Resolution Disclosures */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between border-t border-[var(--border-subtle)]/70 pt-2.5 px-1 mt-2 text-[10px] font-mono text-[var(--ink-muted)] gap-1">
               <span>
-                Start: {forecast[0]?.time.replace('T', ' ')} • End: {forecast[forecast.length - 1]?.time.replace('T', ' ')}
+                Observation Time: {localTime || modelTimestamp || forecast[0]?.time.replace('T', ' ')} (Age: {formatDataAge(modelTimestamp)})
               </span>
               <span>
-                Model resolution: {modelMetadata?.temporalResolution || 'Hourly resolution'} (CAMS simulation runs)
+                Modeled estimate (Copernicus CAMS via Open-Meteo, ~45 km grid)
               </span>
             </div>
           </div>
 
           <p className="mt-2 text-[10px] font-mono text-[var(--ink-muted)] leading-relaxed px-1">
-            Notice: Modelled forecast projections provide expected regional atmospheric trends and do not represent physical station measurements or guaranteed future conditions.
+            Notice: Numerical atmospheric simulations reflect regional grid forecasts (~45 km). They do not represent physical station measurements or guaranteed future conditions.
           </p>
         </div>
       ) : (

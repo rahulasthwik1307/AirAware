@@ -135,12 +135,55 @@ export function getDeterministicGuidance(data: GuidanceRequest): GuidanceRespons
     actionRecommendations.unshift('Use closed-window transit (metro or car with recirculated AC) rather than walking or open cycling.');
   }
 
+  const isSevere = aqi >= 300;
+  const isPoor = aqi >= 200;
+
+  const todayHouseholdPlan = {
+    morning: {
+      period: 'morning' as const,
+      area: 'Low-emission routine',
+      action: isSevere
+        ? 'Shift school runs and morning travel past 9:30 AM; cancel early park runs for children and seniors.'
+        : isPoor
+        ? 'Shift outdoor cardio to indoor workout; ensure children wear fitted N95 masks during morning school transit.'
+        : 'Proceed with normal morning activities; combine early market trips to minimize cold vehicle starts.',
+      why: 'Nocturnal radiation cooling traps particulate matter below a shallow 120m boundary layer until solar heating commences.',
+      expectedImpact: isSevere
+        ? 'Avoids up to 70% of peak daily PM2.5 inhalation during nocturnal ground-level inversion.'
+        : 'Reduces morning ultrafine particle exposure by 40–55%.',
+    },
+    afternoon: {
+      period: 'afternoon' as const,
+      area: 'Indoor air quality hack',
+      action: isSevere
+        ? 'Keep exterior doors sealed; operate HEPA air purifier on continuous medium-high in main living areas.'
+        : isPoor
+        ? 'Execute brief 15-minute cross-ventilation between 1:00 PM and 3:00 PM, then seal and purify.'
+        : 'Open windows for cross-ventilation between 12:30 PM and 3:30 PM to clear indoor CO2 buildup.',
+      why: 'Maximum diurnal solar radiation elevates the atmospheric mixing height to over 400m, providing the safest natural ventilation window.',
+      expectedImpact: isSevere
+        ? 'Maintains indoor PM2.5 below 25 µg/m³ despite severe ambient outdoor pollution.'
+        : 'Flushes stale indoor CO2 while preventing elevated ambient particulate accumulation.',
+    },
+    evening: {
+      period: 'evening' as const,
+      area: 'Sustainable alternative',
+      action: isSevere
+        ? 'Combine all evening household errands into a single shared carpool or electric transit trip; avoid diesel transit.'
+        : 'Use public electric transit or carpool for evening travel; eliminate cold engine idling in residential lanes.',
+      why: 'Sunset rapidly cools the ground, reforming the surface inversion lid and compounding local NOx tailpipe emissions.',
+      expectedImpact: 'Prevents 1.8–3.5 kg CO2 and 15g NOx tailpipe precursors per combined trip.',
+    },
+  };
+
   return {
     headline,
     healthSummary,
     actionRecommendations: actionRecommendations.slice(0, 4),
     sensitiveGroupAdvisory,
     ventilationRecommendation,
+    todayHouseholdPlan,
+    modelName: 'Rule-based fallback',
     isDeterministicFallback: true,
   };
 }
@@ -237,8 +280,11 @@ export function getDeterministicCopilotAnswer(data: CopilotRequest): CopilotResp
     }
   }
 
-  const environmentalConditions = `Current AQI: ${aqi} (${category}), Dominant Pollutant: ${dominantPollutant.toUpperCase()} (${data.pollutantConcentration} ${data.pollutantUnit}), Temp: ${weather.temperatureC}°C, Humidity: ${weather.humidityPercent}%.`;
-  const dataSourceAndFreshness = 'Source: Grounded deterministic rules derived from US EPA breakpoints and WHO air quality guidelines (15-min refresh).';
+  const locPrefix = data.cityName ? `In ${data.cityName}: ` : '';
+  const environmentalConditions = `${locPrefix}Current AQI: ${aqi} (${category}), Dominant Pollutant: ${dominantPollutant.toUpperCase()} (${data.pollutantConcentration} ${data.pollutantUnit}), Temp: ${weather.temperatureC}°C, Humidity: ${weather.humidityPercent}%.`;
+  const dataSourceAndFreshness = data.dataSource
+    ? `Source: ${data.dataSource}${data.observationTime ? ` (${data.observationTime})` : ''}.`
+    : 'Source: Grounded deterministic rules derived from US EPA breakpoints and WHO air quality guidelines (15-min refresh).';
   const limitationsOrUncertainty = 'Regional ambient estimate; microclimates near roadways, building seal quality, and individual health factors introduce variability.';
 
   return {

@@ -30,6 +30,118 @@ export interface CpcbPm25Classification {
   readonly methodologyNote: string;
 }
 
+export interface CpcbAqiResult {
+  readonly aqi: number | null;
+  readonly category: CpcbCategory;
+  readonly aqiRange: string;
+  readonly concentrationRange: string;
+  readonly colorToken: string;
+  readonly bgToken: string;
+  readonly methodologyNote: string;
+}
+
+export function calculateCpcbAqi(pm25: number | null | undefined): CpcbAqiResult {
+  if (
+    pm25 === null ||
+    pm25 === undefined ||
+    !Number.isFinite(pm25) ||
+    pm25 < 0
+  ) {
+    return {
+      aqi: null,
+      category: 'Unavailable',
+      aqiRange: 'N/A',
+      concentrationRange: 'Data not reported',
+      colorToken: 'var(--ink-muted)',
+      bgToken: '#F1F5F9',
+      methodologyNote:
+        'Single-pollutant PM2.5 benchmark: Concentration unavailable for reference comparison.',
+    };
+  }
+
+  if (pm25 <= 30) {
+    const aqi = Math.round((50 / 30) * pm25);
+    return {
+      aqi,
+      category: 'Good',
+      aqiRange: '0–50',
+      concentrationRange: '0–30 μg/m³',
+      colorToken: '#059669',
+      bgToken: '#ECFDF5',
+      methodologyNote:
+        'Single-pollutant PM2.5 benchmark: Current concentration falls within India CPCB NAQI "Good" range (0–30 μg/m³, AQI 0–50).',
+    };
+  }
+
+  if (pm25 <= 60) {
+    const aqi = Math.round(50 + ((100 - 50) / (60 - 30)) * (pm25 - 30));
+    return {
+      aqi,
+      category: 'Satisfactory',
+      aqiRange: '51–100',
+      concentrationRange: '31–60 μg/m³',
+      colorToken: '#84cc16',
+      bgToken: '#F7FEE7',
+      methodologyNote:
+        'Single-pollutant PM2.5 benchmark: Current concentration falls within India CPCB NAQI "Satisfactory" range (31–60 μg/m³, AQI 51–100).',
+    };
+  }
+
+  if (pm25 <= 90) {
+    const aqi = Math.round(100 + ((200 - 100) / (90 - 60)) * (pm25 - 60));
+    return {
+      aqi,
+      category: 'Moderate',
+      aqiRange: '101–200',
+      concentrationRange: '61–90 μg/m³',
+      colorToken: '#D97706',
+      bgToken: '#FFFBEB',
+      methodologyNote:
+        'Single-pollutant PM2.5 benchmark: Current concentration falls within India CPCB NAQI "Moderate" range (61–90 μg/m³, AQI 101–200).',
+    };
+  }
+
+  if (pm25 <= 120) {
+    const aqi = Math.round(200 + ((300 - 200) / (120 - 90)) * (pm25 - 90));
+    return {
+      aqi,
+      category: 'Poor',
+      aqiRange: '201–300',
+      concentrationRange: '91–120 μg/m³',
+      colorToken: '#EA580C',
+      bgToken: '#FFF7ED',
+      methodologyNote:
+        'Single-pollutant PM2.5 benchmark: Current concentration falls within India CPCB NAQI "Poor" range (91–120 μg/m³, AQI 201–300).',
+    };
+  }
+
+  if (pm25 <= 250) {
+    const aqi = Math.round(300 + ((400 - 300) / (250 - 120)) * (pm25 - 120));
+    return {
+      aqi,
+      category: 'Very Poor',
+      aqiRange: '301–400',
+      concentrationRange: '121–250 μg/m³',
+      colorToken: '#DC2626',
+      bgToken: '#FEF2F2',
+      methodologyNote:
+        'Single-pollutant PM2.5 benchmark: Current concentration falls within India CPCB NAQI "Very Poor" range (121–250 μg/m³, AQI 301–400).',
+    };
+  }
+
+  const aqi = Math.min(500, Math.round(400 + ((500 - 400) / (380 - 250)) * (pm25 - 250)));
+  return {
+    aqi,
+    category: 'Severe',
+    aqiRange: '401–500',
+    concentrationRange: '> 250 μg/m³',
+    colorToken: '#7F1D1D',
+    bgToken: '#450A0A',
+    methodologyNote:
+      'Single-pollutant PM2.5 benchmark: Current concentration exceeds India CPCB NAQI "Severe" threshold (>250 μg/m³, AQI 401–500).',
+  };
+}
+
 export function classifyCpcbPm25(
   concentration: number | null | undefined
 ): CpcbPm25Classification {

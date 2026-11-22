@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
       'us_aqi',
     ].join(',');
 
-    const targetUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${latitude}&longitude=${longitude}&current=${currentParams}&hourly=${hourlyParams}&forecast_days=2&timezone=${encodeURIComponent(
+    const targetUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${latitude}&longitude=${longitude}&current=${currentParams}&hourly=${hourlyParams}&past_days=7&forecast_days=2&timezone=${encodeURIComponent(
       timezone
     )}`;
 

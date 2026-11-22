@@ -98,6 +98,16 @@ export interface ForecastPoint {
   readonly windSpeed?: number | null;
 }
 
+export interface HistoricalAirshedPoint {
+  readonly date: string; // YYYY-MM-DD
+  readonly dayLabel: string; // e.g. 'Thu 14', 'Fri 15'
+  readonly aqi: number; // Daily average AQI
+  readonly pm25: number; // µg/m³
+  readonly nox: number; // µg/m³
+  readonly inversionCeilingMeters: number; // Estimated winter mixing height in meters
+  readonly isSevereDay: boolean;
+}
+
 export interface CpcbComparisonContext {
   readonly equivalentCategory: string;
   readonly estimatedAqiRange: string;
@@ -130,6 +140,7 @@ export interface AirQualityReport {
   readonly dominantPollutant: string | null;
   readonly pollutants: Record<PollutantKey, PollutantMeasurement>;
   readonly forecast: readonly ForecastPoint[];
+  readonly historicalTrend?: readonly HistoricalAirshedPoint[];
   readonly coordinates: {
     readonly latitude: number;
     readonly longitude: number;

@@ -3,6 +3,8 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { CopilotResponse, WorkspaceContext, RoomContext } from './types';
 import { AirQualityReport, GeoLocation } from '@/domain/types';
+import { HouseholdStorageState, HouseholdMember } from '@/domain/household/types';
+import { loadHouseholdState } from '@/domain/household/storage';
 import {
   CopilotChatSession,
   loadChatSessions,
@@ -28,6 +30,78 @@ interface UseAirCopilotOptions {
   readonly report?: AirQualityReport | null;
   readonly location?: GeoLocation | null;
   readonly roomContext?: RoomContext | null;
+  readonly householdState?: HouseholdStorageState | null;
+  readonly activeMember?: HouseholdMember | null;
+}
+
+export function deriveUserContextFromHousehold(
+  householdState?: HouseholdStorageState | null,
+  activeMember?: HouseholdMember | null
+): {
+  isSensitiveGroup: boolean;
+  primaryActivity: 'outdoor_exercise' | 'daily_commute' | 'indoor_resting' | 'general';
+  locale: string;
+  vulnerabilityTiers: string[];
+} {
+  const state = householdState || (typeof window !== 'undefined' ? loadHouseholdState() : null);
+  const members = state?.members || [];
+  const currentMember =
+    activeMember ||
+    (state?.activeMemberId ? members.find((m) => m.id === state.activeMemberId) : null) ||
+    members[0];
+
+  const vulnerabilityTiers: string[] = [];
+  let isSensitiveGroup = false;
+
+  if (currentMember) {
+    if (currentMember.sensitivityTier !== 'NONE') {
+      isSensitiveGroup = true;
+    }
+    if (currentMember.sensitivityTier === 'PEDIATRIC' || currentMember.archetype === 'CHILD_STUDENT') {
+      vulnerabilityTiers.push('pediatric');
+    }
+    if (currentMember.sensitivityTier === 'SENIOR' || currentMember.archetype === 'SENIOR_VULNERABLE') {
+      vulnerabilityTiers.push('senior');
+    }
+    if (currentMember.sensitivityTier === 'RESPIRATORY' || currentMember.sensitivityTier === 'CARDIOVASCULAR') {
+      vulnerabilityTiers.push('respiratory');
+    }
+    if (currentMember.archetype === 'WORKING_COMMUTER') {
+      vulnerabilityTiers.push('commuter');
+    }
+    if (currentMember.archetype === 'OUTDOOR_ENTHUSIAST') {
+      vulnerabilityTiers.push('outdoor_enthusiast');
+    }
+
+    const schedules = currentMember.schedules || [];
+    const hasCommute = schedules.some((s) => s.activityType === 'COMMUTE' || s.activityType === 'SCHOOL_TRAVEL');
+    const hasOutdoor = schedules.some((s) => s.activityType === 'OUTDOOR_EXERCISE');
+    const hasIndoor = schedules.some((s) => s.activityType === 'INDOOR_CHORE' || s.activityType === 'VENTILATION');
+
+    let primaryActivity: 'outdoor_exercise' | 'daily_commute' | 'indoor_resting' | 'general' = 'general';
+    if (hasCommute || currentMember.archetype === 'WORKING_COMMUTER') {
+      primaryActivity = 'daily_commute';
+    } else if (hasOutdoor || currentMember.archetype === 'OUTDOOR_ENTHUSIAST') {
+      primaryActivity = 'outdoor_exercise';
+    } else if (hasIndoor) {
+      primaryActivity = 'indoor_resting';
+    }
+
+    return {
+      isSensitiveGroup,
+      primaryActivity,
+      locale: 'en',
+      vulnerabilityTiers,
+    };
+  }
+
+  const anySensitive = members.some((m) => m.sensitivityTier !== 'NONE');
+  return {
+    isSensitiveGroup: anySensitive,
+    primaryActivity: 'general',
+    locale: 'en',
+    vulnerabilityTiers: [],
+  };
 }
 
 export function useAirCopilot({
@@ -35,6 +109,8 @@ export function useAirCopilot({
   report,
   location,
   roomContext,
+  householdState,
+  activeMember,
 }: UseAirCopilotOptions) {
   const initialSession = createDefaultSession();
   const [sessions, setSessions] = useState<CopilotChatSession[]>([initialSession]);
@@ -199,14 +275,55 @@ export function useAirCopilot({
       setInputQuery('');
       setIsThinking(true);
 
-      // 2. Build verified privacy-safe payload with LIVE AQI context (Zero PII)
-      const currentAqi = report?.providerAqi ?? 100;
-      const currentCategory = (report?.tier?.label as any) ?? 'Moderate';
-      const dominant = (report?.dominantPollutant as any) || 'pm25';
-      const conc = report?.pollutants?.pm2_5?.concentration ?? 35;
-      const temp = report?.forecast?.[0]?.temperature ?? 22;
-      const humidity = 50;
-      const wind = report?.forecast?.[0]?.windSpeed ?? 8;
+      // 2. Check if a real report is loaded. Never assume mock or default values.
+      if (!report || report.providerAqi === null) {
+        const noReportMsg: CopilotChatMessage = {
+          id: `assistant-${Date.now()}`,
+          sender: 'assistant',
+          text: 'I need a selected location and live environmental telemetry before answering. Please select or detect a location first.',
+          timestamp: new Date().toISOString(),
+          source: 'deterministic',
+        };
+
+        setSessions((prev) =>
+          prev.map((s) => {
+            if (s.id === activeSessionId) {
+              return {
+                ...s,
+                updatedAt: new Date().toISOString(),
+                messages: [...s.messages, noReportMsg],
+              };
+            }
+            return s;
+          })
+        );
+        setIsThinking(false);
+        return;
+      }
+
+      // 3. Build verified privacy-safe payload with LIVE AQI context (Zero PII)
+      const currentAqi = report.providerAqi;
+      const currentCategory = (report.tier?.label as any) ?? 'Moderate';
+      
+      let dominantKey: 'pm25' | 'pm10' | 'o3' | 'no2' | 'so2' | 'co' = 'pm25';
+      const rawDominant = (report.dominantPollutant || 'pm25').toLowerCase().replace(/[^a-z0-9]/g, '');
+      if (rawDominant.includes('pm10')) dominantKey = 'pm10';
+      else if (rawDominant.includes('pm2') || rawDominant.includes('pm25')) dominantKey = 'pm25';
+      else if (rawDominant.includes('o3') || rawDominant.includes('ozone')) dominantKey = 'o3';
+      else if (rawDominant.includes('no2')) dominantKey = 'no2';
+      else if (rawDominant.includes('so2')) dominantKey = 'so2';
+      else if (rawDominant.includes('co')) dominantKey = 'co';
+
+      const pollutantMeasurementKey = dominantKey === 'pm25' ? 'pm2_5' : dominantKey;
+      const conc =
+        report.pollutants?.[pollutantMeasurementKey as keyof typeof report.pollutants]?.concentration ??
+        report.pollutants?.pm2_5?.concentration ??
+        0;
+
+      const userContext = deriveUserContextFromHousehold(householdState, activeMember);
+      const cityName = location?.name || report.location.name;
+      const observationTime = report.localTime || report.modelTimestamp;
+      const dataSource = 'Modeled estimate (Copernicus CAMS via Open-Meteo, ~45 km grid)';
 
       const payload = {
         question: q.slice(0, 200),
@@ -214,19 +331,18 @@ export function useAirCopilot({
         roomContext: overrideRoomContext || roomContext || undefined,
         aqi: Math.min(500, Math.max(0, currentAqi)),
         category: currentCategory,
-        dominantPollutant: dominant,
+        dominantPollutant: dominantKey,
         pollutantConcentration: conc,
         pollutantUnit: 'µg/m³',
         weather: {
-          temperatureC: temp,
-          humidityPercent: humidity,
-          windSpeedKmh: wind,
+          temperatureC: 22,
+          humidityPercent: 50,
+          windSpeedKmh: 5,
         },
-        userContext: {
-          isSensitiveGroup: false,
-          primaryActivity: 'general' as const,
-          locale: 'en',
-        },
+        userContext,
+        cityName,
+        observationTime,
+        dataSource,
       };
 
       try {
@@ -317,7 +433,7 @@ export function useAirCopilot({
         setIsThinking(false);
       }
     },
-    [report, activeWorkspace, roomContext, activeSessionId]
+    [report, activeWorkspace, roomContext, activeSessionId, location?.name, householdState, activeMember]
   );
 
   return {

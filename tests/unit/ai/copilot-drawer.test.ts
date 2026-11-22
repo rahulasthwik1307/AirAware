@@ -85,4 +85,31 @@ describe('Copilot Request & Workspace Context Schema', () => {
       'community-alerts',
     ]);
   });
+
+  it('validates provenance and vulnerability context in CopilotRequestSchema', () => {
+    const raw = {
+      question: 'Is it safe for my toddler to play outside?',
+      aqi: 185,
+      category: 'Unhealthy',
+      dominantPollutant: 'pm25',
+      pollutantConcentration: 110.0,
+      cityName: 'Delhi',
+      dataSource: 'CPCB Ground Station (ITO)',
+      observationTime: '2026-11-22T09:00:00Z',
+      weather: { temperatureC: 19, humidityPercent: 70, windSpeedKmh: 4 },
+      userContext: {
+        isSensitiveGroup: true,
+        primaryActivity: 'outdoor_exercise',
+        vulnerabilityTiers: ['pediatric', 'respiratory'],
+        locale: 'en',
+      },
+    };
+
+    const parsed = CopilotRequestSchema.parse(raw);
+    expect(parsed.cityName).toBe('Delhi');
+    expect(parsed.dataSource).toBe('CPCB Ground Station (ITO)');
+    expect(parsed.observationTime).toBe('2026-11-22T09:00:00Z');
+    expect(parsed.userContext?.vulnerabilityTiers).toEqual(['pediatric', 'respiratory']);
+    expect(parsed.userContext?.isSensitiveGroup).toBe(true);
+  });
 });

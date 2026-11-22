@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { AirQualityReport, AqiStandardKey, GeoLocation } from '@/domain/types';
+import { calculateCpcbAqi } from '@/domain/aqi/cpcb-benchmark';
 import { WeatherData } from '@/app/api/weather/route';
 import { GLOBE_REFERENCE_CITIES } from '../globe/world-landmass';
 
@@ -87,6 +88,23 @@ function formatPollutantSymbol(code?: string | null): string {
   return code.toUpperCase().replace('_', '.');
 }
 
+function formatDataAge(timestampStr?: string): string {
+  if (!timestampStr) return 'recent';
+  try {
+    const iso = timestampStr.includes('T') ? timestampStr : timestampStr.replace(' ', 'T');
+    const time = new Date(iso).getTime();
+    if (isNaN(time)) return 'recent';
+    const diffMs = Date.now() - time;
+    const diffMin = Math.round(diffMs / 60000);
+    if (diffMin < 1) return 'just now';
+    if (diffMin < 60) return `${diffMin}m ago`;
+    const diffHours = Math.floor(diffMin / 60);
+    return `${diffHours}h ${diffMin % 60}m ago`;
+  } catch {
+    return 'recent';
+  }
+}
+
 export function AqiHeroCard({
   report,
   weather,
@@ -107,6 +125,8 @@ export function AqiHeroCard({
     averagingPeriodNote,
   } = report;
 
+  const [selectedStandard, setSelectedStandard] = useState<'CPCB_NAQI' | 'US_EPA'>('CPCB_NAQI');
+  const [showGlobe, setShowGlobe] = useState(false);
   const [viewMode, setViewMode] = useState<'3d' | 'grid'>('3d');
   const [mousePos, setMousePos] = useState({ x: 50, y: 50 });
   const [hoveredBand, setHoveredBand] = useState<string | null>(null);
@@ -120,21 +140,30 @@ export function AqiHeroCard({
     }
   };
 
-  const hasAqi = providerAqi !== null;
-  const isIndia = location.countryCode === 'IN' || location.country.toLowerCase().includes('india');
-  const animatedAqi = useAnimatedNumber(hasAqi ? providerAqi : null);
-  const displayAqi = hasAqi ? (animatedAqi ?? providerAqi) : null;
+  const isCpcbActive = selectedStandard === 'CPCB_NAQI';
+  const cpcbResult = calculateCpcbAqi(report.pollutants?.pm2_5?.concentration);
 
-  // Calculate percentage along the spectrum for the visual marker
+  const effectiveAqi = isCpcbActive
+    ? (cpcbResult.aqi ?? providerAqi)
+    : providerAqi;
+
+  const hasAqi = effectiveAqi !== null;
+  const isIndia = location.countryCode === 'IN' || location.country.toLowerCase().includes('india');
+  const animatedAqi = useAnimatedNumber(hasAqi ? effectiveAqi : null);
+  const displayAqi = hasAqi ? (animatedAqi ?? effectiveAqi) : null;
+
+  const effectiveTierLabel = isCpcbActive
+    ? (cpcbResult.category !== 'Unavailable' ? cpcbResult.category : (tier?.label ?? 'Moderate'))
+    : (tier ? tier.label : 'Moderate');
+
+  const aqiColor = isCpcbActive
+    ? (cpcbResult.colorToken !== 'var(--ink-muted)' ? cpcbResult.colorToken : (tier?.colorToken ?? '#059669'))
+    : (tier ? tier.colorToken : '#059669');
+
+  // Calculate percentage along the spectrum for the visual marker (strictly 0–500 scale)
   let spectrumPercent = 0;
-  if (hasAqi && Number.isFinite(providerAqi) && providerAqi >= 0) {
-    if (activeStandard === 'EUROPEAN_EAQI') {
-      // European EAQI: strictly 0–100+ scale (Open-Meteo continuous EAQI)
-      spectrumPercent = Math.min(100, Math.max(0, (providerAqi / 100) * 100));
-    } else {
-      // US EPA: strictly 0–500 scale
-      spectrumPercent = Math.min(100, Math.max(0, (providerAqi / 500) * 100));
-    }
+  if (hasAqi && Number.isFinite(effectiveAqi) && effectiveAqi >= 0) {
+    spectrumPercent = Math.min(100, Math.max(0, (effectiveAqi / 500) * 100));
   }
 
   // Graded Response Action Plan (GRAP) for Indian Cities (Official CPCB Protocol)
@@ -195,8 +224,6 @@ export function AqiHeroCard({
   const feedLabel =
     report.modelMetadata?.domain === 'CAMS_EUROPE' ? 'CAMS Europe Ensemble' : 'CAMS Global IFS';
 
-  const aqiColor = tier ? tier.colorToken : '#059669';
-
   // SVG Gauge calculations
   const gaugeRadius = 40;
   const gaugeCircumference = Math.PI * gaugeRadius; // Semi-circle arc
@@ -217,31 +244,37 @@ export function AqiHeroCard({
         `,
       }}
     >
-      {/* Current Modelled Atmospheric Feed Ribbon */}
-      <div className="flex flex-wrap items-center justify-between border-b border-slate-200/80 bg-white px-6 py-2.5 sm:px-8 text-[11px] font-mono text-slate-600">
-        <div className="flex items-center gap-2 sm:gap-3">
+      {/* Current Modelled Atmospheric Feed Ribbon with Explicit Provenance */}
+      <div className="flex flex-wrap items-center justify-between border-b border-slate-200/80 bg-white px-6 py-2.5 sm:px-8 text-[11px] font-mono text-slate-600 gap-2">
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
           <span className="inline-flex items-center gap-1.5 font-bold text-slate-800">
             <span
               className="h-2 w-2 rounded-full"
               style={{ backgroundColor: aqiColor }}
             />
-            {feedLabel}
+            Modeled estimate (Copernicus CAMS via Open-Meteo, ~45 km grid)
           </span>
           <span className="text-slate-300">|</span>
           <span className="text-sky-700 font-semibold tabular-nums">
             {coordinates.latitude.toFixed(2)}°N, {coordinates.longitude.toFixed(2)}°E
           </span>
           {isLoading && (
-            <span className="hidden sm:inline-flex items-center gap-1 text-[10px] text-amber-800 bg-amber-50 border border-amber-300 px-2 py-0.5 rounded-full">
+            <span className="inline-flex items-center gap-1 text-[10px] text-amber-800 bg-amber-50 border border-amber-300 px-2 py-0.5 rounded-full">
               <span>🔄 Updating modelled atmospheric feed...</span>
             </span>
           )}
         </div>
 
-        <div className="flex items-center gap-3">
-          <span className="hidden sm:inline text-slate-500 tabular-nums">Model Run: {modelTimestamp}</span>
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+          <span className="text-slate-600 tabular-nums">
+            Observation: <strong className="text-slate-800">{modelTimestamp}</strong>
+          </span>
+          <span className="text-slate-300">|</span>
+          <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-bold border border-slate-200">
+            Age: {formatDataAge(modelTimestamp)}
+          </span>
           <span className="hidden sm:inline text-slate-300">|</span>
-          <span className="font-semibold text-slate-700 tabular-nums">Local: {localTime}</span>
+          <span className="font-semibold text-slate-700 tabular-nums hidden sm:inline">Local: {localTime}</span>
         </div>
       </div>
 
@@ -267,34 +300,40 @@ export function AqiHeroCard({
                   <button
                     type="button"
                     role="radio"
-                    aria-checked={activeStandard === 'US_EPA'}
-                    onClick={() => onSwitchStandard('US_EPA')}
+                    aria-checked={isCpcbActive}
+                    onClick={() => setSelectedStandard('CPCB_NAQI')}
                     className={`px-3 py-1 rounded-lg transition-all cursor-pointer tactile-btn ${
-                      activeStandard === 'US_EPA'
+                      isCpcbActive
+                        ? 'bg-emerald-700 text-white shadow-xs font-bold'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    🇮🇳 CPCB NAQI
+                  </button>
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={!isCpcbActive}
+                    onClick={() => {
+                      setSelectedStandard('US_EPA');
+                      onSwitchStandard('US_EPA');
+                    }}
+                    className={`px-3 py-1 rounded-lg transition-all cursor-pointer tactile-btn ${
+                      !isCpcbActive
                         ? 'bg-sky-600 text-white shadow-xs font-bold'
                         : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
                     US EPA
                   </button>
-                  <button
-                    type="button"
-                    role="radio"
-                    aria-checked={activeStandard === 'EUROPEAN_EAQI'}
-                    onClick={() => onSwitchStandard('EUROPEAN_EAQI')}
-                    className={`px-3 py-1 rounded-lg transition-all cursor-pointer tactile-btn ${
-                      activeStandard === 'EUROPEAN_EAQI'
-                        ? 'bg-sky-600 text-white shadow-xs font-bold'
-                        : 'text-slate-600 hover:text-slate-900'
-                    }`}
-                  >
-                    EAQI
-                  </button>
                 </div>
               </div>
 
               <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm font-mono text-slate-600 pt-0.5">
-                <span className="tabular-nums font-semibold">{localTime || 'Modelled estimate'}</span>
+                <span className="tabular-nums font-semibold">Observed: {localTime || modelTimestamp}</span>
+                <span className="px-1.5 py-0.5 rounded bg-slate-100 text-[11px] text-slate-700 font-semibold border border-slate-200">
+                  {formatDataAge(modelTimestamp)}
+                </span>
                 <span>•</span>
                 <span className="text-teal-700 font-bold truncate">
                   {location.name}, {location.country} [{location.countryCode}]
@@ -344,19 +383,17 @@ export function AqiHeroCard({
                     Current Air Quality
                   </span>
                 </div>
-                {tier && (
-                  <span
-                    className="px-3 py-0.5 rounded-full text-xs font-mono font-bold uppercase tracking-wider border shadow-xs inline-flex items-center gap-1.5"
-                    style={{
-                      backgroundColor: `${tier.colorToken}15`,
-                      borderColor: `${tier.colorToken}50`,
-                      color: tier.colorToken,
-                    }}
-                  >
-                    <span className="h-2 w-2 rounded-full" style={{ backgroundColor: tier.colorToken }} />
-                    {tier.label}
-                  </span>
-                )}
+                <span
+                  className="px-3 py-0.5 rounded-full text-xs font-mono font-bold uppercase tracking-wider border shadow-xs inline-flex items-center gap-1.5"
+                  style={{
+                    backgroundColor: `${aqiColor}15`,
+                    borderColor: `${aqiColor}50`,
+                    color: aqiColor,
+                  }}
+                >
+                  <span className="h-2 w-2 rounded-full" style={{ backgroundColor: aqiColor }} />
+                  {effectiveTierLabel}
+                </span>
               </div>
 
               {/* Dynamic Severity Gauge + Large AQI Display */}
@@ -424,9 +461,7 @@ export function AqiHeroCard({
                       {hasAqi ? displayAqi : '--'}
                     </span>
                     <span className="text-xs font-mono text-slate-500 font-bold tabular-nums">
-                      / {activeStandard === 'EUROPEAN_EAQI'
-                        ? '0–100+ Scale (EAQI)'
-                        : '0–500 Scale (US EPA)'}
+                      / {isCpcbActive ? '0–500 Scale (CPCB NAQI India)' : '0–500 Scale (US EPA)'}
                     </span>
                   </div>
 
@@ -539,17 +574,17 @@ export function AqiHeroCard({
             </div>
           </div>
 
-          {/* Right Column: Dominant MapLibre 3D Globe with Deep Slate Cosmic Grounding (7/12 ~ 58.3%) */}
+          {/* Right Column: Dominant MapLibre 3D Globe with Lazy-Load Toggle / Prioritized Hourly Forecast */}
           <div className="lg:col-span-7 relative flex flex-col items-center justify-center">
             {/* Visual Viewport Header with 2D / 3D Mode Toggle */}
             <div className="w-full flex items-center justify-between px-2 mb-2">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-semibold text-slate-700 font-sans">
-                  Airshed Dispersion
+                  {showGlobe ? 'Airshed 3D Dispersion' : 'Upcoming 6-Hour Atmospheric Outlook'}
                 </span>
               </div>
 
-              {/* View Switcher: 3D Earth Globe vs Accessible 2D Global Grid */}
+              {/* View Switcher: Toggle 3D Globe vs 2D Forecast */}
               <div
                 role="group"
                 aria-label="Environmental Visualization Mode"
@@ -557,45 +592,141 @@ export function AqiHeroCard({
               >
                 <button
                   type="button"
-                  onClick={() => setViewMode('3d')}
+                  onClick={() => setShowGlobe(!showGlobe)}
                   className={`px-3 py-1 rounded-lg transition-all cursor-pointer tactile-btn ${
-                    viewMode === '3d'
+                    showGlobe
                       ? 'bg-sky-600 text-white shadow-xs font-semibold'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  🌐 3D Globe
+                  {showGlobe ? '✕ Hide 3D Globe' : '🌐 View on 3D Globe'}
                 </button>
                 <button
                   type="button"
-                  onClick={() => setViewMode('grid')}
+                  onClick={() => {
+                    setShowGlobe(false);
+                    setViewMode(viewMode === 'grid' ? '3d' : 'grid');
+                  }}
                   className={`px-3 py-1 rounded-lg transition-all cursor-pointer tactile-btn ${
-                    viewMode === 'grid'
+                    !showGlobe && viewMode === 'grid'
                       ? 'bg-sky-600 text-white shadow-xs font-semibold'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  📋 Global Grid (2D)
+                  📋 Regional Hotspots
                 </button>
               </div>
             </div>
 
             {/* View Mode 1: Signature MapLibre 3D Globe (Space to Street Zoom) */}
-            {viewMode === '3d' && (
-              <div className="w-full relative flex items-center justify-center">
+            {showGlobe && (
+              <div className="w-full relative flex items-center justify-center animate-fadeIn">
                 <MapLibreGlobe
                   selectedLocation={location}
                   onSelectLocation={onSelectLocation}
-                  aqiColor={tier?.colorToken || '#059669'}
-                  aqiTierLabel={tier?.label}
-                  currentAqi={providerAqi}
+                  aqiColor={aqiColor}
+                  aqiTierLabel={effectiveTierLabel}
+                  currentAqi={effectiveAqi}
                   theme="light"
                 />
               </div>
             )}
 
-            {/* View Mode 2: Accessible 2D Reference Grid (Focused on Indian Hotspots + International Reference) */}
-            {viewMode === 'grid' && (
+            {/* View Mode 2: Prioritized Hourly Forecast & Health Directives */}
+            {!showGlobe && viewMode !== 'grid' && (
+              <div className="w-full h-[540px] sm:h-[620px] lg:h-[680px] rounded-3xl border border-slate-200/90 bg-white p-5 sm:p-6 overflow-y-auto space-y-4 shadow-sm flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between border-b border-slate-200/80 pb-3">
+                    <div>
+                      <h3 className="text-base font-bold font-sans text-slate-900 flex items-center gap-2">
+                        <span>⏱️ Rapid 6-Hour Exposure Window</span>
+                      </h3>
+                      <p className="text-xs text-slate-600 mt-0.5">
+                        Live hourly atmospheric trajectory from numerical forecast models.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowGlobe(true)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-mono font-bold shadow-xs transition-all cursor-pointer"
+                    >
+                      <span>🌐</span>
+                      <span>View on Globe</span>
+                    </button>
+                  </div>
+
+                  {/* Hourly forecast quick cards */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 pt-3">
+                    {report.forecast.slice(0, 6).map((point, idx) => {
+                      const ptAqi = point.activeAqi ?? 100;
+                      const ptColor = point.tier?.colorToken || '#059669';
+                      return (
+                        <div
+                          key={point.time || idx}
+                          className="rounded-2xl p-3 border border-slate-200/80 bg-slate-50 hover:bg-white hover:border-slate-300 transition-all text-center space-y-1"
+                        >
+                          <span className="text-xs font-mono font-bold text-slate-600 block">
+                            {point.displayTime}
+                            {point.isCurrentHour ? ' (Now)' : ''}
+                          </span>
+                          <span
+                            className="text-2xl font-black font-mono tabular-nums block"
+                            style={{ color: ptColor }}
+                          >
+                            {ptAqi}
+                          </span>
+                          <span
+                            className="inline-block text-[10px] font-mono font-bold px-2 py-0.5 rounded-full uppercase"
+                            style={{
+                              backgroundColor: `${ptColor}18`,
+                              color: ptColor,
+                            }}
+                          >
+                            {point.tier?.label || 'Moderate'}
+                          </span>
+                          {point.pm25 !== null && point.pm25 !== undefined && (
+                            <span className="text-[10px] text-slate-500 block font-mono">
+                              PM₂.₅: {point.pm25.toFixed(1)} µg/m³
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Exposure Guidance Callout */}
+                  <div className="mt-4 p-4 rounded-2xl bg-amber-50/80 border border-amber-200 text-xs space-y-1.5">
+                    <div className="flex items-center gap-2 font-bold text-amber-900 font-sans">
+                      <span>🛡️ Smog Season Protective Directives</span>
+                    </div>
+                    <p className="text-amber-800 leading-relaxed font-sans">
+                      Winter thermal inversions compress ground particulates between 06:00 and 09:30 IST. Shift outdoor cardio or children&apos;s playtime to midday when surface heating dissipates stagnant ground smoke.
+                    </p>
+                  </div>
+                </div>
+
+                {/* 3D Globe Invitation Banner */}
+                <div className="rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-950 p-4 text-white flex items-center justify-between gap-3 border border-slate-700 shadow-md">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl" aria-hidden="true">🌍</span>
+                    <div>
+                      <h4 className="text-xs font-bold font-sans">Interactive 3D Dispersion Earth</h4>
+                      <p className="text-[11px] text-slate-300">Visualize aerosol plumes &amp; boundary layer transport</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowGlobe(true)}
+                    className="px-3 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-white font-mono text-xs font-bold shadow-xs transition-all cursor-pointer shrink-0"
+                  >
+                    Open 3D Globe →
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* View Mode 3: Accessible 2D Reference Grid (Focused on Indian Hotspots + International Reference) */}
+            {!showGlobe && viewMode === 'grid' && (
               <div className="w-full h-[540px] sm:h-[620px] lg:h-[680px] rounded-3xl border border-slate-200/90 bg-white p-5 sm:p-6 overflow-y-auto space-y-4 shadow-lg">
                 <div className="border-b border-slate-200/80 pb-3">
                   <div className="flex items-center justify-between">
@@ -718,8 +849,14 @@ export function AqiHeroCard({
 
                         <div className="flex items-center justify-between text-xs font-mono text-slate-600 mb-2">
                           <span className="text-slate-500">{c.admin1}, {c.country}</span>
-                          <span className="font-bold px-1.5 py-0.5 rounded text-[10px] bg-slate-200/70 text-slate-800">
-                            CPCB: {cpcbCategory}
+                          <span
+                            className={`font-bold px-1.5 py-0.5 rounded text-[10px] ${
+                              isCurrent
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : 'bg-slate-200/70 text-slate-700'
+                            }`}
+                          >
+                            {isCurrent ? '● Active Live Feed' : 'Illustration (Click to load)'}
                           </span>
                         </div>
 
@@ -764,13 +901,13 @@ export function AqiHeroCard({
               </span>
             </div>
             <span className="text-slate-900 font-bold text-sm tabular-nums">
-              Active Value: {hasAqi && Number.isFinite(providerAqi) ? `${providerAqi} (${tier?.label || 'Evaluated'})` : 'N/A'}
+              Active Value: {hasAqi && effectiveAqi !== null && Number.isFinite(effectiveAqi) ? `${effectiveAqi} (${effectiveTierLabel})` : 'N/A'}
             </span>
           </div>
 
           {/* Segmented Gradient Bar with Dynamic Needle and Hover Tooltip */}
           <div className="relative pt-7 pb-1">
-            {hasAqi && Number.isFinite(providerAqi) && providerAqi >= 0 && (
+            {hasAqi && effectiveAqi !== null && Number.isFinite(effectiveAqi) && effectiveAqi >= 0 && (
               <div
                 className="absolute top-0 -translate-x-1/2 flex flex-col items-center transition-all duration-300 pointer-events-none z-20"
                 style={{ left: `${spectrumPercent}%` }}

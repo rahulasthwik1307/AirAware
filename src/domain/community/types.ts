@@ -4,7 +4,9 @@
  * verified atmospheric alerts, diurnal ventilation windows, and historical intelligence.
  */
 
-import { WorkspaceKey } from '@/domain/types';
+import { WorkspaceKey, HistoricalAirshedPoint } from '@/domain/types';
+
+export type { HistoricalAirshedPoint };
 
 export type AlertSeverity = 'CRITICAL' | 'ADVISORY' | 'VENTILATION' | 'INFO';
 
@@ -66,16 +68,6 @@ export interface PollutionIncident {
   readonly photoDataUrl?: string; // Client-side compressed canvas thumbnail (<80 KB)
   readonly status: IncidentStatus;
   readonly severity: IncidentSeverity;
-}
-
-export interface HistoricalAirshedPoint {
-  readonly date: string; // YYYY-MM-DD
-  readonly dayLabel: string; // e.g. 'Thu 14', 'Fri 15'
-  readonly aqi: number; // CPCB NAQI
-  readonly pm25: number; // µg/m³
-  readonly nox: number; // µg/m³
-  readonly inversionCeilingMeters: number; // Estimated winter mixing height in meters
-  readonly isSevereDay: boolean;
 }
 
 export interface DiurnalVentilationWindow {

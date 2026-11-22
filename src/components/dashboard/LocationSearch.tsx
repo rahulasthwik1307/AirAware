@@ -192,7 +192,7 @@ export function LocationSearch({
   // Browser Geolocation with Client-Side Reverse Geocoding
   const handleGpsLocation = () => {
     if (!navigator.geolocation) {
-      setStatusMessage('Geolocation sensor is not supported by your browser environment.');
+      setStatusMessage('Geolocation is not supported by your browser environment.');
       return;
     }
 
@@ -241,7 +241,7 @@ export function LocationSearch({
         setGpsLoading(false);
         if (err.code === err.PERMISSION_DENIED) {
           setStatusMessage(
-            'GPS sensor permission was denied. You may search for any coordinate or city manually.'
+            'Geolocation permission was denied. You may search for any coordinate or city manually.'
           );
         } else {
           setStatusMessage('GPS coordinate acquisition timed out or failed.');
@@ -314,7 +314,7 @@ export function LocationSearch({
                 onChange={handleInputChange}
                 onKeyDown={handleKeyDown}
                 onFocus={() => suggestions.length > 0 && setIsOpen(true)}
-                placeholder="Search city or coordinates (e.g. New Delhi, Gurugram, Patna, Lucknow, Hyderabad, London)..."
+                placeholder="Search city or coordinates (e.g. New Delhi, Gurugram, Patna, Lucknow, Hyderabad, Mumbai)..."
                 autoComplete="off"
                 spellCheck="false"
                 className="w-full h-12 pl-10 pr-10 text-sm sm:text-base font-medium text-[var(--ink-primary)] bg-[var(--surface-card)] border border-[var(--border-subtle)] rounded-xl shadow-xs placeholder:text-[var(--ink-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/40 focus:border-[var(--brand-primary)] transition-all font-sans"

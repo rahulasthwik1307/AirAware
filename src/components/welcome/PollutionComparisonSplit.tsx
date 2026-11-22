@@ -165,10 +165,10 @@ export function PollutionComparisonSplit() {
           <div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-10 flex flex-col items-start gap-1 pointer-events-none">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-950/90 backdrop-blur-md border border-rose-500/50 px-2.5 py-1 sm:px-3.5 sm:py-1.5 text-[11px] sm:text-xs font-sans font-bold text-rose-300 shadow-lg">
               <span className="h-2 w-2 rounded-full bg-rose-500" />
-              382 AQI • HAZARD
+              Illustration: 382 AQI • HAZARD
             </span>
             <span className="hidden sm:block rounded-lg bg-black/60 backdrop-blur-xs px-2.5 py-1 text-[11px] font-sans font-medium text-white shadow-sm">
-              Lungs Exposed • Boundary Trapping
+              Lungs Exposed • Boundary Trapping (Illustration)
             </span>
           </div>
         </div>
@@ -221,7 +221,7 @@ export function PollutionComparisonSplit() {
             <span className="text-[10px] font-sans font-bold uppercase tracking-wider text-rose-800">
               Without AirAware
             </span>
-            <span className="text-sm font-sans font-extrabold text-rose-700">382 AQI</span>
+            <span className="text-sm font-sans font-extrabold text-rose-700">382 AQI (Illustration)</span>
           </div>
           <p className="text-xs font-sans font-medium text-slate-700 leading-snug">
             Blind morning walks during nocturnal inversion peak; under-sized air filtration.
@@ -233,7 +233,7 @@ export function PollutionComparisonSplit() {
             <span className="text-[10px] font-sans font-bold uppercase tracking-wider text-emerald-800">
               With AirAware Shield
             </span>
-            <span className="text-sm font-sans font-extrabold text-emerald-700">18 AQI</span>
+            <span className="text-sm font-sans font-extrabold text-emerald-700">18 AQI (Illustration)</span>
           </div>
           <p className="text-xs font-sans font-medium text-slate-700 leading-snug">
             Calculated CADR room sizing; routines shifted to sunny afternoon dispersion windows.

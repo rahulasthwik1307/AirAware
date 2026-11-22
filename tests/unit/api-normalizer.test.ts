@@ -105,4 +105,28 @@ describe('Air Quality Data Normalizer', () => {
     expect(report.coordinates.longitude).toBe(-0.12);
     expect(report.coordinates.elevationMeters).toBe(25);
   });
+
+  it('derives real historical trend points from past hourly data and avoids mock numbers', () => {
+    const pastHourlyPayload: RawOpenMeteoAirQualityResponse = {
+      ...sampleRawPayload,
+      hourly: {
+        time: [
+          '2026-11-15T12:00',
+          '2026-11-16T12:00',
+          '2026-11-17T12:00',
+        ],
+        us_aqi: [250, 310, 420],
+        pm2_5: [140, 180, 260],
+        nitrogen_dioxide: [45, 55, 80],
+      },
+    };
+
+    const report = normalizeAirQualityReport(pastHourlyPayload, mockDelhiLocation);
+    expect(report.historicalTrend).toBeDefined();
+    expect(report.historicalTrend?.length).toBe(3);
+    expect(report.historicalTrend?.[0].aqi).toBe(250);
+    expect(report.historicalTrend?.[1].aqi).toBe(310);
+    expect(report.historicalTrend?.[2].aqi).toBe(420);
+    expect(report.historicalTrend?.[2].isSevereDay).toBe(true);
+  });
 });

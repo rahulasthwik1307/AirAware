@@ -17,6 +17,7 @@ import {
   CpcbComparisonContext,
   ForecastPoint,
   GeoLocation,
+  HistoricalAirshedPoint,
   PollutantKey,
   PollutantMeasurement,
 } from '../types';
@@ -295,6 +296,7 @@ export function normalizeAirQualityReport(
   }
 
   const modelMetadata = getAtmosphericModelMetadata(location.countryCode);
+  const historicalTrend = deriveHistoricalTrend(raw.hourly, activeStandard);
 
   return {
     location,
@@ -311,6 +313,7 @@ export function normalizeAirQualityReport(
     dominantPollutant,
     pollutants,
     forecast,
+    historicalTrend,
     coordinates: {
       latitude: raw.latitude,
       longitude: raw.longitude,
@@ -320,6 +323,101 @@ export function normalizeAirQualityReport(
     cpcbComparison,
     modelMetadata,
   };
+}
+
+export function deriveHistoricalTrend(
+  hourly: RawOpenMeteoAirQualityResponse['hourly'] | undefined,
+  activeStandard: AqiStandardKey = 'US_EPA'
+): readonly HistoricalAirshedPoint[] {
+  if (!hourly || !hourly.time || hourly.time.length === 0) {
+    return [];
+  }
+
+  // Map each date (YYYY-MM-DD) to its measurements
+  const dayGroups = new Map<
+    string,
+    {
+      aqiList: number[];
+      pm25List: number[];
+      noxList: number[];
+    }
+  >();
+
+  const todayStr = new Date().toISOString().split('T')[0];
+
+  for (let i = 0; i < hourly.time.length; i++) {
+    const timeStr = hourly.time[i];
+    const dateStr = timeStr.includes('T') ? timeStr.split('T')[0] : timeStr.slice(0, 10);
+    // Only process past days up to today
+    if (dateStr > todayStr) continue;
+
+    if (!dayGroups.has(dateStr)) {
+      dayGroups.set(dateStr, { aqiList: [], pm25List: [], noxList: [] });
+    }
+
+    const group = dayGroups.get(dateStr)!;
+    const aqiVal =
+      activeStandard === 'EUROPEAN_EAQI'
+        ? (hourly.european_aqi ? hourly.european_aqi[i] : null)
+        : (hourly.us_aqi ? hourly.us_aqi[i] : null);
+
+    if (aqiVal !== null && aqiVal !== undefined && Number.isFinite(aqiVal)) {
+      group.aqiList.push(aqiVal);
+    }
+    const pm25Val = hourly.pm2_5 ? hourly.pm2_5[i] : null;
+    if (pm25Val !== null && pm25Val !== undefined && Number.isFinite(pm25Val)) {
+      group.pm25List.push(pm25Val);
+    }
+    const noxVal = hourly.nitrogen_dioxide ? hourly.nitrogen_dioxide[i] : null;
+    if (noxVal !== null && noxVal !== undefined && Number.isFinite(noxVal)) {
+      group.noxList.push(noxVal);
+    }
+  }
+
+  const sortedDates = Array.from(dayGroups.keys()).sort();
+  // Take last 7 days of historical records
+  const recentDates = sortedDates.slice(-7);
+
+  const points: HistoricalAirshedPoint[] = [];
+
+  for (const date of recentDates) {
+    const data = dayGroups.get(date)!;
+    if (data.aqiList.length === 0 && data.pm25List.length === 0) continue;
+
+    const meanAqi =
+      data.aqiList.length > 0
+        ? Math.round(data.aqiList.reduce((a, b) => a + b, 0) / data.aqiList.length)
+        : 0;
+    const meanPm25 =
+      data.pm25List.length > 0
+        ? Math.round((data.pm25List.reduce((a, b) => a + b, 0) / data.pm25List.length) * 10) / 10
+        : 0;
+    const meanNox =
+      data.noxList.length > 0
+        ? Math.round((data.noxList.reduce((a, b) => a + b, 0) / data.noxList.length) * 10) / 10
+        : 0;
+
+    const parsedDate = new Date(`${date}T12:00:00Z`);
+    const dayName = parsedDate.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' });
+    const dayNum = parsedDate.getUTCDate();
+    const isToday = date === todayStr;
+    const dayLabel = isToday ? `Today (${dayName})` : `${dayName} ${dayNum}`;
+
+    // Estimated winter boundary layer ceiling based on PM2.5 stagnation
+    const inversionCeilingMeters = Math.max(90, Math.round(350 - Math.min(250, meanPm25 * 0.8)));
+
+    points.push({
+      date,
+      dayLabel,
+      aqi: meanAqi,
+      pm25: meanPm25,
+      nox: meanNox,
+      inversionCeilingMeters,
+      isSevereDay: meanAqi >= 400 || meanPm25 >= 250,
+    });
+  }
+
+  return points;
 }
 
 export { normalizeAirQualityReport as normalizeAirQualityData };

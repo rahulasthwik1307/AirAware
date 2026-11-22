@@ -65,6 +65,7 @@ export async function getPersonalizedGuidance(
 
       const result: GuidanceResponse = {
         ...aiResponse,
+        modelName: aiResponse.modelName || '@cf/google/gemma-4-26b-a4b-it',
         isDeterministicFallback: false,
       };
 

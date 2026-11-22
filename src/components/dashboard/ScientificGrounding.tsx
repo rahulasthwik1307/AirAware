@@ -95,7 +95,7 @@ export function ScientificGrounding({ report }: ScientificGroundingProps) {
                 <span>🔬</span>
                 <span>Scientific Grounding</span>
               </span>
-              <span className="text-[var(--ink-secondary)]">Multi-Standard Sensor Calibration</span>
+              <span className="text-[var(--ink-secondary)]">Multi-Standard Atmospheric Calibration</span>
               <span aria-hidden="true" className="text-xs text-[var(--ink-muted)] group-open:rotate-180 transition-transform duration-200 ml-1">
                 ▼
               </span>

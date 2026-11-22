@@ -17,7 +17,7 @@ interface OnboardingModalProps {
   readonly onCancel: () => void;
 }
 
-const CITY_PRESETS: readonly GeoLocation[] = [
+export const CITY_PRESETS: readonly GeoLocation[] = [
   {
     id: 1273294,
     name: 'New Delhi',
@@ -99,14 +99,14 @@ const CITY_PRESETS: readonly GeoLocation[] = [
     timezone: 'Asia/Kolkata',
   },
   {
-    id: 2643743,
-    name: 'London',
-    country: 'United Kingdom',
-    countryCode: 'GB',
-    admin1: 'England',
-    latitude: 51.5085,
-    longitude: -0.1257,
-    timezone: 'Europe/London',
+    id: 1279233,
+    name: 'Ahmedabad',
+    country: 'India',
+    countryCode: 'IN',
+    admin1: 'Gujarat',
+    latitude: 23.0225,
+    longitude: 72.5714,
+    timezone: 'Asia/Kolkata',
   },
 ];
 
@@ -432,7 +432,7 @@ export function OnboardingModal({
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Search any city (e.g. Hyderabad, Pune, London)..."
+                      placeholder="Search any city in India (e.g. Mumbai, Patna, Lucknow, Bengaluru)..."
                       aria-label="Search any city or region"
                       className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-teal-700 focus:ring-1 focus:ring-teal-700 focus:outline-none transition-all"
                     />

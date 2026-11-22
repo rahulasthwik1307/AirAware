@@ -1,8 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useSyncExternalStore } from 'react';
-import { GeoLocation, AirQualityReport } from '@/domain/types';
-import { normalizeAirQualityReport, RawOpenMeteoAirQualityResponse } from '@/domain/aqi/normalizer';
+import React, { useSyncExternalStore } from 'react';
+import { useAirQuality, DEFAULT_LOCATION } from '@/domain/aqi/useAirQuality';
 import {
   subscribeIndoorStorage,
   loadIndoorState,
@@ -23,28 +22,6 @@ interface IndoorAirWorkspaceProps {
   readonly onOpenCopilotWithContext?: (prompt?: string, roomName?: string) => void;
 }
 
-const DEFAULT_LOCATION: GeoLocation = {
-  id: 1273294,
-  name: 'New Delhi',
-  country: 'India',
-  countryCode: 'IN',
-  admin1: 'Delhi',
-  latitude: 28.6139,
-  longitude: 77.209,
-  timezone: 'Asia/Kolkata',
-};
-
-function getSavedLocation(): GeoLocation {
-  if (typeof window === 'undefined') return DEFAULT_LOCATION;
-  try {
-    const raw = localStorage.getItem('airaware_last_location');
-    if (raw) return JSON.parse(raw);
-  } catch {
-    // fallback
-  }
-  return DEFAULT_LOCATION;
-}
-
 export function IndoorAirWorkspace({ onOpenCopilotWithContext }: IndoorAirWorkspaceProps) {
   // 1. Reactive Indoor Storage via useSyncExternalStore
   const indoorState = useSyncExternalStore(
@@ -53,35 +30,9 @@ export function IndoorAirWorkspace({ onOpenCopilotWithContext }: IndoorAirWorksp
     getIndoorServerSnapshot
   );
 
-  // 2. Fetch current environmental forecast report for active location
-  const [location] = useState<GeoLocation>(getSavedLocation);
-  const [report, setReport] = useState<AirQualityReport | null>(null);
-
-  useEffect(() => {
-    let isCancelled = false;
-    async function fetchForecast() {
-      try {
-        const res = await fetch(
-          `/api/air-quality?latitude=${location.latitude}&longitude=${location.longitude}&timezone=${encodeURIComponent(
-            location.timezone
-          )}`
-        );
-        if (!res.ok) throw new Error('Failed to load atmospheric forecast');
-        const rawJson: RawOpenMeteoAirQualityResponse = await res.json();
-        const normalized = normalizeAirQualityReport(rawJson, location);
-        if (!isCancelled) {
-          setReport(normalized);
-        }
-      } catch {
-        // Fallback gracefully without breaking UI
-      }
-    }
-
-    fetchForecast();
-    return () => {
-      isCancelled = true;
-    };
-  }, [location]);
+  // 2. Shared single-source environmental forecast report for active location
+  const { location, report } = useAirQuality();
+  const activeLocation = location ?? DEFAULT_LOCATION;
 
   const activeRoomArea = indoorState.roomAreas[indoorState.selectedRoomId] || 22;
 
@@ -107,7 +58,7 @@ export function IndoorAirWorkspace({ onOpenCopilotWithContext }: IndoorAirWorksp
         {/* Location & Storage Indicator */}
         <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto text-xs font-mono text-slate-600">
           <span className="px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200">
-            📍 {location.name}, {location.countryCode}
+            📍 {activeLocation.name}, {activeLocation.countryCode}
           </span>
           <span className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 font-semibold">
             🔒 100% Local-First

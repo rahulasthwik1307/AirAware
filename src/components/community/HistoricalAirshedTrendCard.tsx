@@ -12,9 +12,14 @@ export function HistoricalAirshedTrendCard({
   history,
   locationName,
 }: HistoricalAirshedTrendCardProps) {
-  const maxAqi = Math.max(...history.map((h) => h.aqi), 450);
+  if (!history || history.length === 0) {
+    return null;
+  }
+
+  const maxAqi = Math.max(...history.map((h) => h.aqi), 100);
   const avgAqi = Math.round(history.reduce((sum, h) => sum + h.aqi, 0) / history.length);
   const severeDays = history.filter((h) => h.aqi >= 400).length;
+  const peakPoint = history.reduce((max, p) => (p.aqi > max.aqi ? p : max), history[0]);
 
   const getBarColor = (aqi: number) => {
     if (aqi >= 400) return 'from-rose-600 to-rose-700 text-rose-950';
@@ -64,11 +69,13 @@ export function HistoricalAirshedTrendCard({
         </div>
         <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-center">
           <span className="text-[10px] font-mono text-rose-800 uppercase block">Peak Smog Day</span>
-          <span className="text-base font-black font-mono text-rose-950">445 (Tue)</span>
+          <span className="text-base font-black font-mono text-rose-950">
+            {peakPoint ? `${peakPoint.aqi} (${peakPoint.dayLabel})` : 'N/A'}
+          </span>
         </div>
         <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-center">
           <span className="text-[10px] font-mono text-amber-800 uppercase block">Severe+ Days</span>
-          <span className="text-base font-black font-mono text-amber-950">{severeDays} of 7</span>
+          <span className="text-base font-black font-mono text-amber-950">{severeDays} of {history.length}</span>
         </div>
       </div>
 

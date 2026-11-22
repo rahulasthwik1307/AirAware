@@ -1,7 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useSyncExternalStore } from 'react';
 import { WorkspaceKey } from '@/domain/types';
+import { useAirQuality } from '@/domain/aqi/useAirQuality';
+import {
+  loadHouseholdState,
+  subscribeHouseholdStorage,
+  getHouseholdServerSnapshot,
+} from '@/domain/household/storage';
 import { AppHeader } from './AppHeader';
 import { MobileBottomNav } from './MobileBottomNav';
 import { PersonalizationBanner } from './PersonalizationBanner';
@@ -137,6 +143,25 @@ export function AirAwareShell() {
   const [copilotInitialPrompt, setCopilotInitialPrompt] = useState<string | null>(null);
   const [copilotRoomContext, setCopilotRoomContext] = useState<string | null>(null);
 
+  // Live single-source environmental telemetry and active location
+  const { location, report, setLocation } = useAirQuality();
+
+  // Reactive Household state
+  const householdState = useSyncExternalStore(
+    subscribeHouseholdStorage,
+    loadHouseholdState,
+    getHouseholdServerSnapshot
+  );
+
+  const activeMember = useMemo(() => {
+    if (!householdState?.members || householdState.members.length === 0) return null;
+    return (
+      householdState.members.find((m) => m.id === householdState.activeMemberId) ||
+      householdState.members[0] ||
+      null
+    );
+  }, [householdState]);
+
   // Welcome page and onboarding questionnaire state
   // Always display the Landing Page first whenever localhost:3000 opens!
   const [isMounted, setIsMounted] = useState(false);
@@ -148,7 +173,12 @@ export function AirAwareShell() {
   }, []);
 
   // Community Alerts hook for header notification bell & global drawer
-  const { alerts, unreadCount, markAlertRead, markAllAlertsRead } = useCommunityAlerts();
+  const { alerts, unreadCount, markAlertRead, markAllAlertsRead } = useCommunityAlerts({
+    locationName: location ? `${location.name}, ${location.country}` : 'Your Location',
+    aqi: report?.providerAqi ?? 100,
+    prominentPollutant: report?.dominantPollutant ?? 'PM2.5',
+    historicalTrend: report?.historicalTrend,
+  });
 
   const handleOpenCopilotWithContext = (prompt?: string, roomName?: string) => {
     setCopilotInitialPrompt(prompt || null);
@@ -165,8 +195,7 @@ export function AirAwareShell() {
   const handleCompleteOnboarding = (result: OnboardingResult) => {
     try {
       // 1. Save chosen location
-      localStorage.setItem('airaware_last_location', JSON.stringify(result.location));
-      window.dispatchEvent(new CustomEvent('airaware_location_changed'));
+      setLocation(result.location);
 
       // 2. Pre-seed household profiles
       const members = createHouseholdMembersFromSensitivities(result.householdSensitivities);
@@ -331,6 +360,10 @@ export function AirAwareShell() {
         activeWorkspace={activeWorkspace}
         initialPrompt={copilotInitialPrompt}
         roomContext={copilotRoomContext ? { roomName: copilotRoomContext } : null}
+        report={report}
+        location={location}
+        householdState={householdState}
+        activeMember={activeMember}
       />
 
       {/* Global Onboarding & Personalization Questionnaire */}

@@ -22,19 +22,21 @@ import {
   calculateVentilationWindow,
   formatCpcbSameerDossier,
   formatRwaSocietyBulletin,
+  isDelhiNcrRegion,
 } from './generator';
-import { DEFAULT_HISTORICAL_TREND } from './constants';
 
 interface UseCommunityAlertsOptions {
   readonly locationName?: string;
   readonly aqi?: number;
   readonly prominentPollutant?: string;
+  readonly historicalTrend?: readonly HistoricalAirshedPoint[];
 }
 
 export function useCommunityAlerts({
-  locationName = 'New Delhi, India',
-  aqi = 378,
+  locationName = 'Your Location',
+  aqi = 100,
   prominentPollutant = 'PM2.5',
+  historicalTrend,
 }: UseCommunityAlertsOptions = {}) {
   const [storageState, setStorageState] = useState<CommunityStorageState>(INITIAL_COMMUNITY_STATE);
   const [isHydrated, setIsHydrated] = useState(false);
@@ -78,17 +80,32 @@ export function useCommunityAlerts({
     return alerts.filter((a) => !a.isRead).length;
   }, [alerts]);
 
-  // Active GRAP Stage
-  const activeGrapStage = useMemo(() => {
-    if (aqi >= 450) return 'Stage 4: Severe+ Air';
-    if (aqi >= 400) return 'Stage 3: Severe Air';
-    if (aqi >= 300) return 'Stage 2: Very Poor Air';
-    if (aqi >= 200) return 'Stage 1: Poor Air';
-    return 'Standard Air (Normal)';
-  }, [aqi]);
+  // Region detection
+  const isDelhiNcr = useMemo(() => isDelhiNcrRegion(locationName), [locationName]);
 
-  // Historical trend
-  const historicalTrend: readonly HistoricalAirshedPoint[] = DEFAULT_HISTORICAL_TREND;
+  // Active GRAP Stage (Delhi-NCR) or CPCB National Category Advisory (Rest of India)
+  const activeGrapStage = useMemo(() => {
+    if (isDelhiNcr) {
+      if (aqi >= 450) return 'GRAP Stage 4: Severe+ Air';
+      if (aqi >= 400) return 'GRAP Stage 3: Severe Air';
+      if (aqi >= 300) return 'GRAP Stage 2: Very Poor Air';
+      if (aqi >= 200) return 'GRAP Stage 1: Poor Air';
+      return 'GRAP: Standard (Normal)';
+    } else {
+      if (aqi >= 450) return 'CPCB: Severe+ Air';
+      if (aqi >= 400) return 'CPCB: Severe Air';
+      if (aqi >= 300) return 'CPCB: Very Poor Air';
+      if (aqi >= 200) return 'CPCB: Poor Air';
+      if (aqi >= 100) return 'CPCB: Moderate Air';
+      if (aqi >= 50) return 'CPCB: Satisfactory';
+      return 'CPCB: Good Air';
+    }
+  }, [aqi, isDelhiNcr]);
+
+  // Real historical trend (empty array if no past data retrieved, never mock numbers)
+  const finalHistoricalTrend = useMemo(() => {
+    return historicalTrend && historicalTrend.length > 0 ? historicalTrend : [];
+  }, [historicalTrend]);
 
   // Handlers
   const handleAddIncident = useCallback(
@@ -147,8 +164,9 @@ export function useCommunityAlerts({
     unreadCount,
     incidents: storageState.incidents,
     activeGrapStage,
+    isDelhiNcr,
     ventilationWindow,
-    historicalTrend,
+    historicalTrend: finalHistoricalTrend,
     rwaSocietyName: storageState.rwaSocietyName,
     addIncident: handleAddIncident,
     updateIncidentStatus: handleUpdateIncidentStatus,

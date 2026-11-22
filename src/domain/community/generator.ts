@@ -33,65 +33,141 @@ export function calculateVentilationWindow(
   };
 }
 
+export function isDelhiNcrRegion(locationName: string): boolean {
+  const normalized = locationName.toLowerCase();
+  const ncrKeywords = [
+    'delhi',
+    'new delhi',
+    'noida',
+    'greater noida',
+    'gurugram',
+    'gurgaon',
+    'faridabad',
+    'ghaziabad',
+    'sonipat',
+    'sonepat',
+    'meerut',
+    'panipat',
+    'rohtak',
+    'bahadurgarh',
+    'ncr',
+  ];
+  return ncrKeywords.some((k) => normalized.includes(k));
+}
+
 export function generateAirshedAlerts(
   locationName: string,
-  aqi: number = 378,
+  aqi: number = 100,
   prominentPollutant: string = 'PM2.5',
   currentHour: number = 14
 ): AlertItem[] {
   const alerts: AlertItem[] = [];
   const nowIso = new Date().toISOString();
   const vent = calculateVentilationWindow(currentHour);
+  const isNcr = isDelhiNcrRegion(locationName);
 
-  // 1. GRAP Regulatory Stage Alert
-  if (aqi >= 450) {
-    alerts.push({
-      id: 'alert-grap-iv',
-      title: 'Emergency CAQM GRAP Stage IV Enforced',
-      severity: 'CRITICAL',
-      category: 'GRAP_REGULATORY',
-      message: `${locationName} is under emergency GRAP Stage IV restrictions. Non-essential truck entry banned; construction halted across NCR.`,
-      locationName,
-      timestamp: nowIso,
-      aqiValue: aqi,
-      pollutant: prominentPollutant,
-      actionableStep: '50% work-from-home advisory active. Activate full household clean-air sanctuary protocol.',
-      targetWorkspace: 'air-intelligence',
-      isRead: false,
-      source: 'CAQM / CPCB Mandate',
-    });
-  } else if (aqi >= 400) {
-    alerts.push({
-      id: 'alert-grap-iii',
-      title: 'CAQM GRAP Stage III Active — Severe Smog Warning',
-      severity: 'CRITICAL',
-      category: 'GRAP_REGULATORY',
-      message: `AQI of ${aqi} triggers mandatory GRAP Stage III protocols. Strict ban on private construction and BS-III/IV diesel vehicles.`,
-      locationName,
-      timestamp: nowIso,
-      aqiValue: aqi,
-      pollutant: prominentPollutant,
-      actionableStep: 'Switch all commutes to electric metro or carpool to curb secondary aerosol nucleation.',
-      targetWorkspace: 'cleaner-choices',
-      isRead: false,
-      source: 'Commission for Air Quality Management',
-    });
-  } else if (aqi >= 300) {
-    alerts.push({
-      id: 'alert-grap-ii',
-      title: 'GRAP Stage II in Effect — Very Poor Air Quality',
-      severity: 'ADVISORY',
-      category: 'GRAP_REGULATORY',
-      message: `Diesel generator sets banned (except emergency hospitals). Metro and public bus frequencies increased by 20%.`,
-      locationName,
-      timestamp: nowIso,
-      aqiValue: aqi,
-      pollutant: prominentPollutant,
-      actionableStep: 'Avoid diesel transit; ensure home purifiers are operating on medium-high speed.',
-      targetWorkspace: 'indoor-air',
-      isRead: false,
-      source: 'CPCB Air Quality Bulletin',
-    });
+  // 1. Regulatory Stage / CPCB National Category Alert
+  if (isNcr) {
+    if (aqi >= 450) {
+      alerts.push({
+        id: 'alert-grap-iv',
+        title: 'Emergency CAQM GRAP Stage IV Enforced',
+        severity: 'CRITICAL',
+        category: 'GRAP_REGULATORY',
+        message: `${locationName} is under emergency GRAP Stage IV restrictions. Non-essential truck entry banned; construction halted across NCR.`,
+        locationName,
+        timestamp: nowIso,
+        aqiValue: aqi,
+        pollutant: prominentPollutant,
+        actionableStep: '50% work-from-home advisory active. Activate full household clean-air sanctuary protocol.',
+        targetWorkspace: 'air-intelligence',
+        isRead: false,
+        source: 'CAQM / CPCB Mandate',
+      });
+    } else if (aqi >= 400) {
+      alerts.push({
+        id: 'alert-grap-iii',
+        title: 'CAQM GRAP Stage III Active — Severe Smog Warning',
+        severity: 'CRITICAL',
+        category: 'GRAP_REGULATORY',
+        message: `AQI of ${aqi} triggers mandatory GRAP Stage III protocols in ${locationName}. Strict ban on private construction and BS-III/IV diesel vehicles.`,
+        locationName,
+        timestamp: nowIso,
+        aqiValue: aqi,
+        pollutant: prominentPollutant,
+        actionableStep: 'Switch all commutes to electric metro or carpool to curb secondary aerosol nucleation.',
+        targetWorkspace: 'cleaner-choices',
+        isRead: false,
+        source: 'Commission for Air Quality Management',
+      });
+    } else if (aqi >= 300) {
+      alerts.push({
+        id: 'alert-grap-ii',
+        title: 'GRAP Stage II in Effect — Very Poor Air Quality',
+        severity: 'ADVISORY',
+        category: 'GRAP_REGULATORY',
+        message: `Diesel generator sets banned (except emergency hospitals) in ${locationName}. Public transit frequencies increased.`,
+        locationName,
+        timestamp: nowIso,
+        aqiValue: aqi,
+        pollutant: prominentPollutant,
+        actionableStep: 'Avoid diesel transit; ensure home purifiers are operating on medium-high speed.',
+        targetWorkspace: 'indoor-air',
+        isRead: false,
+        source: 'CPCB Air Quality Bulletin',
+      });
+    }
+  } else {
+    // Non-NCR region: CPCB National Category Advisory
+    if (aqi >= 400) {
+      alerts.push({
+        id: 'alert-cpcb-severe',
+        title: 'CPCB Severe Air Alert — Health Emergency Advisory',
+        severity: 'CRITICAL',
+        category: 'GRAP_REGULATORY',
+        message: `${locationName} reports severe AQI of ${aqi}. Affects healthy people and seriously impacts those with existing respiratory conditions.`,
+        locationName,
+        timestamp: nowIso,
+        aqiValue: aqi,
+        pollutant: prominentPollutant,
+        actionableStep: 'Avoid all outdoor activity. Keep indoors sealed and operate air purifiers continuously.',
+        targetWorkspace: 'air-intelligence',
+        isRead: false,
+        source: 'CPCB National Air Quality Index',
+      });
+    } else if (aqi >= 300) {
+      alerts.push({
+        id: 'alert-cpcb-very-poor',
+        title: 'CPCB Very Poor Air Advisory',
+        severity: 'ADVISORY',
+        category: 'GRAP_REGULATORY',
+        message: `${locationName} reports very poor air quality (AQI ${aqi}). Prolonged exposure causes respiratory illness.`,
+        locationName,
+        timestamp: nowIso,
+        aqiValue: aqi,
+        pollutant: prominentPollutant,
+        actionableStep: 'Wear certified N95/N99 masks for any outdoor transit and minimize peak-hour exposure.',
+        targetWorkspace: 'cleaner-choices',
+        isRead: false,
+        source: 'CPCB National Air Quality Index',
+      });
+    } else if (aqi >= 200) {
+      alerts.push({
+        id: 'alert-cpcb-poor',
+        title: 'CPCB Poor Air Advisory',
+        severity: 'ADVISORY',
+        category: 'GRAP_REGULATORY',
+        message: `${locationName} reports poor air quality (AQI ${aqi}). Breathing discomfort likely for sensitive groups.`,
+        locationName,
+        timestamp: nowIso,
+        aqiValue: aqi,
+        pollutant: prominentPollutant,
+        actionableStep: 'Sensitive individuals, children, and elderly should reduce prolonged outdoor exertion.',
+        targetWorkspace: 'indoor-air',
+        isRead: false,
+        source: 'CPCB National Air Quality Index',
+      });
+    }
   }
 
   // 2. Diurnal Ventilation Window Alert
@@ -202,8 +278,8 @@ STATUS: Filed locally by resident for dispatch to municipal control room.
 
 export function formatRwaSocietyBulletin(
   locationName: string,
-  aqi: number = 378,
-  grapStage: string = 'Stage II',
+  aqi: number = 100,
+  grapStage: string = 'Standard Advisory',
   ventWindow: DiurnalVentilationWindow = calculateVentilationWindow(14)
 ): string {
   const dateStr = new Date().toLocaleDateString('en-IN', {

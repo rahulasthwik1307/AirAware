@@ -7,6 +7,23 @@ interface ProvenanceFooterProps {
   readonly report: AirQualityReport | null;
 }
 
+function formatDataAge(timestampStr?: string): string {
+  if (!timestampStr) return 'recent';
+  try {
+    const iso = timestampStr.includes('T') ? timestampStr : timestampStr.replace(' ', 'T');
+    const time = new Date(iso).getTime();
+    if (isNaN(time)) return 'recent';
+    const diffMs = Date.now() - time;
+    const diffMin = Math.round(diffMs / 60000);
+    if (diffMin < 1) return 'just now';
+    if (diffMin < 60) return `${diffMin}m ago`;
+    const diffHours = Math.floor(diffMin / 60);
+    return `${diffHours}h ${diffMin % 60}m ago`;
+  } catch {
+    return 'recent';
+  }
+}
+
 export function ProvenanceFooter({ report }: ProvenanceFooterProps) {
   const isEurope = report?.modelMetadata.domain === 'CAMS_EUROPE';
 
@@ -90,12 +107,18 @@ export function ProvenanceFooter({ report }: ProvenanceFooterProps) {
           {report && (
             <div className="flex flex-col sm:items-end gap-2 text-xs text-[var(--ink-muted)] flex-shrink-0 font-mono bg-[var(--surface-card)] p-4 rounded-xl border border-[var(--border-subtle)] shadow-2xs">
               <span className="font-bold text-sm text-[var(--ink-primary)]">
-                Model Run: {report.modelTimestamp}
+                Observation Time: {report.modelTimestamp}
+              </span>
+              <span>
+                Data Age: <strong className="text-[var(--ink-primary)] font-bold">{formatDataAge(report.modelTimestamp)}</strong>
               </span>
               <span>Cadence: <strong className="text-[var(--ink-secondary)]">{report.modelMetadata.temporalResolution}</strong></span>
               <span>Dataset: <strong className="text-[var(--ink-secondary)]">{report.modelMetadata.domainName}</strong></span>
               <span className="text-xs font-bold text-[var(--brand-primary)] bg-[var(--brand-surface)] px-2.5 py-1 rounded-md border border-[var(--brand-primary)]/30 mt-1">
-                Modelled Environmental Simulation
+                Modeled estimate (Copernicus CAMS via Open-Meteo, ~45 km grid) • Modelled Environmental Simulation
+              </span>
+              <span className="text-[10px] text-[var(--ink-muted)] italic">
+                Numerical atmospheric simulation · Not ground station reading
               </span>
             </div>
           )}

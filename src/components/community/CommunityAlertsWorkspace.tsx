@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useCommunityAlerts } from '@/domain/community/useCommunityAlerts';
+import { useAirQuality } from '@/domain/aqi/useAirQuality';
 import { CommunityKpiStrip } from './CommunityKpiStrip';
 import { AirshedAlertFeedCard } from './AirshedAlertFeedCard';
 import { HistoricalAirshedTrendCard } from './HistoricalAirshedTrendCard';
@@ -21,12 +22,20 @@ export function CommunityAlertsWorkspace({
   onAskCopilot,
 }: CommunityAlertsWorkspaceProps) {
   const [isRwaModalOpen, setIsRwaModalOpen] = useState(false);
+  const { location, report } = useAirQuality();
+
+  const displayLocation = location
+    ? `${location.name}${location.admin1 ? `, ${location.admin1}` : ''}, ${location.country}`
+    : 'Your Location';
+  const liveAqi = report?.providerAqi ?? 100;
+  const prominentPollutant = report?.dominantPollutant ?? 'PM2.5';
 
   const {
     alerts,
     unreadCount,
     incidents,
     activeGrapStage,
+    isDelhiNcr,
     ventilationWindow,
     historicalTrend,
     rwaSocietyName,
@@ -38,9 +47,10 @@ export function CommunityAlertsWorkspace({
     generateCpcbComplaint,
     generateRwaBulletin,
   } = useCommunityAlerts({
-    locationName: 'New Delhi, India',
-    aqi: 378,
-    prominentPollutant: 'PM2.5',
+    locationName: displayLocation,
+    aqi: liveAqi,
+    prominentPollutant,
+    historicalTrend: report?.historicalTrend,
   });
 
   return (
@@ -56,6 +66,8 @@ export function CommunityAlertsWorkspace({
         ventilationWindow={ventilationWindow}
         incidentCount={incidents.length}
         onOpenRwaModal={() => setIsRwaModalOpen(true)}
+        aqi={liveAqi}
+        isDelhiNcr={isDelhiNcr}
       />
 
       {/* Asymmetric 7 / 5 Bento Grid (Dominant Alert Stream & Retrospective History on Left) */}
@@ -72,11 +84,11 @@ export function CommunityAlertsWorkspace({
 
           <HistoricalAirshedTrendCard
             history={historicalTrend}
-            locationName="New Delhi, India"
+            locationName={displayLocation}
           />
 
           <AirshedSourceAttributionCard
-            locationName="New Delhi, India"
+            locationName={displayLocation}
             onNavigateWorkspace={onSelectWorkspace}
             onAskCopilot={onAskCopilot}
           />
@@ -85,7 +97,7 @@ export function CommunityAlertsWorkspace({
         {/* Right Column: Citizen Incident Reporter & Journal (5 cols - 41.7%) */}
         <div className="lg:col-span-5 space-y-6">
           <PollutionIncidentReporterCard
-            defaultLocationName="New Delhi, India"
+            defaultLocationName={displayLocation}
             onSubmitIncident={addIncident}
             onAskCopilot={onAskCopilot}
           />
@@ -106,6 +118,9 @@ export function CommunityAlertsWorkspace({
           onClose={() => setIsRwaModalOpen(false)}
           defaultSocietyName={rwaSocietyName}
           onGenerateBulletin={generateRwaBulletin}
+          aqi={liveAqi}
+          activeGrapStage={activeGrapStage}
+          locationName={displayLocation}
         />
       )}
     </div>

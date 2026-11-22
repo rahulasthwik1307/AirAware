@@ -9,6 +9,8 @@ interface CommunityKpiStripProps {
   readonly ventilationWindow: DiurnalVentilationWindow;
   readonly incidentCount: number;
   readonly onOpenRwaModal: () => void;
+  readonly aqi?: number;
+  readonly isDelhiNcr?: boolean;
 }
 
 export function CommunityKpiStrip({
@@ -17,6 +19,8 @@ export function CommunityKpiStrip({
   ventilationWindow,
   incidentCount,
   onOpenRwaModal,
+  aqi,
+  isDelhiNcr = false,
 }: CommunityKpiStripProps) {
   return (
     <section
@@ -28,7 +32,7 @@ export function CommunityKpiStrip({
         <div className="flex items-center justify-between gap-2">
           <span className="text-[11px] font-semibold text-rose-900 font-sans flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-rose-600" aria-hidden="true" />
-            Government Rules
+            {isDelhiNcr ? 'CAQM GRAP Mandate' : 'CPCB National Standard'}
           </span>
           <span className="text-[10px] font-mono font-semibold text-rose-800 bg-rose-100/90 px-2 py-0.5 rounded border border-rose-200 shrink-0">
             Active
@@ -39,17 +43,21 @@ export function CommunityKpiStrip({
             <h3 className="text-sm font-extrabold text-rose-950 font-sans tracking-tight">
               {activeGrapStage}
             </h3>
-            <span className="text-[10px] font-mono font-bold text-rose-700 bg-rose-100/80 px-1.5 py-0.2 rounded border border-rose-200 shrink-0">
-              AQI 378
-            </span>
+            {aqi !== undefined && (
+              <span className="text-[10px] font-mono font-bold text-rose-700 bg-rose-100/80 px-1.5 py-0.2 rounded border border-rose-200 shrink-0">
+                AQI {aqi}
+              </span>
+            )}
           </div>
           <p className="text-[11px] text-rose-900/85 leading-snug">
-            Generator ban, carpool priority &amp; extra metro runs active.
+            {isDelhiNcr
+              ? 'Generator ban, carpool priority & extra metro runs active across NCR.'
+              : 'Ambient air guidelines active. Sensitive groups should avoid outdoor exertion.'}
           </p>
         </div>
         <div className="pt-2 border-t border-rose-100/80 flex items-center justify-between text-[10px] font-mono text-rose-700">
-          <span>🚨 CAQM Mandate</span>
-          <span>Level 2 Alert</span>
+          <span>{isDelhiNcr ? '🚨 CAQM Mandate' : '📋 CPCB Benchmark'}</span>
+          <span>{aqi && aqi >= 300 ? 'High Alert' : 'Advisory'}</span>
         </div>
       </div>
 

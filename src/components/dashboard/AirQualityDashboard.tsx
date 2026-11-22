@@ -1,12 +1,16 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback, useRef, useSyncExternalStore } from 'react';
-import { z } from 'zod';
+import React, { useCallback, useSyncExternalStore } from 'react';
 import { AqiStandardKey, GeoLocation, WorkspaceKey } from '@/domain/types';
-import { normalizeAirQualityReport, RawOpenMeteoAirQualityResponse } from '@/domain/aqi/normalizer';
-import { WeatherData } from '@/app/api/weather/route';
+import { useAirQuality, DEFAULT_LOCATION } from '@/domain/aqi/useAirQuality';
+import {
+  loadHouseholdState,
+  getHouseholdServerSnapshot,
+  subscribeHouseholdStorage,
+} from '@/domain/household/storage';
 import { LocationSearch } from './LocationSearch';
 import { AqiHeroCard } from './AqiHeroCard';
+import { HouseholdTodayPlanCard } from '@/components/planner/HouseholdTodayPlanCard';
 import { ActionableHealthGuidance } from './ActionableHealthGuidance';
 import { PollutantGrid } from './PollutantGrid';
 import { ForecastTimeline } from './ForecastTimeline';
@@ -14,210 +18,43 @@ import { AtmosphericWeatherCard } from './AtmosphericWeatherCard';
 import { ScientificGrounding } from './ScientificGrounding';
 import { ProvenanceFooter } from './ProvenanceFooter';
 
-const GeoLocationSchema = z.object({
-  id: z.number(),
-  name: z.string(),
-  country: z.string(),
-  countryCode: z.string(),
-  admin1: z.string().optional(),
-  latitude: z.number(),
-  longitude: z.number(),
-  timezone: z.string(),
-  isPrimary: z.boolean().optional(),
-});
-
-const DEFAULT_LOCATION: GeoLocation = {
-  id: 1273294,
-  name: 'New Delhi',
-  country: 'India',
-  countryCode: 'IN',
-  admin1: 'Delhi',
-  latitude: 28.6139,
-  longitude: 77.209,
-  timezone: 'Asia/Kolkata',
-};
-
-const STORAGE_KEY = 'airaware_last_location';
-
-function subscribeToStorage(callback: () => void) {
-  window.addEventListener('storage', callback);
-  return () => window.removeEventListener('storage', callback);
-}
-
-function getClientStorageSnapshot(): string | null {
-  try {
-    return localStorage.getItem(STORAGE_KEY);
-  } catch {
-    return null;
-  }
-}
-
-function getServerStorageSnapshot(): null {
-  return null;
-}
-
-interface CacheEntry {
-  readonly rawAirQuality: RawOpenMeteoAirQualityResponse;
-  readonly weather: WeatherData | null;
-  readonly timestamp: number;
-}
-
-const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes client cache
-
 interface AirQualityDashboardProps {
   readonly onSelectWorkspace?: (workspace: WorkspaceKey) => void;
 }
 
 export function AirQualityDashboard({ onSelectWorkspace }: AirQualityDashboardProps = {}) {
-  // Read cached location using React's official useSyncExternalStore (zero SSR mismatch)
-  const storedJson = useSyncExternalStore(
-    subscribeToStorage,
-    getClientStorageSnapshot,
-    getServerStorageSnapshot
+  const {
+    location,
+    report,
+    weather,
+    isLoading,
+    error,
+    setLocation,
+    refetch,
+    setActiveStandard,
+  } = useAirQuality();
+
+  const selectedLocation = location ?? DEFAULT_LOCATION;
+  const weatherData = weather;
+  const isDefaultInitial = !location || location.id === DEFAULT_LOCATION.id;
+
+  const householdState = useSyncExternalStore(
+    subscribeHouseholdStorage,
+    loadHouseholdState,
+    getHouseholdServerSnapshot
   );
 
-  const initialLocation = useMemo<GeoLocation | null>(() => {
-    if (!storedJson) return null;
-    try {
-      const parsed = JSON.parse(storedJson);
-      const valid = GeoLocationSchema.safeParse(parsed);
-      return valid.success ? valid.data : null;
-    } catch {
-      return null;
-    }
-  }, [storedJson]);
-
-  const [overrideLocation, setOverrideLocation] = useState<GeoLocation | null>(null);
-  const selectedLocation = overrideLocation ?? initialLocation ?? DEFAULT_LOCATION;
-  const isDefaultInitial = !overrideLocation && !initialLocation;
-
-  const [activeStandardOverride, setActiveStandardOverride] = useState<AqiStandardKey | undefined>(undefined);
-  const [rawAirQuality, setRawAirQuality] = useState<RawOpenMeteoAirQualityResponse | null>(null);
-  const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // In-memory request deduplication and response cache
-  const cacheRef = useRef<Map<string, CacheEntry>>(new Map());
-
-  // Derived state computed during render
-  const report = useMemo(() => {
-    if (!rawAirQuality || !selectedLocation) return null;
-    return normalizeAirQualityReport(
-      rawAirQuality,
-      selectedLocation,
-      activeStandardOverride
-    );
-  }, [rawAirQuality, selectedLocation, activeStandardOverride]);
-
-  // Fetch telemetry & weather in parallel with caching and AbortController
-  useEffect(() => {
-    if (!selectedLocation) return;
-
-    const loc = selectedLocation;
-    const cacheKey = `${loc.latitude.toFixed(2)}_${loc.longitude.toFixed(2)}`;
-
-    // Check in-memory cache first for instant navigation without network hit
-    const cached = cacheRef.current.get(cacheKey);
-    const now = Date.now();
-    if (cached && now - cached.timestamp < CACHE_TTL_MS) {
-      setRawAirQuality(cached.rawAirQuality);
-      setWeatherData(cached.weather);
-      setIsLoading(false);
-      setError(null);
-      return;
-    }
-
-    const abortController = new AbortController();
-
-    async function loadData() {
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const aqiUrl = `/api/air-quality?latitude=${loc.latitude}&longitude=${loc.longitude}&timezone=${encodeURIComponent(
-          loc.timezone || 'auto'
-        )}`;
-
-        const weatherUrl = `/api/weather?latitude=${loc.latitude}&longitude=${loc.longitude}&timezone=${encodeURIComponent(
-          loc.timezone || 'auto'
-        )}`;
-
-        console.log('LOAD_DATA_FETCHING:', aqiUrl);
-
-        // Parallel non-waterfall data fetching
-        const [aqiRes, weatherRes] = await Promise.all([
-          fetch(aqiUrl, { signal: abortController.signal }),
-          fetch(weatherUrl, { signal: abortController.signal }).catch(() => null),
-        ]);
-
-        if (!aqiRes.ok) {
-          const errJson = await aqiRes.json().catch(() => ({}));
-          throw new Error(errJson.error || `Server responded with status ${aqiRes.status}`);
-        }
-
-        const rawData: RawOpenMeteoAirQualityResponse = await aqiRes.json();
-        console.log('LOAD_DATA_SUCCESS, current:', rawData?.current?.time);
-        let wData: WeatherData | null = null;
-        if (weatherRes && weatherRes.ok) {
-          wData = await weatherRes.json().catch(() => null);
-        }
-
-        if (!abortController.signal.aborted) {
-          setRawAirQuality(rawData);
-          setWeatherData(wData);
-
-          // Store in in-memory cache
-          cacheRef.current.set(cacheKey, {
-            rawAirQuality: rawData,
-            weather: wData,
-            timestamp: Date.now(),
-          });
-
-          // Persist current location to localStorage
-          try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(loc));
-          } catch {
-            // Ignore localStorage write quota/permission errors
-          }
-        }
-      } catch (err: any) {
-        if (!abortController.signal.aborted) {
-          setError(err.message || 'Unable to retrieve modelled air-quality data for this coordinate.');
-          setRawAirQuality(null);
-          setWeatherData(null);
-        }
-      } finally {
-        if (!abortController.signal.aborted) {
-          setIsLoading(false);
-        }
-      }
-    }
-
-    loadData();
-
-    return () => {
-      abortController.abort();
-    };
-  }, [selectedLocation]);
-
   const handleSelectLocation = useCallback((loc: GeoLocation) => {
-    setOverrideLocation(loc);
-    setActiveStandardOverride(undefined); // Reset to geographic default for new location
-  }, []);
+    setLocation(loc);
+  }, [setLocation]);
 
   const handleSwitchStandard = useCallback((standard: AqiStandardKey) => {
-    setActiveStandardOverride(standard);
-  }, []);
+    setActiveStandard(standard);
+  }, [setActiveStandard]);
 
   const handleRetry = useCallback(() => {
-    if (selectedLocation) {
-      // Invalidate cache on manual retry to force fresh fetch
-      const cacheKey = `${selectedLocation.latitude.toFixed(2)}_${selectedLocation.longitude.toFixed(2)}`;
-      cacheRef.current.delete(cacheKey);
-      setOverrideLocation({ ...selectedLocation });
-    }
-  }, [selectedLocation]);
+    refetch();
+  }, [refetch]);
 
   return (
     <div className="w-full space-y-7">
@@ -306,6 +143,13 @@ export function AirQualityDashboard({ onSelectWorkspace }: AirQualityDashboardPr
             onSelectLocation={handleSelectLocation}
             isLoading={isLoading}
             isDefaultLocation={isDefaultInitial}
+          />
+
+          {/* Today's GenAI Household Plan: Morning / Afternoon / Evening (Locked live numbers, Why & Expected Impact) */}
+          <HouseholdTodayPlanCard
+            report={report}
+            householdState={householdState}
+            location={selectedLocation}
           />
 
           {/* 2. Actionable Health Guidance: Daily Family Protective Protocols */}

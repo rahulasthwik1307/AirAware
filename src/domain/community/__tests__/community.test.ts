@@ -6,6 +6,7 @@ import {
   formatRwaSocietyBulletin,
   formatSocietyIncidentNotice,
   formatMunicipalComplaint,
+  isDelhiNcrRegion,
 } from '../generator';
 import {
   loadCommunityState,
@@ -57,6 +58,25 @@ describe('Community & Alerts Domain Tests', () => {
       const healthAlert = alerts.find((a) => a.category === 'FAMILY_HEALTH');
       expect(healthAlert).toBeDefined();
       expect(healthAlert?.targetWorkspace).toBe('family-planner');
+    });
+
+    it('generates CPCB National Category advisory instead of CAQM GRAP for non-NCR cities', () => {
+      const mumbaiAlerts = generateAirshedAlerts('Mumbai, Maharashtra', 410, 'PM2.5', 14);
+      const regAlert = mumbaiAlerts.find((a) => a.category === 'GRAP_REGULATORY');
+      expect(regAlert).toBeDefined();
+      expect(regAlert?.title).toContain('CPCB Severe Air Alert');
+      expect(regAlert?.title).not.toContain('GRAP Stage');
+      expect(regAlert?.source).toBe('CPCB National Air Quality Index');
+    });
+
+    it('distinguishes Delhi-NCR from non-NCR cities correctly', () => {
+      expect(isDelhiNcrRegion('New Delhi, India')).toBe(true);
+      expect(isDelhiNcrRegion('Noida, Uttar Pradesh')).toBe(true);
+      expect(isDelhiNcrRegion('Gurugram, Haryana')).toBe(true);
+      expect(isDelhiNcrRegion('Faridabad, NCR')).toBe(true);
+      expect(isDelhiNcrRegion('Mumbai, Maharashtra')).toBe(false);
+      expect(isDelhiNcrRegion('Bengaluru, Karnataka')).toBe(false);
+      expect(isDelhiNcrRegion('Chennai, Tamil Nadu')).toBe(false);
     });
   });
 
