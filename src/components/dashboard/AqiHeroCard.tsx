@@ -590,27 +590,42 @@ export function AqiHeroCard({
                   <p className="text-xs text-slate-700 leading-relaxed font-sans font-medium">
                     {tier?.description || 'Modelled atmospheric composition based on Copernicus Atmosphere Monitoring Service (CAMS) forecasts.'}
                   </p>
-
-                  {/* Urgent Exposure Action Pill */}
-                  <div className="pt-0.5">
-                    {providerAqi !== null && providerAqi > 200 ? (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-xs font-mono font-bold bg-rose-50 text-rose-900 border border-rose-300 shadow-2xs">
-                        <span>🛡️ Urgent:</span>
-                        <span>N95/FFP2 Respirator Required</span>
-                      </span>
-                    ) : providerAqi !== null && providerAqi > 100 ? (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-xs font-mono font-bold bg-amber-50 text-amber-900 border border-amber-300 shadow-2xs">
-                        <span>⚠️ Caution:</span>
-                        <span>Sensitive members limit morning exertion</span>
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-xs font-mono font-bold bg-emerald-50 text-emerald-900 border border-emerald-300 shadow-2xs">
-                        <span>✓ Standard:</span>
-                        <span>Favorable air for routine family activities</span>
-                      </span>
-                    )}
-                  </div>
                 </div>
+              </div>
+
+              {/* Health Advisory Alert Banner (Full Card Width) */}
+              <div className="pt-0.5 w-full">
+                {(effectiveAqi !== null && effectiveAqi > 200) || (providerAqi !== null && providerAqi > 200) ? (
+                  <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-rose-50/90 border border-rose-200 text-rose-900 shadow-2xs">
+                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-rose-100 text-rose-900 text-[11px] font-bold font-mono shrink-0 whitespace-nowrap">
+                      <span aria-hidden="true">🛡️</span>
+                      <span>Urgent</span>
+                    </span>
+                    <span className="text-xs font-sans font-semibold text-rose-900 leading-snug">
+                      N95/FFP2 Respirator Required
+                    </span>
+                  </div>
+                ) : (effectiveAqi !== null && effectiveAqi > 100) || (providerAqi !== null && providerAqi > 100) ? (
+                  <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-amber-50/90 border border-amber-300/80 text-amber-900 shadow-2xs">
+                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 text-[11px] font-bold font-mono shrink-0 whitespace-nowrap">
+                      <span aria-hidden="true">⚠️</span>
+                      <span>Caution</span>
+                    </span>
+                    <span className="text-xs font-sans font-semibold text-amber-900 leading-snug">
+                      Sensitive members limit morning exertion
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-emerald-50/90 border border-emerald-200 text-emerald-900 shadow-2xs">
+                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-900 text-[11px] font-bold font-mono shrink-0 whitespace-nowrap">
+                      <span aria-hidden="true">✓</span>
+                      <span>Standard</span>
+                    </span>
+                    <span className="text-xs font-sans font-semibold text-emerald-900 leading-snug">
+                      Favorable air for routine family activities
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Indian Graded Response Action Plan (GRAP) Protocol Banner */}

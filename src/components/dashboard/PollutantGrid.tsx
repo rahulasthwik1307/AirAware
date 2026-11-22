@@ -408,26 +408,18 @@ export function PollutantGrid({
               <div>
                 {/* 1. Header: Chemical Formula & Unclipped Full Name with Badges Above/Beside */}
                 <div className="border-b border-[var(--border-subtle)]/70 pb-3 mb-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span
-                          aria-hidden="true"
-                          className="text-2xl font-black font-mono text-[var(--ink-primary)] tracking-tight"
-                        >
-                          {edu.chemicalFormula}
-                        </span>
-                        <span className="sr-only">{edu.screenReaderName}</span>
-                        <span className="text-sm font-semibold text-[var(--ink-primary)] font-sans">
-                          {edu.fullName}
-                        </span>
-                      </div>
-                    </div>
+                  <div className="flex items-center justify-between gap-2">
+                    <span
+                      aria-hidden="true"
+                      className="text-2xl font-black font-mono text-[var(--ink-primary)] tracking-tight shrink-0"
+                    >
+                      {edu.chemicalFormula}
+                    </span>
 
-                    <div className="flex flex-wrap items-center justify-end gap-1.5 shrink-0">
+                    <div className="flex flex-wrap items-center justify-end gap-1.5 min-w-0">
                       {isDominant && (
                         <span
-                          className="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-[var(--brand-primary)] text-white shrink-0"
+                          className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-[var(--brand-primary)] text-white shrink-0 shadow-2xs"
                           title={`Identified as Primary Driver based on highest sub-index (${highestSubIndex}) under ${standardName}, not raw concentration.`}
                         >
                           Primary Driver
@@ -436,14 +428,14 @@ export function PollutantGrid({
 
                       {isCoUnderEaqi ? (
                         <span
-                          className="px-2 py-0.5 rounded text-[10px] font-mono text-[var(--ink-muted)] bg-[var(--surface-subtle)] border border-[var(--border-subtle)] whitespace-nowrap shrink-0"
+                          className="px-2 py-0.5 rounded-md text-[10px] font-mono font-medium text-[var(--ink-muted)] bg-[var(--surface-subtle)] border border-[var(--border-subtle)] whitespace-nowrap shrink-0"
                           title="Not evaluated under European EAQI standard (EEA convention)"
                         >
                           EAQI Excluded
                         </span>
                       ) : tier ? (
                         <span
-                          className="px-2 py-0.5 rounded text-xs font-mono font-semibold border whitespace-nowrap shrink-0"
+                          className="px-2 py-0.5 rounded-md text-[11px] font-mono font-bold border whitespace-nowrap shrink-0 shadow-2xs"
                           title={tier.label}
                           style={{
                             color: tier.colorToken,
@@ -454,26 +446,34 @@ export function PollutantGrid({
                           {formatBadgeTier(tier.label)}
                         </span>
                       ) : !hasConcentration ? (
-                        <span className="px-2 py-0.5 rounded text-[10px] font-mono text-[var(--ink-muted)] bg-[var(--surface-subtle)] border border-[var(--border-subtle)] whitespace-nowrap shrink-0">
+                        <span className="px-2 py-0.5 rounded-md text-[10px] font-mono text-[var(--ink-muted)] bg-[var(--surface-subtle)] border border-[var(--border-subtle)] whitespace-nowrap shrink-0">
                           Unreported
                         </span>
                       ) : null}
                       {isStationMeasurement ? (
                         <span
-                          className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-50 text-emerald-800 border border-emerald-300 whitespace-nowrap shrink-0"
+                          className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-emerald-50 text-emerald-800 border border-emerald-300 whitespace-nowrap shrink-0 shadow-2xs"
                           title="Physical in-situ measurement from government reference ground station"
                         >
                           Station
                         </span>
                       ) : (
                         <span
-                          className="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-slate-100 text-slate-600 border border-slate-200 whitespace-nowrap shrink-0"
+                          className="px-2 py-0.5 rounded-md text-[10px] font-mono font-medium bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap shrink-0"
                           title="Atmospheric numerical model simulation"
                         >
                           Modeled
                         </span>
                       )}
                     </div>
+                  </div>
+
+                  {/* Second Row: Full Name and Screen Reader Accessibility */}
+                  <div className="mt-1">
+                    <span className="sr-only">{edu.screenReaderName}</span>
+                    <span className="text-xs font-semibold text-[var(--ink-secondary)] font-sans block truncate">
+                      {edu.fullName}
+                    </span>
                   </div>
                 </div>
 
