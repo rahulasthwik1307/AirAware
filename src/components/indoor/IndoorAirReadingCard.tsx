@@ -89,7 +89,7 @@ export function IndoorAirReadingCard({
             id="indoor-reading-heading"
             className="text-base sm:text-lg font-bold font-sans text-slate-900 flex items-center gap-2"
           >
-            <span>🏠 Indoor Air Quality &amp; Room Protection</span>
+            <span>🛋️ Living Space &amp; Room Air Protection</span>
           </h2>
           <p className="text-xs text-slate-600 mt-0.5">
             Compare your indoor living space against outdoor smog and discover timed room actions.

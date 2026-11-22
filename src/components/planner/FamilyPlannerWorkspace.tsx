@@ -190,9 +190,6 @@ export function FamilyPlannerWorkspace() {
               <h1 className="text-xl sm:text-2xl font-bold text-[var(--ink-primary)] font-sans">
                 Family Daily Planner
               </h1>
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-medium bg-[var(--brand-surface)] text-[var(--brand-primary)] border border-[var(--brand-primary)]/20">
-                Phase 3 Verified
-              </span>
             </div>
             <p className="text-xs sm:text-sm text-[var(--ink-secondary)] max-w-2xl leading-relaxed">
               The Family Morning Command Center. Coordinate school runs, commutes, exercise, and ventilation with live diurnal smog forecasts. 100% local-first in your browser.

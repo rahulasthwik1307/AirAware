@@ -63,8 +63,8 @@ export function FilterMaintenanceLog({
     });
   };
 
-  // Circular progress calculations (radius 44, circumference ~276.46)
-  const radius = 44;
+  // Circular progress calculations (radius 36, circumference ~226.19)
+  const radius = 36;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (percentElapsed / 100) * circumference;
 
@@ -113,23 +113,23 @@ export function FilterMaintenanceLog({
       {/* Main Lifecycle & Donut Status Panel - Enlarged & Visually Engaging */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-stretch">
         {/* Left: SVG Circular Donut Progress Ring with Prominent Readout */}
-        <div className="rounded-xl border border-slate-200/90 bg-gradient-to-b from-slate-50 to-slate-100/70 p-3 sm:p-3.5 flex items-center justify-around gap-3 shadow-2xs">
+        <div className="rounded-xl border border-slate-200/90 bg-gradient-to-b from-slate-50 to-slate-100/70 p-3 flex items-center justify-between gap-2.5 shadow-2xs">
           <div className="relative flex items-center justify-center shrink-0">
-            <svg width="108" height="108" viewBox="0 0 108 108" className="transform -rotate-90 select-none">
+            <svg width="88" height="88" viewBox="0 0 88 88" className="transform -rotate-90 select-none">
               <circle
-                cx="54"
-                cy="54"
+                cx="44"
+                cy="44"
                 r={radius}
                 stroke="#e2e8f0"
-                strokeWidth="8"
+                strokeWidth="7"
                 fill="none"
               />
               <circle
-                cx="54"
-                cy="54"
+                cx="44"
+                cy="44"
                 r={radius}
                 stroke={percentElapsed > 85 ? '#ef4444' : percentElapsed > 65 ? '#f59e0b' : '#0284c7'}
-                strokeWidth="8"
+                strokeWidth="7"
                 strokeDasharray={circumference}
                 strokeDashoffset={strokeDashoffset}
                 strokeLinecap="round"
@@ -138,27 +138,34 @@ export function FilterMaintenanceLog({
               />
             </svg>
             <div className="absolute text-center flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-xl sm:text-2xl font-black text-slate-900 font-mono block leading-none">
+              <span className="text-lg sm:text-xl font-black text-slate-900 font-mono block leading-none">
                 {100 - percentElapsed}%
               </span>
-              <span className="text-[9px] font-mono font-medium text-slate-500 mt-0.5">
+              <span className="text-[8.5px] font-mono font-medium text-slate-500 mt-0.5">
                 Life Left
               </span>
             </div>
           </div>
 
-          <div className="space-y-1">
-            <span className="text-[10px] font-mono font-semibold text-slate-600 block bg-white/80 px-2 py-0.5 rounded border border-slate-200/70 text-center">
-              {filterLog.customIntervalMonths || 6}-Mo. HEPA Cycle
+          <div className="flex flex-col items-start gap-1 min-w-0 flex-1">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white border border-slate-200/90 text-[10px] font-mono font-bold text-slate-700 shadow-2xs whitespace-nowrap self-start">
+              <span className="h-1.5 w-1.5 rounded-full bg-sky-500 shrink-0" />
+              <span>{filterLog.customIntervalMonths || 6}-Mo HEPA</span>
             </span>
-            <div className="text-2xl sm:text-3xl font-black font-mono text-slate-900 leading-none">
-              {daysRemaining} <span className="text-xs font-semibold text-slate-500">Days</span>
+            <div className="flex items-baseline gap-1.5 pt-0.5">
+              <span className="text-2xl sm:text-3xl font-black font-mono text-slate-900 leading-none">
+                {daysRemaining}
+              </span>
+              <span className="text-xs font-mono font-semibold text-slate-500">
+                Days
+              </span>
             </div>
             <span className="text-[10px] text-slate-500 block leading-tight font-mono">
               Installed: {filterLog.installDate || installDate}
             </span>
-            <span className="text-[9.5px] font-mono font-semibold text-emerald-700 block">
-              ✓ Optimal Filtration
+            <span className="text-[9.5px] font-mono font-bold text-emerald-700 flex items-center gap-1">
+              <span aria-hidden="true">✓</span>
+              <span>Optimal Filtration</span>
             </span>
           </div>
         </div>
@@ -166,19 +173,19 @@ export function FilterMaintenanceLog({
         {/* Right: Airflow & Resistance Health Status with Visual Progress Bar */}
         <div className="rounded-xl border border-slate-200/90 bg-white p-3 sm:p-3.5 space-y-2 flex flex-col justify-between shadow-2xs">
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-bold text-slate-800 font-sans flex items-center gap-1.5">
-                <span>🕸️</span>
+            <div className="flex items-center justify-between gap-1 text-xs">
+              <span className="font-bold text-slate-800 font-sans flex items-center gap-1.5 whitespace-nowrap">
+                <span aria-hidden="true">🕸️</span>
                 <span>Pre-Filter Hygiene</span>
               </span>
               <span
-                className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${
+                className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border whitespace-nowrap shrink-0 flex items-center gap-1 ${
                   isVacuumDue
                     ? 'bg-amber-100 text-amber-900 border-amber-300'
                     : 'bg-emerald-100 text-emerald-900 border-emerald-300'
                 }`}
               >
-                {isVacuumDue ? '⚠️ Vacuum Due' : '✓ Airflow Optimal'}
+                <span>{isVacuumDue ? '⚠️ Vacuum Due' : '✓ Optimal'}</span>
               </span>
             </div>
 

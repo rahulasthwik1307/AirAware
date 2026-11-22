@@ -74,13 +74,20 @@ export function DualImpactDashboardCard({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Panel 1: Personal Exposure Defense */}
         <div className="p-4 rounded-2xl bg-gradient-to-b from-sky-50/70 to-sky-100/40 border border-sky-200/90 shadow-2xs flex flex-col justify-between gap-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-sky-950 flex items-center gap-1.5">
-              <span className="text-sm">🛡️</span> Personal Smog Defense
-            </span>
-            <span className="text-[10px] font-mono font-bold text-sky-800 bg-white px-2 py-0.5 rounded-full border border-sky-200 shadow-2xs">
-              {dualImpact.personalDefenseBadge}
-            </span>
+          <div className="flex flex-col gap-1.5 border-b border-sky-200/70 pb-2">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="text-sm shrink-0" aria-hidden="true">🛡️</span>
+              <h3 className="text-xs sm:text-sm font-bold text-sky-950 font-sans tracking-tight">
+                Personal Smog Defense
+              </h3>
+            </div>
+            <div className="flex items-center justify-between text-[10px] font-mono">
+              <span className="text-sky-700/80 font-medium">Inversion Shield</span>
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-bold bg-white text-sky-800 border border-sky-200 shadow-2xs whitespace-nowrap">
+                <span className="h-1.5 w-1.5 rounded-full bg-sky-500 shrink-0" />
+                <span>{dualImpact.personalDefenseBadge}</span>
+              </span>
+            </div>
           </div>
 
           {/* SVG Circular Radial Progress Arc */}
@@ -155,13 +162,20 @@ export function DualImpactDashboardCard({
 
         {/* Panel 2: Planetary Emissions Avoided */}
         <div className="p-4 rounded-2xl bg-gradient-to-b from-emerald-50/70 to-emerald-100/40 border border-emerald-200/90 shadow-2xs flex flex-col justify-between gap-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-emerald-950 flex items-center gap-1.5">
-              <span className="text-sm">🌍</span> Planetary Avoidance
-            </span>
-            <span className="text-[10px] font-mono font-bold text-emerald-800 bg-white px-2 py-0.5 rounded-full border border-emerald-200 shadow-2xs">
-              {dualImpact.avoidedCo2eProgressPercent}% of Goal
-            </span>
+          <div className="flex flex-col gap-1.5 border-b border-emerald-200/70 pb-2">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="text-sm shrink-0" aria-hidden="true">🌍</span>
+              <h3 className="text-xs sm:text-sm font-bold text-emerald-950 font-sans tracking-tight">
+                Planetary Avoidance
+              </h3>
+            </div>
+            <div className="flex items-center justify-between text-[10px] font-mono">
+              <span className="text-emerald-700/80 font-medium">Monthly Target</span>
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-bold bg-white text-emerald-800 border border-emerald-200 shadow-2xs whitespace-nowrap">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
+                <span>{dualImpact.avoidedCo2eProgressPercent}% of Goal</span>
+              </span>
+            </div>
           </div>
 
           {/* SVG Circular Radial Progress Arc */}

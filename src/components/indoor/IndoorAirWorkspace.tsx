@@ -52,7 +52,7 @@ export function IndoorAirWorkspace({ onOpenCopilotWithContext }: IndoorAirWorksp
             </span>
           </div>
           <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-2xl leading-relaxed">
-            Understand room micro-climates, simulate particle clearance kinetics, size air cleaners, and discover evidence-backed indoor mitigations.
+            Track room air quality, size purifiers, and keep your indoor air clean.
           </p>
         </div>
 
