@@ -40,6 +40,26 @@ export function getDeterministicGuidance(data: GuidanceRequest): GuidanceRespons
       ventilationRecommendation = 'open_windows';
       break;
 
+    case 'Satisfactory':
+      headline = 'Air Quality is Satisfactory';
+      healthSummary = `AQI is ${aqi} (Satisfactory, CPCB NAQI). Air quality is generally acceptable, though sensitive individuals may experience minor breathing discomfort on prolonged exertion.`;
+      if (isSensitive) {
+        actionRecommendations.push(
+          'Sensitive members should monitor comfort during prolonged outdoor activities.',
+          'Consider indoor alternatives if symptoms like throat irritation appear.'
+        );
+      } else {
+        actionRecommendations.push(
+          'Healthy individuals can proceed with normal outdoor routines.',
+          'Ventilate rooms during periods of moderate wind and lower traffic.'
+        );
+      }
+      actionRecommendations.push('Keep an eye on diurnal trends if planning extended outdoor workouts.');
+      sensitiveGroupAdvisory =
+        'Sensitive individuals (pediatric, senior, asthmatic) should observe personal comfort during prolonged exertion.';
+      ventilationRecommendation = 'open_windows';
+      break;
+
     case 'Moderate':
       headline = 'Acceptable Air Quality with Minor Cautions';
       healthSummary = `Air quality is acceptable (AQI ${aqi}). However, unusually sensitive individuals should watch for symptoms like coughing or shortness of breath.`;
@@ -56,7 +76,7 @@ export function getDeterministicGuidance(data: GuidanceRequest): GuidanceRespons
       }
       actionRecommendations.push('Keep an eye on air trends if planning prolonged outdoor activities.');
       sensitiveGroupAdvisory =
-        'EPA statistical risk bands indicate low risk, though individuals with asthma or respiratory conditions should monitor their comfort.';
+        'People with respiratory or cardiac conditions should observe comfort during outdoor exertion.';
       // Scientific ventilation guidance based on pollutant characteristics & environmental conditions:
       // - Ozone (O3): Photochemically driven; spikes in warm afternoons and degrades indoors on surfaces.
       // - Particulates (PM2.5/PM10): Outdoor air enters through openings; brief airing flushes indoor CO2/VOCs without major PM loading.
@@ -65,6 +85,19 @@ export function getDeterministicGuidance(data: GuidanceRequest): GuidanceRespons
       } else {
         ventilationRecommendation = aqi <= 75 ? 'open_windows' : 'ventilate_briefly';
       }
+      break;
+
+    case 'Poor':
+      headline = 'Poor Air Quality — Breathing Discomfort on Exposure';
+      healthSummary = `AQI is ${aqi} (Poor, CPCB NAQI). Breathing discomfort may occur to most people on prolonged exposure, with pronounced impacts on vulnerable individuals.`;
+      actionRecommendations.push(
+        'Reduce prolonged strenuous outdoor physical activity, especially during morning traffic peaks.',
+        'Keep windows closed during inversion hours and run certified HEPA purifiers in occupied rooms.',
+        'Wear an N95 respirator if commuting in congested traffic corridors.'
+      );
+      sensitiveGroupAdvisory =
+        'People with lung disease, asthma, or heart disease should avoid prolonged outdoor exertion.';
+      ventilationRecommendation = 'ventilate_briefly';
       break;
 
     case 'Unhealthy for Sensitive Groups':
@@ -102,6 +135,19 @@ export function getDeterministicGuidance(data: GuidanceRequest): GuidanceRespons
       ventilationRecommendation = 'keep_closed_use_purifier';
       break;
 
+    case 'Very Poor':
+      headline = 'Very Poor Air — High Risk of Respiratory Illness';
+      healthSummary = `AQI is ${aqi} (Very Poor, CPCB NAQI). Prolonged exposure causes respiratory illness and puts acute stress on cardiovascular function.`;
+      actionRecommendations.push(
+        'Avoid morning runs and strenuous outdoor activities; shift all exercise indoors.',
+        'Keep windows sealed; operate HEPA air purification continuously on medium or high speed.',
+        'Wear a certified N95 respirator for any unavoidable outdoor travel.'
+      );
+      sensitiveGroupAdvisory =
+        'Vulnerable members (pediatric, senior, asthmatic) must strictly avoid outdoor exposure.';
+      ventilationRecommendation = 'keep_closed_use_purifier';
+      break;
+
     case 'Very Unhealthy':
       headline = 'Health Alert: Serious Risk of Health Effects';
       healthSummary = `AQI ${aqi} indicates severe pollution. Risk of respiratory irritation and cardiovascular stress is significantly increased for everyone.`;
@@ -115,10 +161,11 @@ export function getDeterministicGuidance(data: GuidanceRequest): GuidanceRespons
       ventilationRecommendation = 'keep_closed_use_purifier';
       break;
 
+    case 'Severe':
     case 'Hazardous':
     default:
-      headline = 'Health Warning of Emergency Conditions';
-      healthSummary = `AQI ${aqi} represents emergency conditions. The entire population is likely to be affected by severe acute health impacts.`;
+      headline = category === 'Severe' ? 'Severe Smog Emergency — CPCB Critical Warning' : 'Health Warning of Emergency Conditions';
+      healthSummary = `AQI ${aqi} represents severe/emergency conditions. Even healthy individuals are likely to be affected, with severe acute impacts on vulnerable populations.`;
       actionRecommendations.push(
         'Remain indoors with windows and doors completely closed.',
         'Operate certified HEPA air filtration continuously; avoid creating indoor smoke or frying.',
@@ -131,7 +178,15 @@ export function getDeterministicGuidance(data: GuidanceRequest): GuidanceRespons
   }
 
   // Activity-specific refinement
-  if (activity === 'daily_commute' && (category === 'Unhealthy' || category === 'Very Unhealthy' || category === 'Hazardous')) {
+  if (
+    activity === 'daily_commute' &&
+    (category === 'Unhealthy' ||
+      category === 'Very Unhealthy' ||
+      category === 'Hazardous' ||
+      category === 'Poor' ||
+      category === 'Very Poor' ||
+      category === 'Severe')
+  ) {
     actionRecommendations.unshift('Use closed-window transit (metro or car with recirculated AC) rather than walking or open cycling.');
   }
 

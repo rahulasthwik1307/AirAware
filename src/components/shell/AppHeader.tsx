@@ -57,7 +57,10 @@ export function AppHeader({
                 <span className="text-base font-extrabold tracking-tight text-[var(--ink-primary)] font-sans">
                   AirAware
                 </span>
-                <span className="inline-flex items-center rounded-full bg-[var(--brand-surface)] px-2 py-0.5 text-[10px] font-mono font-semibold text-[var(--brand-primary)] border border-[var(--border-subtle)]">
+                <span
+                  className="inline-flex items-center rounded-full bg-[var(--brand-surface)] px-2 py-0.5 text-[10px] font-mono font-semibold text-[var(--brand-primary)] border border-[var(--border-subtle)] cursor-help"
+                  title="Open Science: Real-time CPCB ground stations and Copernicus CAMS European atmospheric models with transparent open data"
+                >
                   Open Science
                 </span>
               </div>
@@ -79,7 +82,10 @@ export function AppHeader({
                 <span className="text-base font-extrabold tracking-tight text-[var(--ink-primary)] font-sans">
                   AirAware
                 </span>
-                <span className="inline-flex items-center rounded-full bg-[var(--brand-surface)] px-2 py-0.5 text-[10px] font-mono font-semibold text-[var(--brand-primary)] border border-[var(--border-subtle)]">
+                <span
+                  className="inline-flex items-center rounded-full bg-[var(--brand-surface)] px-2 py-0.5 text-[10px] font-mono font-semibold text-[var(--brand-primary)] border border-[var(--border-subtle)] cursor-help"
+                  title="Open Science: Real-time CPCB ground stations and Copernicus CAMS European atmospheric models with transparent open data"
+                >
                   Open Science
                 </span>
               </div>
@@ -133,7 +139,7 @@ export function AppHeader({
               className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-[var(--surface-subtle)] hover:bg-[var(--surface-card)] text-[var(--ink-secondary)] hover:text-[var(--brand-primary)] text-xs font-mono font-semibold border border-[var(--border-subtle)] transition-all cursor-pointer shadow-xs tactile-btn focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
               title="View Platform Overview & 5-Workspace Guide"
             >
-              <span>Overview</span>
+              <span>Quick summary</span>
             </button>
           )}
 

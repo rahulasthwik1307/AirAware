@@ -14,7 +14,7 @@ import { getCloudflareAiConfig } from './config';
 import { AiServiceError } from './types';
 import { aiCache } from './cache';
 
-const TIMEOUT_MS = 5000;
+const TIMEOUT_MS = 12000;
 const RETRY_DELAY_MS = 200;
 
 export interface InferenceOptions<T> {
@@ -222,6 +222,43 @@ async function attemptModelInference<T>(params: AttemptParams<T>): Promise<T> {
       const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
       normalized[camelKey] = value;
     }
+
+    // Common alias normalization for LLM output tolerance
+    if (!normalized.directAnswer && normalized.answer) normalized.directAnswer = normalized.answer;
+    if (!normalized.recommendedAction && normalized.action) normalized.recommendedAction = normalized.action;
+    if (!normalized.explanation && normalized.scientificReasoning) normalized.explanation = normalized.scientificReasoning;
+    if (!normalized.dataSourceAndFreshness && normalized.dataSource) normalized.dataSourceAndFreshness = normalized.dataSource;
+    if (!normalized.limitationsOrUncertainty && normalized.limitations) normalized.limitationsOrUncertainty = normalized.limitations;
+
+    // Normalize practicalAlternatives: if string, wrap in array
+    if (typeof normalized.practicalAlternatives === 'string') {
+      normalized.practicalAlternatives = [normalized.practicalAlternatives];
+    } else if (Array.isArray(normalized.practicalAlternatives)) {
+      normalized.practicalAlternatives = normalized.practicalAlternatives.filter(
+        (a) => typeof a === 'string' && a.trim() !== ''
+      );
+    }
+
+    // Length safety clamp for string fields to prevent off-schema rejections on minor verbose outputs
+    if (typeof normalized.directAnswer === 'string' && normalized.directAnswer.length > 250) {
+      normalized.directAnswer = normalized.directAnswer.slice(0, 247) + '...';
+    }
+    if (typeof normalized.environmentalConditions === 'string' && normalized.environmentalConditions.length > 200) {
+      normalized.environmentalConditions = normalized.environmentalConditions.slice(0, 197) + '...';
+    }
+    if (typeof normalized.recommendedAction === 'string' && normalized.recommendedAction.length > 200) {
+      normalized.recommendedAction = normalized.recommendedAction.slice(0, 197) + '...';
+    }
+    if (typeof normalized.explanation === 'string' && normalized.explanation.length > 350) {
+      normalized.explanation = normalized.explanation.slice(0, 347) + '...';
+    }
+    if (typeof normalized.dataSourceAndFreshness === 'string' && normalized.dataSourceAndFreshness.length > 150) {
+      normalized.dataSourceAndFreshness = normalized.dataSourceAndFreshness.slice(0, 147) + '...';
+    }
+    if (typeof normalized.limitationsOrUncertainty === 'string' && normalized.limitationsOrUncertainty.length > 200) {
+      normalized.limitationsOrUncertainty = normalized.limitationsOrUncertainty.slice(0, 197) + '...';
+    }
+
     parsedObject = normalized;
   }
 

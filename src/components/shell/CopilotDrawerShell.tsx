@@ -6,6 +6,7 @@ import { WorkspaceKey, AirQualityReport, GeoLocation } from '@/domain/types';
 import { RoomContext } from '@/lib/ai/types';
 import { HouseholdStorageState, HouseholdMember } from '@/domain/household/types';
 import { useAirCopilot, CopilotChatMessage } from '@/lib/ai/use-copilot';
+import { CopilotRichResponse } from '@/components/copilot/CopilotRichResponse';
 
 interface CopilotDrawerShellProps {
   readonly isOpen: boolean;
@@ -168,6 +169,7 @@ export function CopilotDrawerShell({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     sendMessage();
+    inputRef.current?.focus();
   };
 
   const drawerContent = (
@@ -367,13 +369,24 @@ export function CopilotDrawerShell({
               aria-live="polite"
               className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4"
             >
-              {messages.map((msg, idx) => (
-                <MessageBubble
-                  key={msg.id}
-                  message={msg}
-                  isLatest={idx === messages.length - 1 && msg.sender === 'assistant'}
-                />
-              ))}
+              {messages.map((msg, idx) => {
+                const prevUserMsg =
+                  idx > 0 && messages[idx - 1]?.sender === 'user' ? messages[idx - 1]?.text : '';
+                return (
+                  <MessageBubble
+                    key={msg.id}
+                    message={msg}
+                    userQuestion={prevUserMsg || ''}
+                    report={report}
+                    onSelectPrompt={(text) => {
+                      setInputQuery(text);
+                      sendMessage(text);
+                      inputRef.current?.focus();
+                    }}
+                    isLatest={idx === messages.length - 1 && msg.sender === 'assistant'}
+                  />
+                );
+              })}
 
               {/* Thinking / Generation Indicator */}
               {isThinking && (
@@ -522,9 +535,15 @@ function FastTypewriterText({
 
 function MessageBubble({
   message,
+  userQuestion = '',
+  report = null,
+  onSelectPrompt,
   isLatest = false,
 }: {
   readonly message: CopilotChatMessage;
+  readonly userQuestion?: string;
+  readonly report?: AirQualityReport | null;
+  readonly onSelectPrompt?: (prompt: string) => void;
   readonly isLatest?: boolean;
 }) {
   if (message.sender === 'user') {
@@ -562,13 +581,15 @@ function MessageBubble({
     );
   }
 
-  const isLiveAi = message.source === 'cloudflare-ai';
+  const isLiveAi = message.source === 'cloudflare-ai' || (!res.isDeterministicFallback && Boolean(res.modelName));
+  const modelName = res.modelName || 'Cloudflare Workers AI';
+  const badgeText = isLiveAi ? `AI-generated · ${modelName}` : 'Rule-based answer';
 
   return (
     <div className="flex justify-start">
       <div className="max-w-[94%] rounded-2xl rounded-tl-xs bg-white border border-[var(--border-subtle)] shadow-xs p-3.5 sm:p-4 text-xs space-y-3">
         {/* Model Provenance Banner */}
-        <div className="flex items-center justify-between pb-2 border-b border-[var(--border-subtle)]">
+        <div className="flex flex-wrap items-center justify-between gap-1.5 pb-2 border-b border-[var(--border-subtle)]">
           <span
             className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${
               isLiveAi
@@ -577,84 +598,30 @@ function MessageBubble({
             }`}
           >
             {isLiveAi
-              ? '⚡ Cloudflare Workers AI • Gemma 4'
+              ? '⚡ Cloudflare Workers AI'
               : '🛡️ Deterministic Guidance Engine'}
           </span>
 
-          <span className="text-[10px] font-mono text-[var(--ink-muted)]">
-            Verified Response
-          </span>
-        </div>
-
-        {/* 1. Direct Answer */}
-        <div>
-          <span className="text-[11px] font-semibold text-[var(--brand-primary)] font-sans block">
-            Direct Answer
-          </span>
-          <p className="text-sm font-bold text-[var(--ink-primary)] mt-0.5 leading-snug">
-            <FastTypewriterText text={res.directAnswer} speedMs={10} isNew={isLatest} />
-          </p>
-        </div>
-
-        {/* 2. Atmospheric & Environmental Context */}
-        <div className="p-2.5 rounded-lg bg-[var(--surface-subtle)] border border-[var(--border-subtle)] space-y-1 animate-fadeIn">
-          <span className="text-[11px] font-semibold text-[var(--ink-muted)] font-sans block">
-            Environmental Context
-          </span>
-          <p className="text-xs text-[var(--ink-secondary)] leading-relaxed">
-            {res.environmentalConditions}
-          </p>
-        </div>
-
-        {/* 3. Recommended Action */}
-        <div className="space-y-0.5 animate-fadeIn">
-          <span className="text-[11px] font-semibold text-emerald-800 font-sans block">
-            Primary Action
-          </span>
-          <p className="text-xs font-semibold text-[var(--ink-primary)] leading-relaxed">
-            {res.recommendedAction}
-          </p>
-        </div>
-
-        {/* 4. Scientific Explanation */}
-        <div className="space-y-0.5 animate-fadeIn">
-          <span className="text-[10px] font-mono font-bold text-[var(--ink-muted)] uppercase tracking-wider block">
-            Scientific Reasoning
-          </span>
-          <p className="text-xs text-[var(--ink-secondary)] leading-relaxed">
-            {res.explanation}
-          </p>
-        </div>
-
-        {/* 5. Practical Alternatives */}
-        {res.practicalAlternatives && res.practicalAlternatives.length > 0 && (
-          <div className="space-y-1">
-            <span className="text-[10px] font-mono font-bold text-[var(--ink-muted)] uppercase tracking-wider block">
-              Practical Alternatives
+          <div className="flex items-center gap-1.5 text-right flex-wrap">
+            {!isLiveAi && res.fallbackReason && (
+              <span className="text-[10px] font-mono text-slate-500 italic">
+                {res.fallbackReason} ·
+              </span>
+            )}
+            <span className="text-[10px] font-mono font-medium text-slate-600 bg-slate-50 px-2 py-0.5 rounded-md border border-slate-200">
+              {badgeText}
             </span>
-            <ul className="space-y-1">
-              {res.practicalAlternatives.map((alt, idx) => (
-                <li
-                  key={idx}
-                  className="flex items-start gap-1.5 text-[11px] text-[var(--ink-secondary)]"
-                >
-                  <span className="text-[var(--brand-primary)] font-bold">›</span>
-                  <span>{alt}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {/* 6. Data Source & 7. Limitations */}
-        <div className="pt-2 border-t border-[var(--border-subtle)] text-[10px] font-mono text-[var(--ink-muted)] space-y-1">
-          <div className="flex items-center gap-1.5">
-            <strong>Source:</strong> <span>{res.dataSourceAndFreshness}</span>
-          </div>
-          <div className="flex items-start gap-1.5">
-            <strong>Notice:</strong> <span className="italic">{res.limitationsOrUncertainty}</span>
           </div>
         </div>
+
+        {/* Rich Copilot Presentation (A2UI-inspired Zero-Dependency Catalog) */}
+        <CopilotRichResponse
+          question={userQuestion || ''}
+          response={res}
+          report={report}
+          onSelectPrompt={onSelectPrompt}
+          isLiveAi={isLiveAi}
+        />
       </div>
     </div>
   );

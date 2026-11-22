@@ -10,7 +10,11 @@ import { z } from 'zod';
 
 export const AqiCategoryEnum = z.enum([
   'Good',
+  'Satisfactory',
   'Moderate',
+  'Poor',
+  'Very Poor',
+  'Severe',
   'Unhealthy for Sensitive Groups',
   'Unhealthy',
   'Very Unhealthy',
@@ -98,6 +102,8 @@ export const GuidanceRequestSchema = z.object({
   distanceKm: z.number().optional().nullable(),
   observationTime: z.string().optional().nullable(),
   indoorPm25: z.number().optional().nullable(),
+  scaleName: z.string().optional(),
+  modelFallbackReason: z.string().optional().nullable(),
 });
 export type GuidanceRequest = z.infer<typeof GuidanceRequestSchema>;
 
@@ -166,6 +172,8 @@ export const CopilotRequestSchema = z.object({
   stationName: z.string().optional().nullable(),
   distanceKm: z.number().optional().nullable(),
   indoorPm25: z.number().optional().nullable(),
+  scaleName: z.string().optional(),
+  modelFallbackReason: z.string().optional().nullable(),
 });
 export type CopilotRequest = Omit<z.infer<typeof CopilotRequestSchema>, 'workspace'> & {
   workspace?: WorkspaceContext;
@@ -179,6 +187,8 @@ export const CopilotResponseSchema = z.object({
   practicalAlternatives: z.array(z.string().min(5).max(150)).min(1).max(4),
   dataSourceAndFreshness: z.string().min(5).max(150),
   limitationsOrUncertainty: z.string().min(5).max(200),
+  modelName: z.string().optional(),
+  fallbackReason: z.string().optional(),
   isDeterministicFallback: z.boolean().default(false),
 });
 export type CopilotResponse = z.infer<typeof CopilotResponseSchema>;

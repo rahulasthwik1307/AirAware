@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { CopilotResponse, WorkspaceContext, RoomContext } from './types';
 import { AirQualityReport, GeoLocation } from '@/domain/types';
+import { getPrimaryAqiFacts } from '@/domain/aqi/primary-aqi';
 import { HouseholdStorageState, HouseholdMember } from '@/domain/household/types';
 import { loadHouseholdState } from '@/domain/household/storage';
 import { loadIndoorState } from '@/domain/indoor/storage';
@@ -302,9 +303,10 @@ export function useAirCopilot({
         return;
       }
 
-      // 3. Build verified privacy-safe payload with LIVE AQI context (Zero PII)
-      const currentAqi = report.providerAqi;
-      const currentCategory = (report.tier?.label as any) ?? 'Moderate';
+      // 3. Build verified privacy-safe payload with authoritative LIVE AQI context (Zero PII)
+      const primaryFacts = getPrimaryAqiFacts(report);
+      const currentAqi = primaryFacts.aqi;
+      const currentCategory = primaryFacts.category as any;
       
       let dominantKey: 'pm25' | 'pm10' | 'o3' | 'no2' | 'so2' | 'co' = 'pm25';
       const rawDominant = (report.dominantPollutant || 'pm25').toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -324,10 +326,7 @@ export function useAirCopilot({
       const userContext = deriveUserContextFromHousehold(householdState, activeMember);
       const cityName = location?.name || report.location.name;
       const observationTime = report.observedAt || report.localTime || report.modelTimestamp;
-      const isStation = report.sourceType === 'station';
-      const dataSource = isStation
-        ? `Ground station: ${report.stationName || 'Nearby Station'}${report.distanceKm !== null && report.distanceKm !== undefined ? `, ${report.distanceKm} km away` : ''} · OpenAQ`
-        : 'Modeled estimate (Copernicus CAMS via Open-Meteo, ~45 km grid) · no recent station within 25 km';
+      const dataSource = primaryFacts.resolvedDataSource;
 
       const payload = {
         question: q.slice(0, 200),
@@ -351,6 +350,8 @@ export function useAirCopilot({
         stationName: report.stationName,
         distanceKm: report.distanceKm,
         indoorPm25: typeof window !== 'undefined' ? (loadIndoorState().indoorPm25Reading ?? null) : null,
+        scaleName: primaryFacts.scaleName,
+        modelFallbackReason: primaryFacts.modelFallbackReason,
       };
 
       try {

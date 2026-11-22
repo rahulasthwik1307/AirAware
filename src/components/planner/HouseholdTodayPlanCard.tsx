@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { AirQualityReport, GeoLocation } from '@/domain/types';
+import { getPrimaryAqiFacts } from '@/domain/aqi/primary-aqi';
 import { HouseholdStorageState } from '@/domain/household/types';
 import {
   GuidanceRequest,
@@ -26,26 +27,15 @@ export function HouseholdTodayPlanCard({
   const [guidance, setGuidance] = useState<GuidanceResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
+  const primaryFacts = useMemo(() => (report ? getPrimaryAqiFacts(report) : null), [report]);
+
   // Derive request payload from live report & real household profiles
   const guidanceRequest = useMemo<GuidanceRequest | null>(() => {
-    if (!report || report.providerAqi === null) return null;
+    if (!report || report.providerAqi === null || !primaryFacts) return null;
 
-    const aqi = report.providerAqi;
-    const pm25Concentration = report.pollutants.pm2_5.concentration ?? 25;
-
-    // Map tier to EPA category string
-    const category =
-      aqi <= 50
-        ? 'Good'
-        : aqi <= 100
-        ? 'Moderate'
-        : aqi <= 150
-        ? 'Unhealthy for Sensitive Groups'
-        : aqi <= 200
-        ? 'Unhealthy'
-        : aqi <= 300
-        ? 'Very Unhealthy'
-        : 'Hazardous';
+    const aqi = primaryFacts.aqi;
+    const category = primaryFacts.category as any;
+    const pm25Concentration = primaryFacts.pm25Concentration ?? 25;
 
     const members = householdState?.members ?? [];
     const hasVulnerable = members.some((m) =>
@@ -92,8 +82,10 @@ export function HouseholdTodayPlanCard({
       distanceKm: report.distanceKm,
       observationTime: report.observedAt || report.modelTimestamp,
       indoorPm25: typeof window !== 'undefined' ? (loadIndoorState().indoorPm25Reading ?? null) : null,
+      scaleName: primaryFacts.scaleName,
+      modelFallbackReason: primaryFacts.modelFallbackReason,
     };
-  }, [report, householdState, location]);
+  }, [report, primaryFacts, householdState, location]);
 
   // Client-side cache key per (location, profile, hour)
   const clientCacheKey = useMemo(() => {
@@ -188,7 +180,7 @@ export function HouseholdTodayPlanCard({
             </h2>
           </div>
           <p className="text-xs text-[var(--ink-secondary)]">
-            Tailored actions for {location?.name || 'your area'} based on diurnal inversion windows, household sensitivities, and live AQI {report.providerAqi}.
+            Tailored actions for {location?.name || 'your area'} based on diurnal inversion windows, household sensitivities, and live AQI {primaryFacts?.aqi ?? report.providerAqi} ({primaryFacts?.category ?? report.tier?.label ?? 'Moderate'}).
           </p>
         </div>
 

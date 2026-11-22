@@ -6,6 +6,12 @@ import { AirQualityReport, AqiStandardKey, GeoLocation } from '@/domain/types';
 import { calculateCpcbAqi, calculateCompositeCpcbAqi } from '@/domain/aqi/cpcb-benchmark';
 import { WeatherData } from '@/app/api/weather/route';
 import { GLOBE_REFERENCE_CITIES } from '../globe/world-landmass';
+import { PollutantBars } from '@/components/charts/PollutantBars';
+import { SevenDayTrend } from '@/components/charts/SevenDayTrend';
+import { findBestDaytimeWindow } from '@/domain/aqi/best-window';
+
+// Single authoritative constant for right-panel height across Overview, Compare, and 3D Globe
+export const HERO_RIGHT_PANEL_HEIGHT_CLASS = 'w-full h-auto lg:h-[680px]';
 
 // Tactile number roll hook for smooth instrument calibration feel
 function useAnimatedNumber(target: number | null, durationMs = 450): number | null {
@@ -221,6 +227,8 @@ export function AqiHeroCard({
     ? (cpcbResult.aqi ?? providerAqi)
     : providerAqi;
 
+  const bestDaytimeWindow = findBestDaytimeWindow(report.forecast, 2);
+
   const hasAqi = effectiveAqi !== null;
   const isIndia = location.countryCode === 'IN' || location.country.toLowerCase().includes('india');
   const animatedAqi = useAnimatedNumber(hasAqi ? effectiveAqi : null);
@@ -400,9 +408,9 @@ export function AqiHeroCard({
 
       <div className="p-6 sm:p-8">
         {/* Main Stage Grid: Left = Compact Intelligence Deck (5/12 ~ 41.7%), Right = Dominant 3D Globe (7/12 ~ 58.3%) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start lg:items-stretch">
           {/* Left Column: Focused Intelligence Deck (5/12) */}
-          <div className="lg:col-span-5 flex flex-col justify-between gap-4 z-10">
+          <div className="lg:col-span-5 flex flex-col justify-between gap-4 z-10 h-full">
             {/* Title & Active Region */}
             <div className="space-y-1">
               <div className="flex items-center justify-between">
@@ -712,7 +720,7 @@ export function AqiHeroCard({
           </div>
 
           {/* Right Column: 3-Option Segmented Control (Overview | Regional compare | 3D globe) */}
-          <div className="lg:col-span-7 relative flex flex-col items-center justify-center">
+          <div className="lg:col-span-7 relative flex flex-col items-center justify-between h-full">
             {/* Visual Viewport Header with 3-Option Segmented Control */}
             <div className="w-full flex items-center justify-between px-2 mb-2">
               <div className="flex items-center gap-2">
@@ -790,92 +798,122 @@ export function AqiHeroCard({
                 id="panel-overview"
                 role="tabpanel"
                 aria-labelledby="tab-overview"
-                className="w-full h-[540px] sm:h-[620px] lg:h-[680px] rounded-3xl border border-slate-200/90 bg-white p-5 sm:p-6 overflow-y-auto space-y-4 shadow-sm flex flex-col justify-between animate-fadeIn"
+                className={`${HERO_RIGHT_PANEL_HEIGHT_CLASS} rounded-3xl border border-slate-200/90 bg-white p-4 sm:p-5 overflow-y-auto shadow-sm flex flex-col justify-between animate-fadeIn`}
               >
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between border-b border-slate-200/80 pb-3">
-                    <div>
-                      <h3 className="text-base font-bold font-sans text-slate-900 flex items-center gap-2">
-                        <span>🌤️ Environmental Overview: {location.name}</span>
-                      </h3>
-                      <p className="text-xs text-slate-600 mt-0.5">
-                        Local atmospheric conditions, ventilation windows, and exposure mitigation.
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setActiveView('globe')}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-mono font-bold shadow-xs transition-all cursor-pointer"
-                    >
-                      <span>🌐</span>
-                      <span>View on Globe</span>
-                    </button>
-                  </div>
-
-                  {/* Smog Season Protective Directives */}
-                  <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200 text-xs space-y-2">
-                    <div className="flex items-center gap-2 font-bold text-amber-900 font-sans">
-                      <span>🛡️ Winter Smog Advisory &amp; Safe Windows</span>
-                    </div>
-                    <p className="text-amber-800 leading-relaxed font-sans">
-                      Night ground cooling traps particulate matter below a shallow boundary layer between 06:00 and 09:30. Outdoor exercise, school sports, and natural window ventilation are safest when afternoon solar heating lifts the stagnant layer.
+                <div className="space-y-3 flex-1 flex flex-col justify-between">
+                  {/* Header */}
+                  <div className="border-b border-slate-200/80 pb-2">
+                    <h3 className="text-sm sm:text-base font-bold font-sans text-slate-900 flex items-center gap-2">
+                      <span>🌤️ Environmental Overview: {location.name}</span>
+                    </h3>
+                    <p className="text-xs text-slate-600 mt-0.5 font-sans">
+                      Local atmospheric conditions, ventilation windows, and exposure mitigation.
                     </p>
                   </div>
 
-                  {/* Summary metric callouts */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                    <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-1">
-                      <span className="text-[11px] font-mono text-slate-500 uppercase font-semibold">
-                        Telemetry Source
-                      </span>
-                      <p className="text-xs font-bold text-slate-800 font-mono">
-                        {isStation
-                          ? `Ground Station (${report.stationName || 'Nearby'}, ${report.distanceKm ?? 0} km)`
-                          : 'Copernicus CAMS (~45 km regional grid)'}
+                  {/* a. Conditional advisory based on live CPCB category (1-2 lines max) */}
+                  {effectiveTierLabel === 'Severe' ||
+                  effectiveTierLabel === 'Very Poor' ||
+                  effectiveTierLabel === 'Poor' ? (
+                    <div className="p-2.5 rounded-xl bg-amber-50/90 border border-amber-300 text-xs flex items-center gap-2">
+                      <span className="text-base shrink-0" aria-hidden="true">🛡️</span>
+                      <p className="text-amber-900 leading-snug font-sans text-xs">
+                        <strong className="font-semibold">Winter Smog Advisory: </strong>
+                        Night ground cooling traps particulate below a shallow boundary layer. Avoid morning exertion; shift outdoor activities to afternoon solar breakup.
                       </p>
-                      <span className="text-[10px] text-slate-500 block">
-                        Observed: {formatDataAge(report.observedAt || report.modelTimestamp)}
+                    </div>
+                  ) : effectiveTierLabel === 'Moderate' ? (
+                    <div className="p-2.5 rounded-xl bg-amber-50/60 border border-amber-200 text-xs flex items-center gap-2">
+                      <span className="text-base shrink-0" aria-hidden="true">⚠️</span>
+                      <p className="text-amber-900 leading-snug font-sans text-xs">
+                        <strong className="font-semibold">Moderate Air Quality Notice: </strong>
+                        Air quality is acceptable; sensitive groups (children, asthmatics, seniors) should limit prolonged morning outdoor exertion.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="p-2.5 rounded-xl bg-emerald-50/80 border border-emerald-200 text-xs flex items-center gap-2">
+                      <span className="text-base shrink-0" aria-hidden="true">🌿</span>
+                      <p className="text-emerald-950 leading-snug font-sans text-xs">
+                        <strong className="font-semibold">Good Air Quality: </strong>
+                        Safe ambient air. Favorable conditions for morning workouts, airing out living spaces, and outdoor sports.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* b. Compact merged row: Data source + Primary concern */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-mono">
+                    <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <span className="text-[10px] text-slate-500 uppercase font-bold block">Data source</span>
+                        <p className="text-xs font-bold text-slate-800 truncate">
+                          {isStation
+                            ? `${report.stationName || 'Nearby Station'} (${report.distanceKm ?? 0} km)`
+                            : 'Copernicus CAMS (~45 km grid)'}
+                        </p>
+                      </div>
+                      <span className="text-[10px] text-slate-500 shrink-0 font-medium bg-white px-1.5 py-0.5 rounded border border-slate-200">
+                        {formatDataAge(report.observedAt || report.modelTimestamp)}
                       </span>
                     </div>
 
-                    <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-1">
-                      <span className="text-[11px] font-mono text-slate-500 uppercase font-semibold">
-                        Primary Concern
-                      </span>
-                      <p className="text-xs font-bold text-slate-800 font-mono">
-                        {dominantPollutant ? dominantPollutant.toUpperCase() : 'PM2.5'} ({effectiveTierLabel})
-                      </p>
-                      <span className="text-[10px] text-slate-500 block">
-                        Fine particles penetrate deep into bronchial airways.
+                    <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <span className="text-[10px] text-slate-500 uppercase font-bold block">Primary Concern</span>
+                        <p className="text-xs font-bold text-slate-800 truncate">
+                          {dominantPollutant ? dominantPollutant.toUpperCase() : 'PM2.5'}
+                        </p>
+                      </div>
+                      <span
+                        className="text-[10px] font-bold px-2 py-0.5 rounded-md border shrink-0"
+                        style={{
+                          backgroundColor: `${aqiColor}15`,
+                          borderColor: `${aqiColor}40`,
+                          color: aqiColor,
+                        }}
+                      >
+                        {effectiveTierLabel}
                       </span>
                     </div>
                   </div>
-                </div>
 
-                {/* Switcher Banner to explore Globe or Compare */}
-                <div className="rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-950 p-4 text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border border-slate-700 shadow-md">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl" aria-hidden="true">🌍</span>
-                    <div>
-                      <h4 className="text-xs font-bold font-sans">Explore 3D Dispersion Earth</h4>
-                      <p className="text-[11px] text-slate-300">Visualize aerosol plumes &amp; compare regional air quality</p>
+                  {/* c. Best time to be outside compact chip */}
+                  {bestDaytimeWindow && (
+                    <div
+                      className="p-2 rounded-xl border flex items-center justify-between gap-2 shadow-2xs text-xs font-sans"
+                      style={{
+                        backgroundColor: `${bestDaytimeWindow.colorToken}10`,
+                        borderColor: `${bestDaytimeWindow.colorToken}35`,
+                      }}
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-sm select-none" aria-hidden="true">✨</span>
+                        <span className="text-slate-800 truncate text-xs">
+                          <strong className="text-slate-900 font-bold">Best time to be outside: </strong>
+                          <span className="font-bold text-teal-950 font-mono">{bestDaytimeWindow.displayWindow}</span>
+                          <span className="text-slate-600 ml-1.5 font-mono text-[11px]">
+                            (AQI ~{bestDaytimeWindow.averageAqi}, {bestDaytimeWindow.category})
+                          </span>
+                        </span>
+                      </div>
+                      <span
+                        className="text-[9px] font-mono font-bold px-2 py-0.5 rounded-md text-white shrink-0 uppercase tracking-tight"
+                        style={{ backgroundColor: bestDaytimeWindow.colorToken }}
+                      >
+                        Recommended
+                      </span>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setActiveView('compare')}
-                      className="px-3 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-mono text-xs font-bold transition-all cursor-pointer"
-                    >
-                      Compare Cities
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setActiveView('globe')}
-                      className="px-3 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-white font-mono text-xs font-bold shadow-xs transition-all cursor-pointer"
-                    >
-                      Open 3D Globe →
-                    </button>
+                  )}
+
+                  {/* d. Two tiles side by side (stack on mobile) filling remaining height */}
+                  <div
+                    className={`grid grid-cols-1 ${
+                      report.historicalTrend && report.historicalTrend.length > 0 ? 'md:grid-cols-2' : 'grid-cols-1'
+                    } gap-3 flex-1 min-h-0 pt-0.5`}
+                  >
+                    <PollutantBars report={report} />
+                    {report.historicalTrend && report.historicalTrend.length > 0 && (
+                      <SevenDayTrend trend={report.historicalTrend} />
+                    )}
                   </div>
                 </div>
               </div>

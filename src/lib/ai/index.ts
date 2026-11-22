@@ -100,7 +100,13 @@ export async function askAirCopilot(
 
   // 3. If credentials are not configured or quota is exhausted, use deterministic fallback
   if (!isCloudflareConfigured() || aiCache.isDailyQuotaExhausted()) {
-    const fallback = getDeterministicCopilotAnswer(validatedInput);
+    const fallbackReason = aiCache.isDailyQuotaExhausted()
+      ? 'Daily AI allowance reached, showing a standard answer'
+      : 'Cloudflare credentials not configured, showing a standard answer';
+    const fallback: CopilotResponse = {
+      ...getDeterministicCopilotAnswer(validatedInput),
+      fallbackReason,
+    };
     aiCache.setCopilot(cacheKey, fallback);
     return fallback;
   }
@@ -116,15 +122,30 @@ export async function askAirCopilot(
 
       const result: CopilotResponse = {
         ...aiResponse,
+        modelName: aiResponse.modelName || 'Cloudflare Workers AI',
         isDeterministicFallback: false,
       };
 
       aiCache.setCopilot(cacheKey, result);
       return result;
     } catch (err: unknown) {
-      console.error('[Copilot Workers AI Error]:', err);
+      console.warn('[Copilot Workers AI Fallback]:', err instanceof Error ? err.message : String(err));
+      let fallbackReason = 'AI service busy, showing a standard answer';
+      if (err instanceof Error) {
+        const errorWithCode = err as { code?: string; isDailyQuota?: boolean };
+        if (errorWithCode.code === 'TIMEOUT') {
+          fallbackReason = 'AI service busy, showing a standard answer';
+        } else if (errorWithCode.code === 'QUOTA_EXHAUSTED_DAILY' || errorWithCode.isDailyQuota) {
+          fallbackReason = 'Daily AI allowance reached, showing a standard answer';
+        } else if (errorWithCode.code === 'RATE_LIMITED_BURST') {
+          fallbackReason = 'Rate limit reached, showing a standard answer';
+        }
+      }
       // Graceful degradation to deterministic 7-part response
-      const fallback = getDeterministicCopilotAnswer(validatedInput);
+      const fallback: CopilotResponse = {
+        ...getDeterministicCopilotAnswer(validatedInput),
+        fallbackReason,
+      };
       aiCache.setCopilot(cacheKey, fallback);
       return fallback;
     }
