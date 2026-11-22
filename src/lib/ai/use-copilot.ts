@@ -5,6 +5,7 @@ import { CopilotResponse, WorkspaceContext, RoomContext } from './types';
 import { AirQualityReport, GeoLocation } from '@/domain/types';
 import { HouseholdStorageState, HouseholdMember } from '@/domain/household/types';
 import { loadHouseholdState } from '@/domain/household/storage';
+import { loadIndoorState } from '@/domain/indoor/storage';
 import {
   CopilotChatSession,
   loadChatSessions,
@@ -349,6 +350,7 @@ export function useAirCopilot({
         sourceType: report.sourceType,
         stationName: report.stationName,
         distanceKm: report.distanceKm,
+        indoorPm25: typeof window !== 'undefined' ? (loadIndoorState().indoorPm25Reading ?? null) : null,
       };
 
       try {

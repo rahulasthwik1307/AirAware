@@ -49,6 +49,7 @@ export interface RawOpenMeteoAirQualityResponse {
   readonly observedAt?: string | null;
   readonly stationPm25?: number | null;
   readonly stationPm10?: number | null;
+  readonly modelFallbackReason?: string | null;
   readonly current: {
     readonly time: string;
     readonly interval?: number;
@@ -233,6 +234,9 @@ export function normalizeAirQualityReport(
         }
       }
 
+      const isStationMeasurement =
+        isStation && (key === 'pm2_5' || (key === 'pm10' && raw.stationPm10 !== null && raw.stationPm10 !== undefined));
+
       pollutants[key] = {
         key,
         label: meta.label,
@@ -245,6 +249,7 @@ export function normalizeAirQualityReport(
         note: averagingNote,
         whoGuideline: meta.whoGuideline,
         whoRatio,
+        isStationMeasurement,
       };
     }
   }
@@ -305,7 +310,7 @@ export function normalizeAirQualityReport(
   if (location.countryCode.toUpperCase() === 'IN') {
     const cpcbResult = calculateCompositeCpcbAqi(
       current.pm2_5,
-      current.pm10,
+      isStation ? (raw.stationPm10 ?? null) : current.pm10,
       isStation
     );
 
@@ -354,6 +359,7 @@ export function normalizeAirQualityReport(
     distanceKm,
     observedAt,
     sourceType: effectiveSourceType,
+    modelFallbackReason: isStation ? null : (raw.modelFallbackReason ?? 'no recent station within 25 km'),
   };
 }
 

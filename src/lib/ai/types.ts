@@ -97,6 +97,7 @@ export const GuidanceRequestSchema = z.object({
   stationName: z.string().optional().nullable(),
   distanceKm: z.number().optional().nullable(),
   observationTime: z.string().optional().nullable(),
+  indoorPm25: z.number().optional().nullable(),
 });
 export type GuidanceRequest = z.infer<typeof GuidanceRequestSchema>;
 
@@ -164,6 +165,7 @@ export const CopilotRequestSchema = z.object({
   sourceType: z.enum(['station', 'model']).optional(),
   stationName: z.string().optional().nullable(),
   distanceKm: z.number().optional().nullable(),
+  indoorPm25: z.number().optional().nullable(),
 });
 export type CopilotRequest = Omit<z.infer<typeof CopilotRequestSchema>, 'workspace'> & {
   workspace?: WorkspaceContext;

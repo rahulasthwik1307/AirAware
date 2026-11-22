@@ -208,9 +208,12 @@ export function AqiHeroCard({
 
   const isCpcbActive = selectedStandard === 'CPCB_NAQI';
   const isStation = report.sourceType === 'station';
+  const stationMeasuredPm10 = isStation
+    ? (report.pollutants?.pm10?.isStationMeasurement ? report.pollutants?.pm10?.concentration : null)
+    : report.pollutants?.pm10?.concentration;
   const cpcbResult = calculateCompositeCpcbAqi(
     report.pollutants?.pm2_5?.concentration,
-    report.pollutants?.pm10?.concentration,
+    stationMeasuredPm10,
     isStation
   );
 
@@ -361,9 +364,14 @@ export function AqiHeroCard({
             {isStation ? (
               <span>
                 Ground station: <strong className="text-slate-900">{report.stationName || 'Nearby Monitor'}</strong>, {report.distanceKm !== null && report.distanceKm !== undefined ? `${report.distanceKm} km away` : ''} · OpenAQ · Observed {report.observedAt ? (report.observedAt.includes('T') ? report.observedAt.split('T')[1].slice(0, 5) : report.observedAt) : ''} ({formatDataAge(report.observedAt || modelTimestamp)})
+                {report.distanceKm !== null && report.distanceKm !== undefined && report.distanceKm > 10 && (
+                  <span className="text-amber-800 ml-1.5 font-normal">
+                    · This station is far from you; air near you may differ.
+                  </span>
+                )}
               </span>
             ) : (
-              <span>Modeled estimate (Copernicus CAMS via Open-Meteo, ~45 km grid) · no recent station within 25 km</span>
+              <span>Modeled estimate (Copernicus CAMS via Open-Meteo, ~45 km grid) · {report.modelFallbackReason || 'no recent station within 25 km'}</span>
             )}
           </span>
           <span className="text-slate-300">|</span>
@@ -475,7 +483,9 @@ export function AqiHeroCard({
                     </div>
                   </div>
                   <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded-md bg-white text-emerald-800 border border-emerald-200 shrink-0 shadow-2xs">
-                    {report.cpcbComparison.indexLabel || (isStation ? 'CPCB AQI (PM2.5/PM10 sub-index)' : 'PM2.5 sub-index, modeled')}
+                    {stationMeasuredPm10 === null || stationMeasuredPm10 === undefined
+                      ? 'PM2.5 sub-index only'
+                      : report.cpcbComparison?.indexLabel || (isStation ? 'CPCB AQI (PM2.5/PM10 sub-index)' : 'PM2.5 sub-index, modeled')}
                   </span>
                 </div>
               )}

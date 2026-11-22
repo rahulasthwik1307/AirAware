@@ -17,6 +17,7 @@ interface PollutantGridProps {
   readonly stationName?: string | null;
   readonly distanceKm?: number | null;
   readonly observedAt?: string | null;
+  readonly modelFallbackReason?: string | null;
 }
 
 const ORDERED_POLLUTANT_KEYS: readonly PollutantKey[] = [
@@ -277,6 +278,7 @@ export function PollutantGrid({
   stationName,
   distanceKm,
   observedAt,
+  modelFallbackReason,
 }: PollutantGridProps) {
   const isEaqi = activeStandard === 'EUROPEAN_EAQI';
   const standardName = isEaqi ? 'European EAQI' : 'US EPA AQI';
@@ -334,8 +336,8 @@ export function PollutantGrid({
           )}
           <span className="text-xs font-mono font-semibold text-[var(--brand-primary)] bg-[var(--brand-surface)] px-2.5 py-1 rounded border border-[var(--brand-primary)]/30 break-words max-w-full">
             {isStation
-              ? `Ground station: ${stationName}, ${distanceKm !== null && distanceKm !== undefined ? `${distanceKm} km away` : ''} · OpenAQ`
-              : 'Modeled estimate (Copernicus CAMS via Open-Meteo, ~45 km grid) · no recent station within 25 km'}
+              ? `Ground station: ${stationName}, ${distanceKm !== null && distanceKm !== undefined ? `${distanceKm} km away` : ''} · OpenAQ${distanceKm && distanceKm > 10 ? ' · This station is far from you; air near you may differ.' : ''}`
+              : `Modeled estimate (Copernicus CAMS via Open-Meteo, ~45 km grid) · ${modelFallbackReason || 'no recent station within 25 km'}`}
           </span>
         </div>
       </div>
@@ -361,6 +363,7 @@ export function PollutantGrid({
               (dominantPollutant && (edu.chemicalFormula === dominantPollutant || key === dominantPollutant)));
 
           const tier = item.tier;
+          const isStationMeasurement = Boolean(item.isStationMeasurement);
 
           // Pollutant-specific regulatory averaging disclosure
           let regulatoryMethodDisclosure = '';
@@ -455,6 +458,21 @@ export function PollutantGrid({
                           Unreported
                         </span>
                       ) : null}
+                      {isStationMeasurement ? (
+                        <span
+                          className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-50 text-emerald-800 border border-emerald-300 whitespace-nowrap shrink-0"
+                          title="Physical in-situ measurement from government reference ground station"
+                        >
+                          Station
+                        </span>
+                      ) : (
+                        <span
+                          className="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-slate-100 text-slate-600 border border-slate-200 whitespace-nowrap shrink-0"
+                          title="Atmospheric numerical model simulation"
+                        >
+                          Modeled
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -480,7 +498,7 @@ export function PollutantGrid({
                         </span>
                       </div>
                       <span className="text-xs font-mono text-[var(--ink-muted)] block mt-0.5">
-                        1-hour model concentration
+                        {isStationMeasurement ? 'Measured at ground station' : '1-hour model concentration'}
                       </span>
                     </div>
                   ) : (

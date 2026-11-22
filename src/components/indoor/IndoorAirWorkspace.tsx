@@ -17,6 +17,7 @@ import { VentilationAdvisor } from './VentilationAdvisor';
 import { PollutionSourceMatrix } from './PollutionSourceMatrix';
 import { CleanAirSizer } from './CleanAirSizer';
 import { FilterMaintenanceLog } from './FilterMaintenanceLog';
+import { IndoorAirReadingCard } from './IndoorAirReadingCard';
 
 interface IndoorAirWorkspaceProps {
   readonly onOpenCopilotWithContext?: (prompt?: string, roomName?: string) => void;
@@ -65,6 +66,15 @@ export function IndoorAirWorkspace({ onOpenCopilotWithContext }: IndoorAirWorksp
           </span>
         </div>
       </div>
+
+      {/* User Indoor Reading & Room Protection Directive */}
+      <IndoorAirReadingCard
+        outdoorPm25={report?.pollutants?.pm2_5?.concentration ?? 60}
+        savedReading={indoorState.indoorPm25Reading}
+        hasMonitor={indoorState.hasMonitor}
+        bestVentilationWindow="1:00 PM – 3:00 PM"
+        onAskCopilot={(q) => onOpenCopilotWithContext?.(q, indoorState.selectedRoomId)}
+      />
 
       {/* Main Balanced Grid: Row 1 (Home Cutaway & Purifier Status) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">

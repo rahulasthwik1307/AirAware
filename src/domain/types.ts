@@ -82,6 +82,7 @@ export interface PollutantMeasurement {
   readonly note?: string;
   readonly whoGuideline: number;
   readonly whoRatio: number | null; // e.g. 3.4x WHO guideline
+  readonly isStationMeasurement?: boolean;
 }
 
 export interface ForecastPoint {
@@ -155,4 +156,5 @@ export interface AirQualityReport {
   readonly distanceKm?: number | null;
   readonly observedAt?: string | null;
   readonly sourceType: 'station' | 'model';
+  readonly modelFallbackReason?: string | null;
 }

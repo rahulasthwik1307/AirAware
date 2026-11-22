@@ -44,7 +44,7 @@ export function AtmosphericWeatherCard({
         </div>
 
         <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded border border-[var(--border-subtle)] bg-[var(--surface-card)] text-[var(--ink-secondary)] self-start sm:self-auto">
-          Surface Observations
+          Modeled Surface Observations
         </span>
       </div>
 
@@ -59,7 +59,7 @@ export function AtmosphericWeatherCard({
           </div>
           <div>
             <span className="text-[10px] font-mono font-bold text-[var(--ink-muted)] uppercase block">
-              Temperature (2m)
+              Temperature (modeled, 2m)
             </span>
             <span className="text-base font-mono font-bold tabular-nums text-[var(--ink-primary)]">
               {weather.temperature !== null ? `${weather.temperature.toFixed(1)}°C` : 'Not Reported'}
@@ -76,7 +76,7 @@ export function AtmosphericWeatherCard({
           </div>
           <div>
             <span className="text-[10px] font-mono font-bold text-[var(--ink-muted)] uppercase block">
-              Relative Humidity (2m)
+              Relative Humidity (modeled, 2m)
             </span>
             <span className="text-base font-mono font-bold tabular-nums text-[var(--ink-primary)]">
               {weather.humidity !== null ? `${weather.humidity}%` : 'Not Reported'}
@@ -96,7 +96,7 @@ export function AtmosphericWeatherCard({
           </div>
           <div>
             <span className="text-[10px] font-mono font-bold text-[var(--ink-muted)] uppercase block">
-              Surface Wind (10m)
+              Surface Wind (modeled, 10m)
             </span>
             <div className="flex items-baseline gap-1.5">
               <span className="text-base font-mono font-bold tabular-nums text-[var(--ink-primary)]">

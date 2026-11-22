@@ -28,6 +28,8 @@ export const DEFAULT_INDOOR_STATE: IndoorPreferencesState = Object.freeze({
     customIntervalMonths: 6,
     notes: 'Standard HEPA + activated carbon filter set',
   },
+  indoorPm25Reading: null,
+  hasMonitor: false,
 });
 
 export function getIndoorServerSnapshot(): IndoorPreferencesState {
@@ -83,6 +85,11 @@ export function loadIndoorState(): IndoorPreferencesState {
         ...DEFAULT_INDOOR_STATE.filterLog,
         ...(parsed.filterLog || {}),
       },
+      indoorPm25Reading:
+        typeof parsed.indoorPm25Reading === 'number' && Number.isFinite(parsed.indoorPm25Reading) && parsed.indoorPm25Reading >= 0
+          ? parsed.indoorPm25Reading
+          : null,
+      hasMonitor: Boolean(parsed.hasMonitor),
     };
     return cachedIndoorState;
   } catch {
@@ -143,6 +150,19 @@ export function updateFilterLog(logUpdate: Partial<FilterLogState>): void {
       ...current.filterLog,
       ...logUpdate,
     },
+  });
+}
+
+export function updateIndoorPm25Reading(reading: number | null, hasMonitor: boolean): void {
+  const current = loadIndoorState();
+  const safeReading =
+    typeof reading === 'number' && Number.isFinite(reading) && reading >= 0
+      ? Math.round(reading * 10) / 10
+      : null;
+  saveIndoorState({
+    ...current,
+    indoorPm25Reading: safeReading,
+    hasMonitor,
   });
 }
 

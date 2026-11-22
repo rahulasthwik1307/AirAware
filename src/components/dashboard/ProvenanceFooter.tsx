@@ -56,7 +56,9 @@ export function ProvenanceFooter({ report }: ProvenanceFooterProps) {
 
           <div className="flex items-center gap-2 text-xs font-mono text-[var(--ink-muted)]">
             <span className="group-open:hidden">
-              {isStation ? `Ground station: ${report?.stationName || 'Nearby'} (${report?.distanceKm} km away) ▾` : 'Copernicus CAMS IFS and Open-Meteo disclosure ▾'}
+              {isStation
+                ? `Ground station: ${report?.stationName || 'Nearby'} (${report?.distanceKm} km away) · OpenAQ${report?.distanceKm && report.distanceKm > 10 ? ' (station far from you)' : ''} ▾`
+                : `Modeled estimate: Copernicus CAMS (${report?.modelFallbackReason || 'no recent station within 25 km'}) ▾`}
             </span>
             <span className="hidden group-open:inline text-[var(--brand-primary)] font-semibold">
               Hide Details ▴
@@ -117,6 +119,7 @@ export function ProvenanceFooter({ report }: ProvenanceFooterProps) {
               {isStation ? (
                 <span>
                   <strong className="text-[var(--ink-primary)]">Telemetry Source:</strong> Ground station: {report?.stationName}, {report?.distanceKm} km away · OpenAQ · Observed {report?.observedAt || report?.modelTimestamp} ({formatDataAge(report?.observedAt || report?.modelTimestamp)}).
+                  {report?.distanceKm && report.distanceKm > 10 ? ' · This station is far from you; air near you may differ.' : ''}
                 </span>
               ) : isEurope ? (
                 <span>
@@ -124,7 +127,7 @@ export function ProvenanceFooter({ report }: ProvenanceFooterProps) {
                 </span>
               ) : (
                 <span>
-                  <strong className="text-[var(--ink-primary)]">Model Domain:</strong> Modeled estimate (Copernicus CAMS via Open-Meteo, ~45 km grid) · no recent station within 25 km. CAMS Global atmospheric composition (~45 km horizontal grid). Modelled regional grid output does not provide street-level precision and reflects atmospheric transport simulations rather than in-situ ground monitoring stations (such as physical CAAQMS stations in India).
+                  <strong className="text-[var(--ink-primary)]">Model Domain:</strong> Modeled estimate (Copernicus CAMS via Open-Meteo, ~45 km grid) · {report?.modelFallbackReason || 'no recent station within 25 km'}. CAMS Global atmospheric composition (~45 km horizontal grid). Modelled regional grid output does not provide street-level precision and reflects atmospheric transport simulations rather than in-situ ground monitoring stations (such as physical CAAQMS stations in India).
                 </span>
               )}
             </div>

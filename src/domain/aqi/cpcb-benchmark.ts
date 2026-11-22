@@ -129,6 +129,13 @@ export function calculateCompositeCpcbAqi(
     }
 
     const { category, aqiRange, colorToken, bgToken } = getCategoryDetailsFromAqi(finalAqi);
+    const hasBothStationPollutants = pm25Sub !== null && pm10Sub !== null;
+    const stationIndexLabel = hasBothStationPollutants
+      ? 'CPCB AQI (PM2.5/PM10 sub-index)'
+      : pm10Sub !== null
+      ? 'PM10 sub-index only'
+      : 'PM2.5 sub-index only';
+
     return {
       aqi: finalAqi,
       category,
@@ -137,7 +144,7 @@ export function calculateCompositeCpcbAqi(
       colorToken,
       bgToken,
       methodologyNote: `In-situ ground monitor composite CPCB AQI determined from maximum sub-index (dominant: ${dominant}).`,
-      indexLabel: 'CPCB AQI (PM2.5/PM10 sub-index)',
+      indexLabel: stationIndexLabel,
       dominantSubIndexPollutant: dominant,
     };
   }
@@ -152,7 +159,7 @@ export function calculateCompositeCpcbAqi(
       colorToken: 'var(--ink-muted)',
       bgToken: '#F1F5F9',
       methodologyNote: 'Single-pollutant PM2.5 benchmark: Concentration unavailable for reference comparison.',
-      indexLabel: 'PM2.5 sub-index, modeled',
+      indexLabel: pm10Sub !== null ? 'PM10 sub-index only' : 'PM2.5 sub-index only',
       dominantSubIndexPollutant: null,
     };
   }

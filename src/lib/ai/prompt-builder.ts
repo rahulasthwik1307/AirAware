@@ -48,7 +48,7 @@ Authoritative facts (do not calculate or alter):
 - ${sourceInfo}
 ${observationTimeInfo ? `${observationTimeInfo}\n` : ''}- Household Members: ${membersInfo}
 - Primary Activity: ${data.userContext.primaryActivity}
-${data.scheduleSummary ? `- Schedules: ${data.scheduleSummary}` : ''}
+${data.indoorPm25 !== null && data.indoorPm25 !== undefined ? `- User-Reported Indoor Air Reading: ${data.indoorPm25} µg/m³ (user-provided reading from home monitor/purifier)\n` : ''}${data.scheduleSummary ? `- Schedules: ${data.scheduleSummary}` : ''}
 
 Rules:
 1. Lock all numbers to the authoritative facts above. Do NOT alter AQI values or pollutant numbers. The AQI and PM values must come only from the provided facts. Never state precise numbers (percentages, CADR, emission factors) unless they are in the provided facts or are widely established; otherwise explain qualitatively.
@@ -144,7 +144,7 @@ ${timeContext ? `- ${timeContext}` : ''}
 ${sourceContext ? `- ${sourceContext}` : ''}
 - ${vulnerabilityContext}
 - ${activityContext}
-${workspaceContext ? `- ${workspaceContext}` : ''}
+${data.indoorPm25 !== null && data.indoorPm25 !== undefined ? `- User Indoor Air Reading: ${data.indoorPm25} µg/m³ (user-provided reading from home monitor/purifier)\n` : ''}${workspaceContext ? `- ${workspaceContext}` : ''}
 ${roomContext ? `- ${roomContext}` : ''}
 
 Rules:

@@ -186,6 +186,7 @@ export function AirQualityDashboard({ onSelectWorkspace }: AirQualityDashboardPr
             stationName={report.stationName}
             distanceKm={report.distanceKm}
             observedAt={report.observedAt}
+            modelFallbackReason={report.modelFallbackReason}
           />
 
           {/* 6. Scientific Grounding & Multi-Standard Calibration */}

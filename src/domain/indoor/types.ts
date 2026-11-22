@@ -65,6 +65,27 @@ export interface FilterLogState {
   readonly notes?: string;
 }
 
+export interface IndoorActionItem {
+  readonly title: string;
+  readonly action: string;
+  readonly why: string;
+  readonly expectedImpact: string;
+}
+
+export interface IndoorReadingAnalysis {
+  readonly reading: number | null;
+  readonly hasMonitor: boolean;
+  readonly cpcbCategory: string;
+  readonly cpcbColorToken: string;
+  readonly cpcbBgToken: string;
+  readonly outdoorPm25: number;
+  readonly comparisonText: string;
+  readonly percentageCleaner: number | null;
+  readonly isEstimate: boolean;
+  readonly statedAssumption?: string;
+  readonly actions: readonly IndoorActionItem[];
+}
+
 export interface IndoorPreferencesState {
   readonly selectedRoomId: RoomType;
   readonly roomAreas: Record<RoomType, number>;
@@ -72,4 +93,6 @@ export interface IndoorPreferencesState {
   readonly selectedCadrM3h: number;
   readonly targetAch: number;
   readonly filterLog: FilterLogState;
+  readonly indoorPm25Reading?: number | null;
+  readonly hasMonitor?: boolean;
 }

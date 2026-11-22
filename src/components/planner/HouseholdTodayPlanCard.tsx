@@ -10,6 +10,7 @@ import {
   TodayHouseholdPlan,
 } from '@/lib/ai/types';
 import { getDeterministicGuidance } from '@/lib/ai/deterministic-fallback';
+import { loadIndoorState } from '@/domain/indoor/storage';
 
 interface HouseholdTodayPlanCardProps {
   readonly report: AirQualityReport | null;
@@ -90,6 +91,7 @@ export function HouseholdTodayPlanCard({
       stationName: report.stationName,
       distanceKm: report.distanceKm,
       observationTime: report.observedAt || report.modelTimestamp,
+      indoorPm25: typeof window !== 'undefined' ? (loadIndoorState().indoorPm25Reading ?? null) : null,
     };
   }, [report, householdState, location]);
 

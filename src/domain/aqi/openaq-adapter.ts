@@ -54,9 +54,19 @@ const TIMEOUT_MS = 5000; // 5 seconds
 const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
 // In-memory module-level cache for serverless invocation lifetime
+export type OpenAqFallbackReason =
+  | 'no recent station within 25 km'
+  | 'station data too old'
+  | 'service busy';
+
+export interface OpenAqDetailedResult {
+  readonly station: OpenAqStationResult | null;
+  readonly fallbackReason: OpenAqFallbackReason | null;
+}
+
 export const openAqMemoryCache = new Map<
   string,
-  { result: OpenAqStationResult | null; timestamp: number }
+  { result: OpenAqStationResult | null; fallbackReason: OpenAqFallbackReason | null; timestamp: number }
 >();
 
 /**
@@ -182,10 +192,10 @@ export function parseLatestReadings(
 }
 
 /**
- * Retrieves the nearest active OpenAQ government reference monitor within 25 km.
- * Falls back gracefully to null on missing key, 429 rate limit, timeouts, or lack of fresh station.
+ * Retrieves the nearest active OpenAQ government reference monitor within 25 km,
+ * alongside the specific reason if falling back to the numerical model.
  */
-export async function getNearestOpenAqStation(
+export async function getNearestOpenAqStationDetailed(
   latitude: number,
   longitude: number,
   options?: {
@@ -193,10 +203,10 @@ export async function getNearestOpenAqStation(
     readonly forceRefresh?: boolean;
     readonly fetchFn?: typeof fetch;
   }
-): Promise<OpenAqStationResult | null> {
+): Promise<OpenAqDetailedResult> {
   const apiKey = options?.apiKeyOverride ?? getOpenAqApiKey();
   if (!apiKey) {
-    return null;
+    return { station: null, fallbackReason: 'no recent station within 25 km' };
   }
 
   const customFetch = options?.fetchFn ?? fetch;
@@ -206,7 +216,7 @@ export async function getNearestOpenAqStation(
   if (!options?.forceRefresh) {
     const cached = openAqMemoryCache.get(cacheKey);
     if (cached && now - cached.timestamp < CACHE_TTL_MS) {
-      return cached.result;
+      return { station: cached.result, fallbackReason: cached.fallbackReason };
     }
   }
 
@@ -232,28 +242,37 @@ export async function getNearestOpenAqStation(
     }
 
     // Rate limit or upstream failure check
-    if (locRes.status === 429 || !locRes.ok) {
-      openAqMemoryCache.set(cacheKey, { result: null, timestamp: now });
-      return null;
+    if (locRes.status === 429) {
+      openAqMemoryCache.set(cacheKey, { result: null, fallbackReason: 'service busy', timestamp: now });
+      return { station: null, fallbackReason: 'service busy' };
+    }
+    if (!locRes.ok) {
+      openAqMemoryCache.set(cacheKey, { result: null, fallbackReason: 'service busy', timestamp: now });
+      return { station: null, fallbackReason: 'service busy' };
     }
 
     const locRemaining = locRes.headers.get('x-ratelimit-remaining');
     if (locRemaining !== null && Number(locRemaining) <= 0) {
-      // At rate limit limit, do not hammer upstream
-      openAqMemoryCache.set(cacheKey, { result: null, timestamp: now });
-      return null;
+      openAqMemoryCache.set(cacheKey, { result: null, fallbackReason: 'service busy', timestamp: now });
+      return { station: null, fallbackReason: 'service busy' };
     }
 
     const locData = await locRes.json().catch(() => null);
     if (!locData || !Array.isArray(locData.results)) {
-      openAqMemoryCache.set(cacheKey, { result: null, timestamp: now });
-      return null;
+      openAqMemoryCache.set(cacheKey, { result: null, fallbackReason: 'service busy', timestamp: now });
+      return { station: null, fallbackReason: 'service busy' };
+    }
+
+    if (locData.results.length === 0) {
+      openAqMemoryCache.set(cacheKey, { result: null, fallbackReason: 'no recent station within 25 km', timestamp: now });
+      return { station: null, fallbackReason: 'no recent station within 25 km' };
     }
 
     const nearestStation = selectNearestStation(locData.results, MAX_DATA_AGE_MS, now);
     if (!nearestStation) {
-      openAqMemoryCache.set(cacheKey, { result: null, timestamp: now });
-      return null;
+      // Stations existed within search but were rejected due to age or sensor filters
+      openAqMemoryCache.set(cacheKey, { result: null, fallbackReason: 'station data too old', timestamp: now });
+      return { station: null, fallbackReason: 'station data too old' };
     }
 
     // Call 2: Fetch latest sensor measurements for the nearest station
@@ -276,22 +295,44 @@ export async function getNearestOpenAqStation(
     }
 
     if (latestRes.status === 429 || !latestRes.ok) {
-      openAqMemoryCache.set(cacheKey, { result: null, timestamp: now });
-      return null;
+      openAqMemoryCache.set(cacheKey, { result: null, fallbackReason: 'service busy', timestamp: now });
+      return { station: null, fallbackReason: 'service busy' };
     }
 
     const latestData = await latestRes.json().catch(() => null);
     if (!latestData || !Array.isArray(latestData.results)) {
-      openAqMemoryCache.set(cacheKey, { result: null, timestamp: now });
-      return null;
+      openAqMemoryCache.set(cacheKey, { result: null, fallbackReason: 'service busy', timestamp: now });
+      return { station: null, fallbackReason: 'service busy' };
     }
 
     const stationResult = parseLatestReadings(nearestStation, latestData.results, MAX_DATA_AGE_MS, now);
-    openAqMemoryCache.set(cacheKey, { result: stationResult, timestamp: now });
-    return stationResult;
+    if (!stationResult) {
+      openAqMemoryCache.set(cacheKey, { result: null, fallbackReason: 'station data too old', timestamp: now });
+      return { station: null, fallbackReason: 'station data too old' };
+    }
+
+    openAqMemoryCache.set(cacheKey, { result: stationResult, fallbackReason: null, timestamp: now });
+    return { station: stationResult, fallbackReason: null };
   } catch {
-    // Network errors, abort timeouts, JSON parse errors -> fail closed to null immediately
-    openAqMemoryCache.set(cacheKey, { result: null, timestamp: now });
-    return null;
+    // Network errors, abort timeouts, JSON parse errors -> fail closed
+    openAqMemoryCache.set(cacheKey, { result: null, fallbackReason: 'service busy', timestamp: now });
+    return { station: null, fallbackReason: 'service busy' };
   }
+}
+
+/**
+ * Retrieves the nearest active OpenAQ government reference monitor within 25 km.
+ * Falls back gracefully to null on missing key, 429 rate limit, timeouts, or lack of fresh station.
+ */
+export async function getNearestOpenAqStation(
+  latitude: number,
+  longitude: number,
+  options?: {
+    readonly apiKeyOverride?: string | null;
+    readonly forceRefresh?: boolean;
+    readonly fetchFn?: typeof fetch;
+  }
+): Promise<OpenAqStationResult | null> {
+  const { station } = await getNearestOpenAqStationDetailed(latitude, longitude, options);
+  return station;
 }

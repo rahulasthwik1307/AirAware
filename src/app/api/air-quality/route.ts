@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getNearestOpenAqStation } from '@/domain/aqi/openaq-adapter';
+import { getNearestOpenAqStationDetailed } from '@/domain/aqi/openaq-adapter';
 
 const AirQualityQuerySchema = z.object({
   latitude: z.coerce.number().min(-90).max(90),
@@ -65,14 +65,17 @@ export async function GET(request: NextRequest) {
     )}`;
 
     // Query CAMS numerical model and OpenAQ in-situ ground station in parallel
-    const [camsRes, stationResult] = await Promise.all([
+    const [camsRes, openAqResponse] = await Promise.all([
       fetch(targetUrl, {
         next: { revalidate: 600 }, // 10-minute caching
         headers: {
           Accept: 'application/json',
         },
       }),
-      getNearestOpenAqStation(latitude, longitude).catch(() => null),
+      getNearestOpenAqStationDetailed(latitude, longitude).catch(() => ({
+        station: null,
+        fallbackReason: 'service busy' as const,
+      })),
     ]);
 
     if (!camsRes.ok) {
@@ -91,6 +94,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const stationResult = openAqResponse.station;
+
     const payload = {
       ...data,
       sourceType: stationResult ? 'station' : 'model',
@@ -99,6 +104,7 @@ export async function GET(request: NextRequest) {
       observedAt: stationResult ? stationResult.observedAt : null,
       stationPm25: stationResult ? stationResult.pm25 : null,
       stationPm10: stationResult ? stationResult.pm10 : null,
+      modelFallbackReason: stationResult ? null : openAqResponse.fallbackReason,
     };
 
     return NextResponse.json(payload, {
