@@ -1,6 +1,15 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback, useSyncExternalStore, createContext, useContext } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useSyncExternalStore,
+  createContext,
+  useContext,
+  useRef,
+} from 'react';
 import { z } from 'zod';
 import { AirQualityReport, AqiStandardKey, GeoLocation } from '@/domain/types';
 import { normalizeAirQualityReport, RawOpenMeteoAirQualityResponse } from './normalizer';
@@ -33,18 +42,119 @@ const STORAGE_KEY = 'airaware_last_location';
 const LOCATION_CHANGED_EVENT = 'airaware_location_changed';
 const CACHE_TTL_MS = 15 * 60 * 1000; // 15-minute SWR caching
 
-interface CacheEntry {
+export const USER_FRIENDLY_TELEMETRY_ERROR =
+  "Couldn't reach the air-quality service. Check your connection and retry.";
+
+export function isSameLocation(
+  a: GeoLocation | null | undefined,
+  b: GeoLocation | null | undefined
+): boolean {
+  if (!a && !b) return true;
+  if (!a || !b) return false;
+  return (
+    a.id === b.id &&
+    a.name === b.name &&
+    Math.abs(a.latitude - b.latitude) < 0.0001 &&
+    Math.abs(a.longitude - b.longitude) < 0.0001
+  );
+}
+
+export function isAbortError(err: unknown): boolean {
+  if (!err) return false;
+  if (typeof DOMException !== 'undefined' && err instanceof DOMException && err.name === 'AbortError') {
+    return true;
+  }
+  if (err instanceof Error) {
+    return err.name === 'AbortError' || err.message.toLowerCase().includes('abort');
+  }
+  return false;
+}
+
+export interface TelemetryData {
   readonly rawAirQuality: RawOpenMeteoAirQualityResponse;
   readonly weather: WeatherData | null;
+}
+
+export interface CacheEntry extends TelemetryData {
   readonly timestamp: number;
 }
 
 // Module-level global singletons for cross-component SWR cache & in-flight deduplication
-const telemetryCache = new Map<string, CacheEntry>();
-const inFlightRequests = new Map<
-  string,
-  Promise<{ rawAirQuality: RawOpenMeteoAirQualityResponse; weather: WeatherData | null }>
->();
+export const telemetryCache = new Map<string, CacheEntry>();
+export const inFlightRequests = new Map<string, Promise<TelemetryData>>();
+
+export function fetchSharedTelemetry(
+  location: GeoLocation,
+  options?: { forceRefresh?: boolean }
+): Promise<TelemetryData> {
+  const cacheKey = `${location.latitude.toFixed(2)}_${location.longitude.toFixed(2)}`;
+
+  if (!options?.forceRefresh) {
+    const cached = telemetryCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+      return Promise.resolve({ rawAirQuality: cached.rawAirQuality, weather: cached.weather });
+    }
+  }
+
+  const existingInFlight = inFlightRequests.get(cacheKey);
+  if (existingInFlight && !options?.forceRefresh) {
+    return existingInFlight;
+  }
+
+  let timedOut = false;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, 12000);
+
+  const aqiUrl = `/api/air-quality?latitude=${location.latitude}&longitude=${location.longitude}&timezone=${encodeURIComponent(
+    location.timezone || 'auto'
+  )}`;
+  const weatherUrl = `/api/weather?latitude=${location.latitude}&longitude=${location.longitude}&timezone=${encodeURIComponent(
+    location.timezone || 'auto'
+  )}`;
+
+  const fetchPromise = Promise.all([
+    fetch(aqiUrl, { signal: controller.signal }),
+    fetch(weatherUrl, { signal: controller.signal }).catch(() => null),
+  ])
+    .then(async ([aqiRes, weatherRes]) => {
+      clearTimeout(timeoutId);
+      if (!aqiRes.ok) {
+        const errJson = await aqiRes.json().catch(() => ({}));
+        throw new Error(errJson.error || `Air Quality API responded with ${aqiRes.status}`);
+      }
+
+      const rawAqi: RawOpenMeteoAirQualityResponse = await aqiRes.json();
+      let wData: WeatherData | null = null;
+      if (weatherRes && weatherRes.ok) {
+        wData = await weatherRes.json().catch(() => null);
+      }
+
+      telemetryCache.set(cacheKey, {
+        rawAirQuality: rawAqi,
+        weather: wData,
+        timestamp: Date.now(),
+      });
+
+      return { rawAirQuality: rawAqi, weather: wData };
+    })
+    .catch((err: unknown) => {
+      clearTimeout(timeoutId);
+      if (timedOut) {
+        throw new Error('Connection timed out while fetching air-quality telemetry');
+      }
+      throw err;
+    })
+    .finally(() => {
+      clearTimeout(timeoutId);
+      inFlightRequests.delete(cacheKey);
+    });
+
+  inFlightRequests.set(cacheKey, fetchPromise);
+  return fetchPromise;
+}
 
 function subscribeToLocationStorage(callback: () => void) {
   if (typeof window === 'undefined') return () => {};
@@ -90,7 +200,7 @@ function useAirQualityState(standardOverride?: AqiStandardKey): UseAirQualityRet
     getServerLocationSnapshot
   );
 
-  const initialLocation = useMemo<GeoLocation | null>(() => {
+  const storedLocation = useMemo<GeoLocation | null>(() => {
     if (!storedJson) return null;
     try {
       const parsed = JSON.parse(storedJson);
@@ -103,13 +213,15 @@ function useAirQualityState(standardOverride?: AqiStandardKey): UseAirQualityRet
 
   const [overrideLocation, setOverrideLocation] = useState<GeoLocation | null>(null);
 
+  // Sync external storage changes (e.g. from other tabs or direct localStorage changes)
+  // only if different from current overrideLocation to avoid redundant render loops
   useEffect(() => {
-    if (initialLocation) {
-      setOverrideLocation(initialLocation);
+    if (storedLocation && (!overrideLocation || !isSameLocation(storedLocation, overrideLocation))) {
+      setOverrideLocation(storedLocation);
     }
-  }, [initialLocation]);
+  }, [storedLocation, overrideLocation]);
 
-  const location = overrideLocation ?? initialLocation ?? DEFAULT_LOCATION;
+  const location = overrideLocation ?? storedLocation ?? DEFAULT_LOCATION;
 
   const [activeStandard, setActiveStandard] = useState<AqiStandardKey | undefined>(standardOverride);
   const [rawAirQuality, setRawAirQuality] = useState<RawOpenMeteoAirQualityResponse | null>(null);
@@ -118,17 +230,17 @@ function useAirQualityState(standardOverride?: AqiStandardKey): UseAirQualityRet
   const [error, setError] = useState<string | null>(null);
   const [fetchTrigger, setFetchTrigger] = useState(0);
 
-  const cacheKey = useMemo(() => {
-    if (!location) return '';
-    return `${location.latitude.toFixed(2)}_${location.longitude.toFixed(2)}`;
-  }, [location]);
+  const latestRequestIdRef = useRef(0);
 
-  // SWR-style telemetry loading with deduplication
+  // SWR-style telemetry loading with latest-wins deduplication
   useEffect(() => {
-    if (!location || !cacheKey) return;
+    if (!location) return;
 
+    const requestId = ++latestRequestIdRef.current;
+    const cacheKey = `${location.latitude.toFixed(2)}_${location.longitude.toFixed(2)}`;
     const cached = telemetryCache.get(cacheKey);
     const now = Date.now();
+
     if (cached && now - cached.timestamp < CACHE_TTL_MS && fetchTrigger === 0) {
       setRawAirQuality(cached.rawAirQuality);
       setWeather(cached.weather);
@@ -137,100 +249,82 @@ function useAirQualityState(standardOverride?: AqiStandardKey): UseAirQualityRet
       return;
     }
 
-    let isAborted = false;
-    const abortController = new AbortController();
+    setIsLoading(true);
+    setError(null);
 
-    async function fetchData() {
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        let promise = inFlightRequests.get(cacheKey);
-
-        if (!promise) {
-          const aqiUrl = `/api/air-quality?latitude=${location!.latitude}&longitude=${location!.longitude}&timezone=${encodeURIComponent(
-            location!.timezone || 'auto'
-          )}`;
-          const weatherUrl = `/api/weather?latitude=${location!.latitude}&longitude=${location!.longitude}&timezone=${encodeURIComponent(
-            location!.timezone || 'auto'
-          )}`;
-
-          promise = Promise.all([
-            fetch(aqiUrl, { signal: abortController.signal }),
-            fetch(weatherUrl, { signal: abortController.signal }).catch(() => null),
-          ])
-            .then(async ([aqiRes, weatherRes]) => {
-              if (!aqiRes.ok) {
-                const errJson = await aqiRes.json().catch(() => ({}));
-                throw new Error(errJson.error || `Air Quality API responded with ${aqiRes.status}`);
-              }
-
-              const rawAqi: RawOpenMeteoAirQualityResponse = await aqiRes.json();
-              let wData: WeatherData | null = null;
-              if (weatherRes && weatherRes.ok) {
-                wData = await weatherRes.json().catch(() => null);
-              }
-
-              telemetryCache.set(cacheKey, {
-                rawAirQuality: rawAqi,
-                weather: wData,
-                timestamp: Date.now(),
-              });
-
-              return { rawAirQuality: rawAqi, weather: wData };
-            })
-            .finally(() => {
-              inFlightRequests.delete(cacheKey);
-            });
-
-          inFlightRequests.set(cacheKey, promise);
+    fetchSharedTelemetry(location, { forceRefresh: fetchTrigger > 0 })
+      .then((data) => {
+        // Latest-wins guard: discard response if a newer location request was initiated
+        if (requestId !== latestRequestIdRef.current) {
+          return;
+        }
+        setRawAirQuality(data.rawAirQuality);
+        setWeather(data.weather);
+        setIsLoading(false);
+        setError(null);
+      })
+      .catch((err: unknown) => {
+        // Latest-wins guard: ignore errors from superseded requests
+        if (requestId !== latestRequestIdRef.current) {
+          return;
         }
 
-        const result = await promise;
-
-        if (!isAborted) {
-          setRawAirQuality(result.rawAirQuality);
-          setWeather(result.weather);
-          setIsLoading(false);
+        // Never surface AbortError as an error state
+        if (isAbortError(err)) {
+          return;
         }
-      } catch (err: unknown) {
-        if (!isAborted) {
-          const msg = err instanceof Error ? err.message : 'Failed to fetch environmental data';
-          setError(msg);
-          setIsLoading(false);
-        }
-      }
-    }
 
-    fetchData();
-
-    return () => {
-      isAborted = true;
-      abortController.abort();
-    };
-  }, [location, cacheKey, fetchTrigger]);
+        // Real failure (network, HTTP error, timeout) -> show friendly human error
+        setError(USER_FRIENDLY_TELEMETRY_ERROR);
+        setIsLoading(false);
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.id, location.latitude, location.longitude, location.timezone, fetchTrigger]);
 
   const report = useMemo(() => {
     if (!rawAirQuality || !location) return null;
+    // Safety guard against cross-city coordinate mismatch during rapid location transitions
+    const latDiff = Math.abs(rawAirQuality.latitude - location.latitude);
+    const lonDiff = Math.abs(rawAirQuality.longitude - location.longitude);
+    if (latDiff > 0.5 || lonDiff > 0.5) {
+      return null;
+    }
     return normalizeAirQualityReport(rawAirQuality, location, activeStandard);
   }, [rawAirQuality, location, activeStandard]);
 
   const setLocation = useCallback((loc: GeoLocation) => {
-    setOverrideLocation(loc);
+    setOverrideLocation((prev) => (isSameLocation(prev, loc) ? prev : loc));
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(loc));
       window.dispatchEvent(new CustomEvent(LOCATION_CHANGED_EVENT));
     } catch {
       // LocalStorage write fallback
     }
+
+    const cacheKey = `${loc.latitude.toFixed(2)}_${loc.longitude.toFixed(2)}`;
+    const cached = telemetryCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+      setRawAirQuality(cached.rawAirQuality);
+      setWeather(cached.weather);
+      setIsLoading(false);
+      setError(null);
+    } else {
+      // Clear mismatched old data immediately so UI shows clean loading skeleton
+      setRawAirQuality(null);
+      setWeather(null);
+      setIsLoading(true);
+      setError(null);
+    }
   }, []);
 
   const refetch = useCallback(() => {
-    if (cacheKey) {
+    if (location) {
+      const cacheKey = `${location.latitude.toFixed(2)}_${location.longitude.toFixed(2)}`;
       telemetryCache.delete(cacheKey);
+      inFlightRequests.delete(cacheKey);
     }
     setFetchTrigger((prev) => prev + 1);
-  }, [cacheKey]);
+  }, [location]);
 
   return {
     location,
@@ -257,3 +351,4 @@ export function useAirQuality(): UseAirQualityReturn {
   }
   return context;
 }
+
