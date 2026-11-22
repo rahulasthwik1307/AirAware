@@ -92,17 +92,17 @@ export function AirQualityDashboard({ onSelectWorkspace }: AirQualityDashboardPr
             ⚠️
           </span>
           <h3 className="text-sm font-semibold font-mono text-[var(--aqi-unhealthy)] mt-2 tracking-wide">
-            Atmospheric Forecast Offline
+            Air Quality Data Unavailable
           </h3>
           <p className="text-xs text-[var(--ink-secondary)] mt-1.5 max-w-md mx-auto">
-            {error}
+            {error || 'Could not load air quality data right now. Please check your connection and tap retry.'}
           </p>
           <button
             type="button"
             onClick={handleRetry}
             className="mt-3.5 px-4 py-2 rounded-lg bg-[var(--brand-primary)] text-white text-xs font-mono font-bold shadow-xs hover:bg-[var(--brand-hover)] transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
           >
-            Retry Atmospheric Feed
+            Try Again
           </button>
         </div>
       )}

@@ -85,7 +85,8 @@ export function WelcomeLandingPage({
         </div>
       </header>
 
-      {/* Hero Section: 5:7 Split Grid */}
+      <main id="main-content">
+        {/* Hero Section: 5:7 Split Grid */}
       <section className="relative overflow-hidden pt-6 pb-16 sm:pt-10 sm:pb-20 border-b border-[var(--border-subtle)] bg-gradient-to-b from-white to-[var(--surface-ground)]">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center">
@@ -418,6 +419,7 @@ export function WelcomeLandingPage({
           </div>
         </div>
       </section>
+      </main>
     </div>
   );
 }

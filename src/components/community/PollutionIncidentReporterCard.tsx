@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { IncidentCategory, IncidentSeverity, PollutionIncident } from '@/domain/community/types';
 import { INCIDENT_CATEGORIES } from '@/domain/community/constants';
+import { getPollutionControlAuthority } from '@/domain/community/authorities';
 
 interface PollutionIncidentReporterCardProps {
   readonly defaultLocationName: string;
@@ -26,6 +27,10 @@ export function PollutionIncidentReporterCard({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const authority = useMemo(
+    () => getPollutionControlAuthority(locationName || defaultLocationName),
+    [locationName, defaultLocationName]
+  );
 
   // Auto-format & scale photo client-side using HTML5 Canvas (preserves full aspect ratio, max 3MB support)
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -140,11 +145,11 @@ export function PollutionIncidentReporterCard({
             type="button"
             onClick={() =>
               onAskCopilot(
-                `How do I officially report an illegal ${INCIDENT_CATEGORIES[category].label} violation to the Delhi Pollution Control Committee or CPCB Sameer? What laws protect citizens?`
+                `How do I officially report an illegal ${INCIDENT_CATEGORIES[category].label} violation to ${authority.name}? What laws protect citizens?`
               )
             }
             className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-lg bg-[var(--surface-subtle)] hover:bg-[var(--surface-card)] text-[var(--brand-primary)] border border-[var(--border-subtle)] hover:border-[var(--brand-primary)]/40 shadow-2xs transition-colors shrink-0 cursor-pointer"
-            title="Ask Copilot about reporting legal channels"
+            title={`Ask Copilot about reporting via ${authority.code}`}
           >
             <span className="text-sm">🤖</span>
             <span>Legal Rights</span>

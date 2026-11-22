@@ -162,13 +162,18 @@ export function AirAwareShell() {
     );
   }, [householdState]);
 
-  // Welcome page and onboarding questionnaire state
-  // Always display the Landing Page first whenever localhost:3000 opens!
+  // Welcome page and onboarding questionnaire state (Hydration-safe returning user check)
   const [isMounted, setIsMounted] = useState(false);
-  const [isWelcomeActive, setIsWelcomeActive] = useState(true);
+  const [isWelcomeActive, setIsWelcomeActive] = useState<boolean | null>(null);
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
 
   useEffect(() => {
+    try {
+      const completed = typeof window !== 'undefined' && localStorage.getItem('airaware_onboarding_completed_v1') === 'true';
+      setIsWelcomeActive(!completed);
+    } catch {
+      setIsWelcomeActive(false);
+    }
     setIsMounted(true);
   }, []);
 
@@ -229,7 +234,19 @@ export function AirAwareShell() {
     setIsWelcomeActive(false);
   };
 
-  // Render Welcome Landing Page whenever localhost:3000 opens or if summoned via Header Overview button
+  // Neutral loading state during initial mount to avoid hydration flash or mismatch
+  if (!isMounted || isWelcomeActive === null) {
+    return (
+      <div className="min-h-screen bg-[var(--surface-ground)] flex flex-col items-center justify-center p-4">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-8 w-8 animate-spin rounded-full border-3 border-[var(--brand-primary)] border-t-transparent" />
+          <span className="text-xs font-mono text-[var(--ink-muted)]">Loading AirAware...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Render Welcome Landing Page for first-time visitors or if summoned via Header Overview button
   if (isWelcomeActive) {
     return (
       <>
@@ -248,7 +265,7 @@ export function AirAwareShell() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-[var(--surface-ground)] text-[var(--ink-primary)] pb-16 md:pb-0">
+    <div className="flex min-h-screen flex-col bg-[var(--surface-ground)] text-[var(--ink-primary)] pb-16 lg:pb-0">
       {/* Universal Top Header */}
       <AppHeader
         activeWorkspace={activeWorkspace}

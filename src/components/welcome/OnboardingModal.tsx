@@ -392,7 +392,7 @@ export function OnboardingModal({
                 Where do you breathe most days?
               </h2>
               <p className="text-xs sm:text-sm text-slate-600 mt-1 leading-relaxed">
-                AirAware connects to local Copernicus CAMS satellite telemetry and regional CPCB airshed standards based on your location.
+                AirAware connects to local environmental satellites, ground stations, and CPCB standards based on your location.
               </p>
             </div>
 
@@ -480,7 +480,7 @@ export function OnboardingModal({
 
                   {isSearching && (
                     <div className="absolute top-full left-0 right-0 mt-1 z-30 rounded-xl border border-slate-200 bg-white shadow-md p-2 text-xs font-mono text-slate-500">
-                      Searching global airshed database...
+                      Searching city database...
                     </div>
                   )}
                 </div>
@@ -497,7 +497,7 @@ export function OnboardingModal({
             {/* Quick 1-Tap City Presets (Expanded with Hyderabad & Major Hubs) */}
             <div className="space-y-2">
               <label className="text-xs font-mono font-bold uppercase text-slate-500 block">
-                Or Select from Major Airshed Presets
+                Or Select from Common City Presets
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {CITY_PRESETS.map((city) => {
@@ -572,27 +572,24 @@ export function OnboardingModal({
               {HEALTH_OPTIONS.map((opt) => {
                 const isChecked = selectedSensitivities.includes(opt.id);
                 return (
-                  <div
+                  <label
                     key={opt.id}
-                    onClick={() => toggleSensitivity(opt.id)}
+                    htmlFor={`sensitivity-${opt.id}`}
                     className={`p-3 sm:p-3.5 rounded-2xl border transition-all cursor-pointer flex items-start gap-3 ${
                       isChecked
                         ? 'border-teal-700 bg-teal-50/50 shadow-2xs'
                         : 'border-slate-200 bg-white hover:border-slate-300'
                     }`}
                   >
-                    <label htmlFor={`sensitivity-${opt.id}`} className="mt-1 shrink-0 flex items-center">
-                      <span className="sr-only">{opt.title}</span>
-                      <input
-                        id={`sensitivity-${opt.id}`}
-                        name={`sensitivity-${opt.id}`}
-                        type="checkbox"
-                        checked={isChecked}
-                        aria-label={opt.title}
-                        onChange={() => {}} // handled by parent div
-                        className="h-4 w-4 shrink-0 rounded border-slate-300 text-teal-700 focus:ring-teal-700"
-                      />
-                    </label>
+                    <input
+                      id={`sensitivity-${opt.id}`}
+                      name={`sensitivity-${opt.id}`}
+                      type="checkbox"
+                      checked={isChecked}
+                      aria-label={opt.title}
+                      onChange={() => toggleSensitivity(opt.id)}
+                      className="mt-1 h-4 w-4 shrink-0 rounded border-slate-300 text-teal-700 focus:ring-teal-700 cursor-pointer"
+                    />
                     <div className="flex-1 space-y-0.5">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-bold text-slate-900">
@@ -606,7 +603,7 @@ export function OnboardingModal({
                         {opt.desc}
                       </p>
                     </div>
-                  </div>
+                  </label>
                 );
               })}
             </div>

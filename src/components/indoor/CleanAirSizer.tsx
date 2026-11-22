@@ -365,15 +365,15 @@ export function CleanAirSizer({
           </div>
         </div>
       ) : (
-        /* Botanical Smog Defense (NASA Clean Air Indoor Plants) */
+        /* Houseplants: Aesthetic & Humidity Addition (Not a Purifier) */
         <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-3 space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-emerald-950 font-sans flex items-center gap-1.5">
               <span>🌿</span>
-              <span>NASA Clean Air Botanical Defense</span>
+              <span>Houseplants: Aesthetic &amp; Humidity Addition (Not a Purifier)</span>
             </span>
             <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-white text-emerald-800 border border-emerald-200">
-              Indian Household Sorbents
+              Nice Extra, Not a Filter
             </span>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
@@ -382,7 +382,7 @@ export function CleanAirSizer({
                 <span>🪴</span> Snake Plant
               </div>
               <p className="text-[9.5px] text-slate-500 leading-tight">
-                Releases night oxygen (CAM); absorbs formaldehyde. Best for bedrooms.
+                Hardy indoor greenery. Provides modest humidity benefit; negligible effect on indoor pollutants.
               </p>
             </div>
             <div className="bg-white p-2 rounded-xl border border-emerald-100 shadow-2xs space-y-0.5">
@@ -390,7 +390,7 @@ export function CleanAirSizer({
                 <span>🌴</span> Areca Palm
               </div>
               <p className="text-[9.5px] text-slate-500 leading-tight">
-                Transpires ~1L moisture/day; humidifies dry smog air. Removes toluene.
+                Natural room humidifier in dry winter air. Does not replace mechanical HEPA air filtration.
               </p>
             </div>
             <div className="bg-white p-2 rounded-xl border border-emerald-100 shadow-2xs space-y-0.5">
@@ -398,7 +398,7 @@ export function CleanAirSizer({
                 <span>🍃</span> Money Plant
               </div>
               <p className="text-[9.5px] text-slate-500 leading-tight">
-                Low-light tolerant; absorbs VOCs &amp; synthetic fumes in study rooms.
+                Easy-care indoor plant for visual comfort. Has minimal impact on room air pollutants.
               </p>
             </div>
             <div className="bg-white p-2 rounded-xl border border-emerald-100 shadow-2xs space-y-0.5">
@@ -406,12 +406,12 @@ export function CleanAirSizer({
                 <span>🌱</span> Spider Plant
               </div>
               <p className="text-[9.5px] text-slate-500 leading-tight">
-                Fast-growing; eliminates CO &amp; nitrogen dioxide from stove exhaust.
+                Resilient houseplant. Does not filter combustion smoke; always use a kitchen range hood or exhaust fan for stove emissions.
               </p>
             </div>
           </div>
           <p className="text-[10px] text-emerald-900 italic">
-            *Botanical sorbents reduce gaseous VOCs &amp; enrich oxygen; mechanical HEPA handles particulate PM2.5 soot.
+            *Scientific consensus: Houseplants provide psychological comfort and modest humidity, but have a negligible effect on indoor pollutants in real homes. Mechanical HEPA filtration and kitchen exhaust ventilation remain essential.
           </p>
         </div>
       )}

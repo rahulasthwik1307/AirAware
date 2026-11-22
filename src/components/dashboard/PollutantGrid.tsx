@@ -308,7 +308,7 @@ export function PollutantGrid({
   return (
     <section aria-labelledby="pollutants-telemetry-heading" className="w-full">
       {/* Matrix Header with Provenance & Standard Context */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-4">
         <div>
           <h2
             id="pollutants-telemetry-heading"
@@ -326,13 +326,13 @@ export function PollutantGrid({
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-1.5 self-start sm:self-auto shrink-0">
+        <div className="flex flex-wrap items-center gap-1.5 self-start lg:self-auto max-w-full">
           {effectiveTimestamp && (
-            <span className="text-xs font-mono text-[var(--ink-muted)] bg-[var(--surface-subtle)] px-2 py-1 rounded border border-[var(--border-subtle)]">
+            <span className="text-xs font-mono text-[var(--ink-muted)] bg-[var(--surface-subtle)] px-2 py-1 rounded border border-[var(--border-subtle)] truncate max-w-full">
               Observation: {effectiveTimestamp} ({formatDataAge(observedAt || modelTimestamp)})
             </span>
           )}
-          <span className="text-xs font-mono font-semibold text-[var(--brand-primary)] bg-[var(--brand-surface)] px-2.5 py-1 rounded border border-[var(--brand-primary)]/30">
+          <span className="text-xs font-mono font-semibold text-[var(--brand-primary)] bg-[var(--brand-surface)] px-2.5 py-1 rounded border border-[var(--brand-primary)]/30 break-words max-w-full">
             {isStation
               ? `Ground station: ${stationName}, ${distanceKm !== null && distanceKm !== undefined ? `${distanceKm} km away` : ''} · OpenAQ`
               : 'Modeled estimate (Copernicus CAMS via Open-Meteo, ~45 km grid) · no recent station within 25 km'}

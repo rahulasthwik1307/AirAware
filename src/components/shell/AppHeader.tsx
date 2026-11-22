@@ -61,7 +61,7 @@ export function AppHeader({
                   Open Science
                 </span>
               </div>
-              <span className="text-[11px] font-medium text-[var(--ink-muted)]">
+              <span className="hidden sm:block text-[11px] font-medium text-[var(--ink-muted)]">
                 Global Environmental Intelligence
               </span>
             </div>
@@ -83,17 +83,17 @@ export function AppHeader({
                   Open Science
                 </span>
               </div>
-              <span className="text-[11px] font-medium text-[var(--ink-muted)]">
+              <span className="hidden sm:block text-[11px] font-medium text-[var(--ink-muted)]">
                 Global Environmental Intelligence
               </span>
             </div>
           </div>
         )}
 
-        {/* Desktop / Tablet Segmented Workspace Switcher */}
+        {/* Desktop / Large Screen Segmented Workspace Switcher */}
         <nav
           aria-label="Application Workspaces"
-          className="hidden md:inline-flex items-center p-1 rounded-xl bg-[var(--surface-subtle)] border border-[var(--border-subtle)]"
+          className="hidden lg:inline-flex items-center p-1 rounded-xl bg-[var(--surface-subtle)] border border-[var(--border-subtle)]"
         >
           {WORKSPACE_TABS.map((tab) => {
             const isActive = activeWorkspace === tab.key;
@@ -130,7 +130,7 @@ export function AppHeader({
             <button
               type="button"
               onClick={onOpenWelcome}
-              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-[var(--surface-subtle)] hover:bg-[var(--surface-card)] text-[var(--ink-secondary)] hover:text-[var(--brand-primary)] text-xs font-mono font-semibold border border-[var(--border-subtle)] transition-all cursor-pointer shadow-xs tactile-btn focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
+              className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-[var(--surface-subtle)] hover:bg-[var(--surface-card)] text-[var(--ink-secondary)] hover:text-[var(--brand-primary)] text-xs font-mono font-semibold border border-[var(--border-subtle)] transition-all cursor-pointer shadow-xs tactile-btn focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
               title="View Platform Overview & 5-Workspace Guide"
             >
               <span>Overview</span>

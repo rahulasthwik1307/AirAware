@@ -93,14 +93,14 @@ export function AirshedAlertFeedCard({
               id="airshed-alerts-heading"
               className="text-base sm:text-lg font-bold text-[var(--ink-primary)] font-sans tracking-tight truncate"
             >
-              Airshed Alerts &amp; Warnings
+              Community Air Alerts &amp; Warnings
             </h2>
           </div>
           <button
             type="button"
             onClick={() =>
               onAskCopilot(
-                'What are the mandatory restrictions under the current emergency air quality stage? How should our housing society and family handle morning inversion smog?'
+                'What are the mandatory restrictions under the current emergency air quality stage? How should our housing society and family handle morning smog?'
               )
             }
             className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-lg bg-[var(--surface-subtle)] hover:bg-[var(--surface-card)] text-[var(--brand-primary)] border border-[var(--border-subtle)] hover:border-[var(--brand-primary)]/40 shadow-2xs transition-colors shrink-0 cursor-pointer"
@@ -113,10 +113,10 @@ export function AirshedAlertFeedCard({
         <div className="flex items-center justify-between gap-2 flex-wrap min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-rose-50 text-rose-800 border border-rose-200 shrink-0">
-              Live Airshed Bulletins
+              Live Community Bulletins
             </span>
             <p className="text-xs text-[var(--ink-secondary)] leading-relaxed">
-              Authoritative triggers derived from Copernicus CAMS, CPCB National Standards, and State Airshed Mandates.
+              Authoritative triggers derived from Copernicus CAMS, CPCB National Standards, and State Air Quality Mandates.
             </p>
           </div>
           <button

@@ -55,14 +55,14 @@ export function AirshedPollutantBreakdownCard({
               id="airshed-pollutants-heading"
               className="text-base sm:text-lg font-bold text-[var(--ink-primary)] truncate font-sans tracking-tight"
             >
-              Airshed Pollutant Impact Breakdown
+              City Air Quality Impact Breakdown
             </h2>
           </div>
           <button
             type="button"
             onClick={() =>
               onAskCopilot(
-                'How do vehicle tailpipe NOx emissions react during cold winter thermal inversions to produce secondary PM2.5 ammonium nitrate smog? Why does shifting morning commutes clean the airshed?'
+                'How do vehicle exhaust emissions react in winter air to produce secondary PM2.5 smog? Why does shifting morning commutes reduce neighborhood air pollution?'
               )
             }
             className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-lg bg-[var(--surface-subtle)] hover:bg-[var(--surface-card)] text-[var(--brand-primary)] border border-[var(--border-subtle)] hover:border-[var(--brand-primary)]/40 shadow-2xs transition-colors shrink-0 cursor-pointer"

@@ -88,26 +88,26 @@ export function AirshedSourceAttributionCard({
               id="source-attribution-heading"
               className="text-base font-bold text-[var(--ink-primary)] font-sans tracking-tight whitespace-nowrap"
             >
-              Airshed Pollution Sources &amp; Mitigation
+              Where Pollution Comes From &amp; How to Help
             </h2>
           </div>
           <button
             type="button"
             onClick={() =>
               onAskCopilot(
-                `What are the leading contributors to winter smog in ${locationName}? How do thermal inversion and dry biomass burning worsen PM2.5 concentrations?`
+                `What are the leading contributors to winter smog in ${locationName}? How do trapped morning air and biomass burning worsen PM2.5 concentrations?`
               )
             }
             className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-lg bg-[var(--surface-subtle)] hover:bg-[var(--surface-card)] text-[var(--brand-primary)] border border-[var(--border-subtle)] hover:border-[var(--brand-primary)]/40 shadow-2xs transition-colors shrink-0 cursor-pointer"
             title="Ask Copilot about source apportionment science"
           >
             <span className="text-sm">🤖</span>
-            <span>Apportionment</span>
+            <span>Sources</span>
           </button>
         </div>
         <div className="flex items-center gap-2 flex-wrap min-w-0">
           <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-bold uppercase tracking-wider bg-rose-50 text-rose-800 border border-rose-200 shrink-0">
-            CPCB &amp; Citizen Telemetry
+            CPCB &amp; Citizen Observations
           </span>
           <p className="text-xs text-[var(--ink-secondary)] leading-relaxed">
             Estimated contribution to local ground-level PM₂.₅ stagnation in {locationName}.
