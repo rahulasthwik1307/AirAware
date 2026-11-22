@@ -137,9 +137,10 @@ export function AppHeader({
               type="button"
               onClick={onOpenWelcome}
               className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-[var(--surface-subtle)] hover:bg-[var(--surface-card)] text-[var(--ink-secondary)] hover:text-[var(--brand-primary)] text-xs font-mono font-semibold border border-[var(--border-subtle)] transition-all cursor-pointer shadow-xs tactile-btn focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
-              title="View Platform Overview & 5-Workspace Guide"
+              title="About AirAware"
+              aria-label="About AirAware"
             >
-              <span>Quick summary</span>
+              <span>About</span>
             </button>
           )}
 

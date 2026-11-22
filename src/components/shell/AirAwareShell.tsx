@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useSyncExternalStore } from 'react';
+import { useState, useEffect, useMemo, useSyncExternalStore, useRef } from 'react';
 import { WorkspaceKey } from '@/domain/types';
 import { useAirQuality } from '@/domain/aqi/useAirQuality';
 import {
@@ -10,7 +10,6 @@ import {
 } from '@/domain/household/storage';
 import { AppHeader } from './AppHeader';
 import { MobileBottomNav } from './MobileBottomNav';
-import { PersonalizationBanner } from './PersonalizationBanner';
 import { CopilotDrawerShell } from './CopilotDrawerShell';
 import { UpcomingWorkspacePlaceholder } from './UpcomingWorkspacePlaceholder';
 import { AirQualityDashboard } from '@/components/dashboard/AirQualityDashboard';
@@ -23,6 +22,7 @@ import { useCommunityAlerts } from '@/domain/community/useCommunityAlerts';
 import { WelcomeLandingPage } from '@/components/welcome/WelcomeLandingPage';
 import { OnboardingModal, OnboardingResult } from '@/components/welcome/OnboardingModal';
 import { HouseholdMember } from '@/domain/household/types';
+import { clearAllAirAwareData } from '@/domain/constants/storage-keys';
 
 function createHouseholdMembersFromSensitivities(sensitivities: readonly string[]): HouseholdMember[] {
   const members: HouseholdMember[] = [];
@@ -166,6 +166,50 @@ export function AirAwareShell() {
   const [isMounted, setIsMounted] = useState(false);
   const [isWelcomeActive, setIsWelcomeActive] = useState<boolean | null>(null);
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [clearedToast, setClearedToast] = useState(false);
+  const cancelBtnRef = useRef<HTMLButtonElement | null>(null);
+  const clearDialogRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (showClearConfirm) {
+      cancelBtnRef.current?.focus();
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          setShowClearConfirm(false);
+        }
+      };
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [showClearConfirm]);
+
+  const handleClearDataConfirm = () => {
+    clearAllAirAwareData();
+    setShowClearConfirm(false);
+    setClearedToast(true);
+    setTimeout(() => {
+      setClearedToast(false);
+      setIsWelcomeActive(true);
+    }, 1200);
+  };
+
+  const handleDialogKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Tab') {
+      const focusable = clearDialogRef.current?.querySelectorAll<HTMLElement>('button');
+      if (focusable && focusable.length > 0) {
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    }
+  };
 
   useEffect(() => {
     try {
@@ -345,13 +389,82 @@ export function AirAwareShell() {
             </div>
 
             <div className="space-y-1 font-mono text-[10px] text-slate-500 md:text-right">
-              <span className="font-semibold text-slate-800 block font-sans text-xs">Privacy Guarantee</span>
-              <p>🔒 100% Local-First: All routines, habits &amp; notes stay on your device.</p>
-              <p>Zero tracking, local-first open public health mission.</p>
+              <span className="font-semibold text-slate-800 block font-sans text-xs">Privacy &amp; Data Control</span>
+              <p className="max-w-md md:ml-auto">
+                No account needed. Your profile, saved cities and chats are stored on this device. Questions you send to the AI are processed to generate answers. You can clear everything at any time.
+              </p>
+              <div className="pt-1.5">
+                <button
+                  type="button"
+                  onClick={() => setShowClearConfirm(true)}
+                  className="inline-flex items-center gap-1 text-[11px] font-mono text-rose-600 hover:text-rose-700 underline underline-offset-2 hover:bg-rose-50 px-1.5 py-0.5 rounded cursor-pointer transition-colors"
+                  aria-haspopup="dialog"
+                >
+                  Clear my data
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </footer>
+
+      {/* Confirmation Dialog for Clear My Data */}
+      {showClearConfirm && (
+        <div
+          role="presentation"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-fadeIn"
+          onClick={() => setShowClearConfirm(false)}
+        >
+          <div
+            ref={clearDialogRef}
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="clear-dialog-title"
+            aria-describedby="clear-dialog-desc"
+            onKeyDown={handleDialogKeyDown}
+            className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl border border-slate-200 space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-xl" aria-hidden="true">⚠️</span>
+              <h3 id="clear-dialog-title" className="text-base font-bold text-slate-900 font-sans">
+                Clear all stored data?
+              </h3>
+            </div>
+            <p id="clear-dialog-desc" className="text-xs text-slate-600 leading-relaxed">
+              This removes your saved profile, cities, chats and indoor reading from this device. Continue?
+            </p>
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                ref={cancelBtnRef}
+                type="button"
+                onClick={() => setShowClearConfirm(false)}
+                className="px-4 py-2 rounded-xl text-xs font-mono font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleClearDataConfirm}
+                className="px-4 py-2 rounded-xl text-xs font-mono font-bold text-white bg-rose-600 hover:bg-rose-700 transition-all cursor-pointer shadow-xs"
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Data Cleared Toast Notification */}
+      {clearedToast && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed bottom-6 right-6 z-50 rounded-xl bg-slate-900 text-white text-xs font-mono px-4 py-2.5 shadow-lg border border-slate-700 animate-fadeIn"
+        >
+          ✓ Your data was cleared
+        </div>
+      )}
 
       {/* Mobile Fixed Bottom Navigation */}
       <MobileBottomNav

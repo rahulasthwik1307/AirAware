@@ -3,6 +3,7 @@
 import React, { useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import { CustomSelect, SelectOption } from './CustomSelect';
+import { EditMemberModal } from './EditMemberModal';
 
 const emptySubscribe = () => () => {};
 import {
@@ -149,39 +150,9 @@ export function HouseholdProfilesManager({
 
   // Edit Member Form State
   const [editingMember, setEditingMember] = useState<HouseholdMember | null>(null);
-  const [editNickname, setEditNickname] = useState('');
-  const [editArchetype, setEditArchetype] = useState<HouseholdArchetype>('CHILD_STUDENT');
-  const [editSensitivityTier, setEditSensitivityTier] = useState<SensitivityTier>('NONE');
-  const [editFormError, setEditFormError] = useState<string | null>(null);
 
   const handleStartEditMember = (member: HouseholdMember) => {
     setEditingMember(member);
-    setEditNickname(member.nickname);
-    setEditArchetype(member.archetype);
-    setEditSensitivityTier(member.sensitivityTier);
-    setEditFormError(null);
-  };
-
-  const handleUpdateMemberSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingMember) return;
-    const trimmed = editNickname.trim();
-    if (!trimmed) {
-      setEditFormError('Please enter a nickname.');
-      return;
-    }
-    const otherMembers = members.filter((m) => m.id !== editingMember.id);
-    if (!isNicknameUnique(otherMembers, trimmed)) {
-      setEditFormError(`A member named "${trimmed}" already exists.`);
-      return;
-    }
-
-    onUpdateMember(editingMember.id, {
-      nickname: trimmed,
-      archetype: editArchetype,
-      sensitivityTier: editSensitivityTier,
-    });
-    setEditingMember(null);
   };
 
   const handleNicknameChange = (val: string) => {
@@ -850,99 +821,12 @@ export function HouseholdProfilesManager({
       )}
 
       {/* EDIT MEMBER PROFILE MODAL */}
-      {editingMember && isMounted && createPortal(
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="edit-member-dialog-title"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/50 animate-fadeIn"
-          onKeyDown={(e) => {
-            if (e.key === 'Escape') setEditingMember(null);
-          }}
-        >
-          <div className="w-full max-w-md rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-card)] p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
-              <h3 id="edit-member-dialog-title" className="text-base font-bold text-[var(--ink-primary)] font-sans">
-                Edit Member: {editingMember.nickname}
-              </h3>
-              <button
-                type="button"
-                onClick={() => setEditingMember(null)}
-                className="p-1.5 rounded-lg text-[var(--ink-muted)] hover:text-[var(--ink-primary)] hover:bg-[var(--surface-subtle)] transition-colors cursor-pointer"
-                aria-label="Close dialog"
-              >
-                ✕
-              </button>
-            </div>
-
-            {editFormError && (
-              <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-medium">
-                {editFormError}
-              </div>
-            )}
-
-            <form onSubmit={handleUpdateMemberSubmit} className="space-y-4">
-              <div>
-                <label htmlFor="edit-member-nickname-input" className="block text-xs font-semibold text-[var(--ink-secondary)] mb-1.5">
-                  Nickname or Identifier
-                </label>
-                <input
-                  id="edit-member-nickname-input"
-                  type="text"
-                  value={editNickname}
-                  onChange={(e) => {
-                    setEditNickname(e.target.value);
-                    if (editFormError) setEditFormError(null);
-                  }}
-                  maxLength={30}
-                  required
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-subtle)] text-sm font-medium text-[var(--ink-primary)] hover:border-[var(--brand-primary)]/40 focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/25 focus:border-[var(--brand-primary)] transition-all"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="edit-member-archetype-select" className="block text-xs font-semibold text-[var(--ink-secondary)] mb-1.5">
-                  Household Archetype
-                </label>
-                <CustomSelect<HouseholdArchetype>
-                  id="edit-member-archetype-select"
-                  value={editArchetype}
-                  options={ARCHETYPE_SELECT_OPTIONS}
-                  onChange={setEditArchetype}
-                />
-              </div>
-
-              <div>
-                <label htmlFor="edit-member-sensitivity-select" className="block text-xs font-semibold text-[var(--ink-secondary)] mb-1.5">
-                  Physiological Sensitivity Category
-                </label>
-                <CustomSelect<SensitivityTier>
-                  id="edit-member-sensitivity-select"
-                  value={editSensitivityTier}
-                  options={SENSITIVITY_SELECT_OPTIONS}
-                  onChange={setEditSensitivityTier}
-                />
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2 border-t border-[var(--border-subtle)]">
-                <button
-                  type="button"
-                  onClick={() => setEditingMember(null)}
-                  className="px-4 py-2 rounded-xl text-xs font-mono font-medium text-[var(--ink-secondary)] hover:bg-[var(--surface-subtle)] transition-colors cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 rounded-xl bg-[var(--brand-primary)] hover:bg-[var(--brand-hover)] text-white text-xs font-mono font-bold transition-all shadow-xs cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
-                >
-                  Save Profile
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>,
-        document.body
+      {editingMember && isMounted && (
+        <EditMemberModal
+          member={editingMember}
+          onClose={() => setEditingMember(null)}
+          onSave={onUpdateMember}
+        />
       )}
     </section>
   );

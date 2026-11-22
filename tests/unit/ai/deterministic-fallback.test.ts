@@ -223,4 +223,52 @@ describe('Deterministic Offline Guidance Engine', () => {
     expect(res.directAnswer).toContain('not recommended');
     expect(res.explanation).toContain('developing lungs');
   });
+
+  it('correctly handles all six official CPCB categories in fallback paths', () => {
+    const cpcbTiers: Array<{
+      category: 'Good' | 'Satisfactory' | 'Moderate' | 'Poor' | 'Very Poor' | 'Severe';
+      aqi: number;
+      expectedVentilation: 'open_windows' | 'ventilate_briefly' | 'keep_closed_use_purifier';
+      expectedHeadlineSubstring: string;
+    }> = [
+      { category: 'Good', aqi: 35, expectedVentilation: 'open_windows', expectedHeadlineSubstring: 'Satisfactory' },
+      { category: 'Satisfactory', aqi: 75, expectedVentilation: 'open_windows', expectedHeadlineSubstring: 'Satisfactory' },
+      { category: 'Moderate', aqi: 150, expectedVentilation: 'ventilate_briefly', expectedHeadlineSubstring: 'Acceptable' },
+      { category: 'Poor', aqi: 250, expectedVentilation: 'ventilate_briefly', expectedHeadlineSubstring: 'Poor' },
+      { category: 'Very Poor', aqi: 350, expectedVentilation: 'keep_closed_use_purifier', expectedHeadlineSubstring: 'Very Poor' },
+      { category: 'Severe', aqi: 450, expectedVentilation: 'keep_closed_use_purifier', expectedHeadlineSubstring: 'Severe' },
+    ];
+
+    for (const tier of cpcbTiers) {
+      const guidance = getDeterministicGuidance({
+        aqi: tier.aqi,
+        category: tier.category,
+        dominantPollutant: 'pm25',
+        pollutantConcentration: 50,
+        pollutantUnit: 'µg/m³',
+        weather: baseWeather,
+        userContext: { isSensitiveGroup: false, primaryActivity: 'general', locale: 'en' },
+      });
+
+      expect(guidance.isDeterministicFallback).toBe(true);
+      expect(guidance.ventilationRecommendation).toBe(tier.expectedVentilation);
+      expect(guidance.headline).toContain(tier.expectedHeadlineSubstring);
+      expect(guidance.actionRecommendations.length).toBeGreaterThan(0);
+
+      const copilot = getDeterministicCopilotAnswer({
+        question: 'Should I open the windows?',
+        aqi: tier.aqi,
+        category: tier.category,
+        dominantPollutant: 'pm25',
+        pollutantConcentration: 50,
+        pollutantUnit: 'µg/m³',
+        weather: baseWeather,
+        userContext: { isSensitiveGroup: false, primaryActivity: 'general', locale: 'en' },
+      });
+
+      expect(copilot.isDeterministicFallback).toBe(true);
+      expect(copilot.directAnswer).toBeDefined();
+      expect(copilot.environmentalConditions).toContain(tier.category);
+    }
+  });
 });

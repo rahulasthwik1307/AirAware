@@ -52,7 +52,6 @@ function formatDataAge(timestampStr?: string): string {
 export function ForecastTimeline({
   forecast,
   activeStandard,
-  modelMetadata,
   modelTimestamp,
   localTime,
 }: ForecastTimelineProps) {

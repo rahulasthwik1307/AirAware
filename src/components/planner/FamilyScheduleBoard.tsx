@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { ForecastPoint } from '@/domain/types';
-import { HouseholdMember, HouseholdArchetype, MemberScheduleItem } from '@/domain/household/types';
+import { HouseholdMember, HouseholdArchetype } from '@/domain/household/types';
 import { PlannerRecommendation, ActiveActionItem } from '@/domain/planner/types';
 
 interface FamilyScheduleBoardProps {

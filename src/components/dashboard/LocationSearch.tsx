@@ -114,8 +114,8 @@ export function LocationSearch({
             ? `${results.length} locations resolved for ${trimmed}. Use up and down arrows to navigate.`
             : `No atmospheric grid matches found for ${trimmed}.`
         );
-      } catch (err: any) {
-        if (err.name !== 'AbortError') {
+      } catch (err: unknown) {
+        if (err instanceof Error && err.name !== 'AbortError') {
           setSuggestions([]);
           setStatusMessage(`Could not search locations. Please try again.`);
         }

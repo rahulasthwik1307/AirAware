@@ -1,6 +1,5 @@
 'use client';
 
-import React, { useState } from 'react';
 import { AqiTier, GeoLocation, WorkspaceKey } from '@/domain/types';
 
 interface ActionableHealthGuidanceProps {
@@ -62,14 +61,12 @@ function ActionIcon({ type, className = 'w-5 h-5' }: { type: ActionCard['iconTyp
 export function ActionableHealthGuidance({
   tier,
   dominantPollutant,
-  variant = 'light',
   onSelectWorkspace,
   location,
   providerAqi,
   cpcbCategory,
 }: ActionableHealthGuidanceProps) {
   const level = tier?.level ?? 1;
-  const [activeExpanded, setActiveExpanded] = useState<string | null>(null);
 
   // Formulate deterministic guidance based on active AQI tier level (1 to 6)
   const getActionCards = (lvl: number): ActionCard[] => {
@@ -385,7 +382,6 @@ export function ActionableHealthGuidance({
       {/* 4 Interactive Protocol Cards (2x2 Grid) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {cards.map((card) => {
-          const isExpanded = activeExpanded === card.title;
           return (
             <article
               key={card.title}

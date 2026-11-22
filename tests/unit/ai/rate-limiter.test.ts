@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import {
   localRateLimiter,
   validateRequestSecurity,
-  getClientHash,
 } from '@/lib/ai/rate-limiter';
 
 describe('Route Rate Limiter & Origin Security', () => {

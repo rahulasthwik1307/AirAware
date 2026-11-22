@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { CopilotResponse, WorkspaceContext, RoomContext } from './types';
+import { CopilotResponse, WorkspaceContext, RoomContext, AqiCategory } from './types';
 import { AirQualityReport, GeoLocation } from '@/domain/types';
 import { getPrimaryAqiFacts } from '@/domain/aqi/primary-aqi';
 import { HouseholdStorageState, HouseholdMember } from '@/domain/household/types';
@@ -306,7 +306,7 @@ export function useAirCopilot({
       // 3. Build verified privacy-safe payload with authoritative LIVE AQI context (Zero PII)
       const primaryFacts = getPrimaryAqiFacts(report);
       const currentAqi = primaryFacts.aqi;
-      const currentCategory = primaryFacts.category as any;
+      const currentCategory = primaryFacts.category as AqiCategory;
       
       let dominantKey: 'pm25' | 'pm10' | 'o3' | 'no2' | 'so2' | 'co' = 'pm25';
       const rawDominant = (report.dominantPollutant || 'pm25').toLowerCase().replace(/[^a-z0-9]/g, '');

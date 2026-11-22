@@ -71,15 +71,3 @@ export const OFFICIAL_CPCB_BANDS: readonly CpcbBandDefinition[] = [
     familyGuidance: 'Public health emergency: halt all outdoor activities; seal room draft gaps; mandatory N95 if venturing outside.',
   },
 ];
-
-/**
- * Formatted prompt block injected into AI system prompts to ensure the model
- * strictly uses Indian CPCB terminology and never US EPA band names when interpreting CPCB data.
- */
-export const CPCB_REFERENCE_PROMPT_SNIPPET = `Official Indian CPCB NAQI Scale & Categories (NEVER use US EPA labels like "Unhealthy" or "Hazardous" when interpreting CPCB numbers):
-- 0–50: Good (Minimal impact)
-- 51–100: Satisfactory (Minor breathing discomfort to sensitive people)
-- 101–200: Moderate (Breathing discomfort to people with asthma/heart disease)
-- 201–300: Poor (Breathing discomfort to most people on prolonged exposure)
-- 301–400: Very Poor (Respiratory illness on prolonged exposure)
-- 401–500: Severe (Affects healthy people and seriously impacts vulnerable groups)`;

@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import { AirQualityReport } from '@/domain/types';
 import { classifyCpcbPm25 } from '@/domain/aqi/cpcb-benchmark';
 
@@ -9,7 +8,7 @@ interface ScientificGroundingProps {
 }
 
 export function ScientificGrounding({ report }: ScientificGroundingProps) {
-  const { location, pollutants, cpcbComparison } = report;
+  const { pollutants, cpcbComparison } = report;
   const pm25Val = pollutants.pm2_5.concentration;
 
   const cpcbClassification = classifyCpcbPm25(pm25Val);

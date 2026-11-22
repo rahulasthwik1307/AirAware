@@ -1,4 +1,3 @@
-import React from 'react';
 import { AirAwareShell } from '@/components/shell/AirAwareShell';
 import { AirQualityProvider } from '@/domain/aqi/useAirQuality';
 

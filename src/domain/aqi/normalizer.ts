@@ -27,7 +27,6 @@ import {
   getAtmosphericModelMetadata,
 } from './standards-resolver';
 import {
-  EAQI_TIERS,
   getEaqiPollutantLevel,
   getEaqiTierFromValue,
 } from './european-aqi';
@@ -35,7 +34,7 @@ import {
   calculatePollutantEpaSubIndex,
   getEpaTierFromValue,
 } from './epa-aqi';
-import { classifyCpcbPm25, calculateCompositeCpcbAqi } from './cpcb-benchmark';
+import { calculateCompositeCpcbAqi } from './cpcb-benchmark';
 import { POLLUTANT_METADATA } from './unit-converters';
 
 export interface RawOpenMeteoAirQualityResponse {
@@ -50,6 +49,7 @@ export interface RawOpenMeteoAirQualityResponse {
   readonly stationPm25?: number | null;
   readonly stationPm10?: number | null;
   readonly modelFallbackReason?: string | null;
+  readonly queryCacheKey?: string;
   readonly current: {
     readonly time: string;
     readonly interval?: number;
@@ -87,6 +87,13 @@ export interface RawOpenMeteoAirQualityResponse {
   };
 }
 
+/**
+ * Normalizes multi-provider atmospheric telemetry into unified AirQualityReport schema.
+ * @param raw - Raw Open-Meteo or CAAQMS station response payload.
+ * @param location - Target geographic location with country metadata.
+ * @param requestedStandard - Optional explicit AQI standard override.
+ * @returns Fully typed, validated AirQualityReport with sub-indices and health tier. Never mutates input arguments.
+ */
 export function normalizeAirQualityReport(
   raw: RawOpenMeteoAirQualityResponse,
   location: GeoLocation,
@@ -133,7 +140,7 @@ export function normalizeAirQualityReport(
     'carbon_monoxide',
   ];
 
-  const pollutants: Record<PollutantKey, PollutantMeasurement> = {} as any;
+  const pollutants = {} as Record<PollutantKey, PollutantMeasurement>;
   let dominantPollutant: string | null = null;
   let highestSubIndex = -1;
 

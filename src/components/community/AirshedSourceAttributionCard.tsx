@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { WorkspaceKey } from '@/domain/types';
 import { isDelhiNcrRegion } from '@/domain/community/generator';
 
@@ -8,18 +8,6 @@ interface AirshedSourceAttributionCardProps {
   readonly locationName: string;
   readonly onNavigateWorkspace: (workspace: WorkspaceKey) => void;
   readonly onAskCopilot: (prompt: string) => void;
-}
-
-interface PollutionSource {
-  readonly id: string;
-  readonly label: string;
-  readonly percentage: number;
-  readonly color: string;
-  readonly bgTrackColor: string;
-  readonly icon: string;
-  readonly primaryPollutant: string;
-  readonly mitigationAction: string;
-  readonly cpcbRule: string;
 }
 
 export function AirshedSourceAttributionCard({
@@ -69,8 +57,6 @@ export function AirshedSourceAttributionCard({
       },
     ];
   }, [locationName]);
-
-  const activeSource = sources.find((s) => s.id === activeSourceId) ?? null;
 
   return (
     <article

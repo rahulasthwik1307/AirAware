@@ -31,7 +31,9 @@ export { getDeterministicGuidance, getDeterministicCopilotAnswer } from './deter
 
 /**
  * Retrieves personalized proactive guidance for environmental conditions.
- * Guaranteed to return a valid GuidanceResponse (via Cloudflare AI or deterministic fallback).
+ * @param input - Validated GuidanceRequest payload with AQI, weather, and user context.
+ * @param customFetch - Optional custom fetch mock for unit testing.
+ * @returns Promise resolving valid GuidanceResponse. Never throws or stores unvalidated error responses.
  */
 export async function getPersonalizedGuidance(
   input: GuidanceRequest,
@@ -50,7 +52,6 @@ export async function getPersonalizedGuidance(
   // 3. If credentials are not yet configured or quota is exhausted, use deterministic fallback
   if (!isCloudflareConfigured() || aiCache.isDailyQuotaExhausted()) {
     const fallback = getDeterministicGuidance(validatedInput);
-    aiCache.setGuidance(cacheKey, fallback);
     return fallback;
   }
 
@@ -72,9 +73,8 @@ export async function getPersonalizedGuidance(
       aiCache.setGuidance(cacheKey, result);
       return result;
     } catch {
-      // Any AI failure gracefully degrades to deterministic guidance
+      // Any AI failure gracefully degrades to deterministic guidance without caching failures
       const fallback = getDeterministicGuidance(validatedInput);
-      aiCache.setGuidance(cacheKey, fallback);
       return fallback;
     }
   });
@@ -82,7 +82,9 @@ export async function getPersonalizedGuidance(
 
 /**
  * Evaluates an interactive user question with the Air Copilot.
- * Strictly conforms to Master Specification §4.4 (7-part response).
+ * @param input - Validated CopilotRequest payload with user query and environmental context.
+ * @param customFetch - Optional custom fetch mock for unit testing.
+ * @returns Promise resolving 7-part CopilotResponse. Never retains chat transcripts on server or throws unhandled errors.
  */
 export async function askAirCopilot(
   input: CopilotRequest,
@@ -107,7 +109,6 @@ export async function askAirCopilot(
       ...getDeterministicCopilotAnswer(validatedInput),
       fallbackReason,
     };
-    aiCache.setCopilot(cacheKey, fallback);
     return fallback;
   }
 
@@ -141,12 +142,11 @@ export async function askAirCopilot(
           fallbackReason = 'Rate limit reached, showing a standard answer';
         }
       }
-      // Graceful degradation to deterministic 7-part response
+      // Graceful degradation to deterministic 7-part response without caching failures
       const fallback: CopilotResponse = {
         ...getDeterministicCopilotAnswer(validatedInput),
         fallbackReason,
       };
-      aiCache.setCopilot(cacheKey, fallback);
       return fallback;
     }
   });

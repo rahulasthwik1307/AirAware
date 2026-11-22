@@ -90,7 +90,6 @@ export function CopilotDrawerShell({
     cooldownSeconds,
     isDailyQuotaExhausted,
     sendMessage,
-    resetConversation,
     createNewSession,
     switchSession,
     deleteSession,
@@ -383,14 +382,17 @@ export function CopilotDrawerShell({
                       sendMessage(text);
                       inputRef.current?.focus();
                     }}
-                    isLatest={idx === messages.length - 1 && msg.sender === 'assistant'}
                   />
                 );
               })}
 
               {/* Thinking / Generation Indicator */}
               {isThinking && (
-                <div className="flex items-start gap-2.5 animate-fadeIn">
+                <div
+                  className="flex items-start gap-2.5 animate-fadeIn"
+                  role="status"
+                  aria-live="polite"
+                >
                   <div
                     className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--brand-surface)] text-[var(--brand-primary)] text-xs border border-[var(--brand-primary)]/30 font-bold shrink-0 mt-0.5"
                     aria-hidden="true"
@@ -402,7 +404,7 @@ export function CopilotDrawerShell({
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--brand-primary)] opacity-75" />
                       <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--brand-primary)]" />
                     </span>
-                    <span className="font-mono text-[11px]">Evaluating atmospheric physics &amp; guidance...</span>
+                    <span className="font-mono text-[11px]">Thinking… Evaluating atmospheric physics &amp; guidance...</span>
                   </div>
                 </div>
               )}
@@ -465,7 +467,7 @@ export function CopilotDrawerShell({
               </div>
 
               <div className="flex items-center justify-between text-[10px] font-mono text-[var(--ink-muted)]">
-                <span>🔒 Zero PII: Local-First Session Memory</span>
+                <span>🔒 Chats are saved only on this device</span>
                 <span>{inputQuery.length}/200</span>
               </div>
             </form>
@@ -478,73 +480,16 @@ export function CopilotDrawerShell({
   return createPortal(drawerContent, document.body);
 }
 
-interface FastTypewriterTextProps {
-  readonly text: string;
-  readonly speedMs?: number;
-  readonly isNew?: boolean;
-  readonly className?: string;
-}
-
-function FastTypewriterText({
-  text,
-  speedMs = 10,
-  isNew = false,
-  className = '',
-}: FastTypewriterTextProps) {
-  const [displayedLength, setDisplayedLength] = useState(isNew ? 0 : text.length);
-  const [isTyping, setIsTyping] = useState(isNew);
-
-  useEffect(() => {
-    if (!isNew) {
-      setDisplayedLength(text.length);
-      setIsTyping(false);
-      return;
-    }
-
-    setDisplayedLength(0);
-    setIsTyping(true);
-
-    let current = 0;
-    const step = text.length > 120 ? 3 : text.length > 60 ? 2 : 1;
-
-    const timer = setInterval(() => {
-      current = Math.min(text.length, current + step);
-      setDisplayedLength(current);
-
-      if (current >= text.length) {
-        clearInterval(timer);
-        setIsTyping(false);
-      }
-    }, speedMs);
-
-    return () => clearInterval(timer);
-  }, [text, speedMs, isNew]);
-
-  return (
-    <span className={className}>
-      {text.slice(0, displayedLength)}
-      {isTyping && (
-        <span
-          className="inline-block w-1.5 h-3.5 ml-0.5 bg-[var(--brand-primary)] animate-pulse rounded-xs align-middle"
-          aria-hidden="true"
-        />
-      )}
-    </span>
-  );
-}
-
 function MessageBubble({
   message,
   userQuestion = '',
   report = null,
   onSelectPrompt,
-  isLatest = false,
 }: {
   readonly message: CopilotChatMessage;
   readonly userQuestion?: string;
   readonly report?: AirQualityReport | null;
   readonly onSelectPrompt?: (prompt: string) => void;
-  readonly isLatest?: boolean;
 }) {
   if (message.sender === 'user') {
     return (

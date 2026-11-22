@@ -22,6 +22,12 @@ function getWindCardinal(degrees: number | null): string {
   return cardinals[index];
 }
 
+/**
+ * GET /api/weather
+ * Purpose: Retrieves surface meteorological telemetry (temperature, humidity, wind) for atmospheric dispersion modeling.
+ * Inputs: NextRequest with query parameters latitude, longitude, timezone.
+ * Never: Never retains user location on the server or exposes raw unparsed provider errors.
+ */
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
 

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { AirQualityReport, PollutantKey, HistoricalAirshedPoint } from '@/domain/types';
 
 interface UnifiedAnalyticsCardProps {
@@ -112,7 +112,6 @@ export function UnifiedAnalyticsCard({ report }: UnifiedAnalyticsCardProps) {
   const plotHeight = svgHeight - paddingTop - paddingBottom;
 
   const maxPlotScale = hasTrend ? Math.max(...points.map((p) => p.aqi), 220) * 1.1 : 250;
-  const minPlotScale = 0;
 
   const getX = (index: number) => paddingLeft + (index / Math.max(1, points.length - 1)) * plotWidth;
   const getY = (val: number) => {

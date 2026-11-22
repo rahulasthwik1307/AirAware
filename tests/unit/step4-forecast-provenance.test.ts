@@ -10,7 +10,6 @@ import { getAtmosphericModelMetadata } from '@/domain/aqi/standards-resolver';
 
 function createMockForecast(): ForecastPoint[] {
   const points: ForecastPoint[] = [];
-  const baseTime = '2026-11-19T08:00';
   for (let i = 0; i < 24; i++) {
     const hour = (8 + i) % 24;
     const hourStr = hour < 10 ? `0${hour}` : `${hour}`;

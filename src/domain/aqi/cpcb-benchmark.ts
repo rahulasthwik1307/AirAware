@@ -42,6 +42,11 @@ export interface CpcbAqiResult {
   readonly dominantSubIndexPollutant?: 'PM2.5' | 'PM10' | null;
 }
 
+/**
+ * Calculates official Indian CPCB PM2.5 sub-index using linear piecewise breakpoint interpolation.
+ * @param pm25 - 24-hour PM2.5 concentration in µg/m³.
+ * @returns Numerical sub-index (0–500) or null if data is missing or negative. Never returns numbers exceeding 500.
+ */
 export function calculateCpcbPm25SubIndex(pm25: number | null | undefined): number | null {
   if (pm25 === null || pm25 === undefined || !Number.isFinite(pm25) || pm25 < 0) {
     return null;
@@ -64,6 +69,11 @@ export function calculateCpcbPm25SubIndex(pm25: number | null | undefined): numb
   return Math.min(500, Math.round(400 + ((500 - 400) / (380 - 250)) * (pm25 - 250)));
 }
 
+/**
+ * Calculates official Indian CPCB PM10 sub-index using linear piecewise breakpoint interpolation.
+ * @param pm10 - 24-hour PM10 concentration in µg/m³.
+ * @returns Numerical sub-index (0–500) or null if data is missing or negative. Never returns numbers exceeding 500.
+ */
 export function calculateCpcbPm10SubIndex(pm10: number | null | undefined): number | null {
   if (pm10 === null || pm10 === undefined || !Number.isFinite(pm10) || pm10 < 0) {
     return null;
@@ -86,6 +96,13 @@ export function calculateCpcbPm10SubIndex(pm10: number | null | undefined): numb
   return Math.min(500, Math.round(400 + ((500 - 400) / (500 - 430)) * (pm10 - 430)));
 }
 
+/**
+ * Calculates composite Indian CPCB NAQI from particulate sub-indices (max sub-index rule).
+ * @param pm25 - PM2.5 concentration in µg/m³.
+ * @param pm10 - Optional PM10 concentration in µg/m³.
+ * @param isStationData - Whether the reading originated from a physical CAAQMS monitor.
+ * @returns Composite CpcbAqiResult with category, range, and provenance note. Never invents missing readings.
+ */
 export function calculateCompositeCpcbAqi(
   pm25: number | null | undefined,
   pm10?: number | null | undefined,

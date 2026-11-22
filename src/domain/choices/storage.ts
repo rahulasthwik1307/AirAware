@@ -5,7 +5,7 @@
  */
 
 import { DEFAULT_CLEANER_HABITS } from './constants';
-import { CleanerChoicesPreferences, CleanerTransitMode, CleanerHabit } from './types';
+import { CleanerChoicesPreferences, CleanerTransitMode } from './types';
 
 const STORAGE_KEY = 'airaware_cleaner_choices_v1';
 

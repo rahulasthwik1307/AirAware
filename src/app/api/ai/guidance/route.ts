@@ -17,6 +17,12 @@ import {
 
 export const runtime = 'nodejs';
 
+/**
+ * POST /api/ai/guidance
+ * Purpose: Evaluates personalized proactive environmental guidance from verified telemetry.
+ * Inputs: Validated JSON body satisfying GuidanceRequestSchema.
+ * Never: Never exposes internal prompt structures, logs PII, or stores unvalidated client requests.
+ */
 export async function POST(req: Request) {
   try {
     // 1. Request security check (Origin, Content-Type, Content-Length)

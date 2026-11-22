@@ -3,11 +3,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { AirQualityReport, AqiStandardKey, GeoLocation } from '@/domain/types';
-import { calculateCpcbAqi, calculateCompositeCpcbAqi } from '@/domain/aqi/cpcb-benchmark';
+import { calculateCompositeCpcbAqi } from '@/domain/aqi/cpcb-benchmark';
 import { WeatherData } from '@/app/api/weather/route';
-import { GLOBE_REFERENCE_CITIES } from '../globe/world-landmass';
+import { GLOBE_REFERENCE_CITIES, GlobeCityPin } from '../globe/world-landmass';
+import type { RegionalCityEstimate } from '@/app/api/regional-hotspots/route';
 import { UnifiedAnalyticsCard } from '@/components/charts/UnifiedAnalyticsCard';
 import { findBestDaytimeWindow } from '@/domain/aqi/best-window';
+import { ComponentErrorBoundary } from '@/components/common/ComponentErrorBoundary';
+import { AtmosphericSpectrumBar } from './AtmosphericSpectrumBar';
 
 // Single authoritative constant for right-panel height across Overview, Compare, and 3D Globe
 export const HERO_RIGHT_PANEL_HEIGHT_CLASS = 'w-full h-auto lg:h-[680px]';
@@ -136,7 +139,7 @@ export function AqiHeroCard({
   const tabListRef = useRef<HTMLDivElement>(null);
 
   // Regional comparisons state (cached 15 minutes via /api/regional-hotspots)
-  const [regionalHotspots, setRegionalHotspots] = useState<any[]>([]);
+  const [regionalHotspots, setRegionalHotspots] = useState<readonly RegionalCityEstimate[]>([]);
   const [isHotspotsLoading, setIsHotspotsLoading] = useState(false);
   const [hotspotsError, setHotspotsError] = useState<string | null>(null);
 
@@ -200,7 +203,6 @@ export function AqiHeroCard({
   };
 
   const [mousePos, setMousePos] = useState({ x: 50, y: 50 });
-  const [hoveredBand, setHoveredBand] = useState<string | null>(null);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -336,9 +338,6 @@ export function AqiHeroCard({
   };
 
   const grapInfo = getGrapProtocol(providerAqi);
-
-  const feedLabel =
-    report.modelMetadata?.domain === 'CAMS_EUROPE' ? 'CAMS Europe Ensemble' : 'CAMS Global IFS';
 
   // SVG Gauge calculations
   const gaugeRadius = 40;
@@ -933,7 +932,12 @@ export function AqiHeroCard({
 
                   {/* d. Unified Environmental Analytics Card (Interactive Segmented Switcher) */}
                   <div className="w-full pt-0.5">
-                    <UnifiedAnalyticsCard report={report} />
+                    <ComponentErrorBoundary
+                      fallbackTitle="Environmental Analytics Unavailable"
+                      fallbackMessage="The comparative air quality charts could not be displayed. Numerical station telemetry remains available above."
+                    >
+                      <UnifiedAnalyticsCard report={report} />
+                    </ComponentErrorBoundary>
                   </div>
                 </div>
               </div>
@@ -991,14 +995,15 @@ export function AqiHeroCard({
 
                 {!isHotspotsLoading && !hotspotsError && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                    {(regionalHotspots.length > 0 ? regionalHotspots : GLOBE_REFERENCE_CITIES).map((c: any) => {
-                      const isCurrent = location.name.toLowerCase() === c.name.toLowerCase();
-                      const flag = c.countryCode === 'GB' ? '🇬🇧' : c.countryCode === 'JP' ? '🇯🇵' : '🇮🇳';
-                      const cityAqi = typeof c.aqi === 'number' ? c.aqi : null;
+                    {(regionalHotspots.length > 0 ? regionalHotspots : GLOBE_REFERENCE_CITIES).map((c) => {
+                      const typedItem = c as RegionalCityEstimate | (GlobeCityPin & { aqi?: number | null; pm25?: number | null; pm10?: number | null; tierLabel?: string; colorToken?: string });
+                      const isCurrent = location.name.toLowerCase() === typedItem.name.toLowerCase();
+                      const flag = typedItem.countryCode === 'GB' ? '🇬🇧' : typedItem.countryCode === 'JP' ? '🇯🇵' : '🇮🇳';
+                      const cityAqi = typeof typedItem.aqi === 'number' ? typedItem.aqi : null;
 
                       return (
                         <div
-                          key={c.name}
+                          key={typedItem.name}
                           className={`p-4 rounded-2xl border transition-all ${
                             isCurrent
                               ? 'bg-sky-50/90 border-sky-400 shadow-sm ring-2 ring-sky-300'
@@ -1008,12 +1013,12 @@ export function AqiHeroCard({
                           <div className="flex items-center justify-between mb-2">
                             <span className="font-bold text-sm text-slate-900 font-sans flex items-center gap-1.5">
                               <span aria-hidden="true">{flag}</span>
-                              <span>{c.name}</span>
+                              <span>{typedItem.name}</span>
                             </span>
                             {cityAqi !== null ? (
                               <span
                                 className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold text-white shadow-xs tabular-nums"
-                                style={{ backgroundColor: c.colorToken || aqiColor }}
+                                style={{ backgroundColor: typedItem.colorToken || aqiColor }}
                               >
                                 AQI {cityAqi}
                               </span>
@@ -1032,7 +1037,7 @@ export function AqiHeroCard({
                           </div>
 
                           <div className="flex items-center justify-between text-xs font-mono text-slate-600 mb-2">
-                            <span className="text-slate-500">{c.admin1}, {c.country}</span>
+                            <span className="text-slate-500">{typedItem.admin1}, {typedItem.country}</span>
                             <span
                               className={`font-bold px-1.5 py-0.5 rounded text-[10px] ${
                                 isCurrent
@@ -1042,29 +1047,38 @@ export function AqiHeroCard({
                             >
                               {isCurrent
                                 ? (isStation ? '● Active Ground Station' : '● Active Model Grid')
-                                : (c.tierLabel || 'Modeled')}
+                                : (typedItem.tierLabel || 'Modeled')}
                             </span>
                           </div>
 
                           <div className="flex items-center justify-between text-xs font-mono text-slate-500 mb-3">
-                            <span className="font-semibold" style={{ color: isCurrent ? aqiColor : (c.colorToken || 'inherit') }}>
+                            <span className="font-semibold" style={{ color: isCurrent ? aqiColor : (typedItem.colorToken || 'inherit') }}>
                               {isCurrent
                                 ? effectiveTierLabel
-                                : c.pm25 !== null && c.pm25 !== undefined
-                                ? `PM₂.₅: ${c.pm25} µg/m³`
-                                : `${c.latitude.toFixed(2)}°N, ${c.longitude.toFixed(2)}°E`}
+                                : typedItem.pm25 !== null && typedItem.pm25 !== undefined
+                                ? `PM₂.₅: ${typedItem.pm25} µg/m³`
+                                : `${typedItem.latitude.toFixed(2)}°N, ${typedItem.longitude.toFixed(2)}°E`}
                             </span>
                             <span className="tabular-nums">
-                              {c.pm10 !== null && c.pm10 !== undefined
-                                ? `PM₁₀: ${c.pm10} µg/m³`
-                                : `${c.latitude.toFixed(1)}°, ${c.longitude.toFixed(1)}°`}
+                              {typedItem.pm10 !== null && typedItem.pm10 !== undefined
+                                ? `PM₁₀: ${typedItem.pm10} µg/m³`
+                                : `${typedItem.latitude.toFixed(1)}°, ${typedItem.longitude.toFixed(1)}°`}
                             </span>
                           </div>
 
                           <button
                             type="button"
                             onClick={() => {
-                              onSelectLocation(c);
+                              onSelectLocation({
+                                id: typedItem.id,
+                                name: typedItem.name,
+                                latitude: typedItem.latitude,
+                                longitude: typedItem.longitude,
+                                country: typedItem.country,
+                                countryCode: typedItem.countryCode,
+                                admin1: typedItem.admin1,
+                                timezone: 'timezone' in typedItem && typeof typedItem.timezone === 'string' ? typedItem.timezone : 'UTC',
+                              });
                               setActiveView('overview');
                             }}
                             disabled={isCurrent}
@@ -1092,14 +1106,19 @@ export function AqiHeroCard({
                 aria-labelledby="tab-globe"
                 className="w-full relative flex items-center justify-center animate-fadeIn"
               >
-                <MapLibreGlobe
-                  selectedLocation={location}
-                  onSelectLocation={onSelectLocation}
-                  aqiColor={aqiColor}
-                  aqiTierLabel={effectiveTierLabel}
-                  currentAqi={effectiveAqi}
-                  theme="light"
-                />
+                <ComponentErrorBoundary
+                  fallbackTitle="3D Atmospheric Globe Unavailable"
+                  fallbackMessage="WebGL 3D globe visualization could not initialize on this hardware. Planetary dispersion data remains accessible via Regional Compare."
+                >
+                  <MapLibreGlobe
+                    selectedLocation={location}
+                    onSelectLocation={onSelectLocation}
+                    aqiColor={aqiColor}
+                    aqiTierLabel={effectiveTierLabel}
+                    currentAqi={effectiveAqi}
+                    theme="light"
+                  />
+                </ComponentErrorBoundary>
               </div>
             )}
           </div>
@@ -1167,167 +1186,16 @@ export function AqiHeroCard({
         </div>
 
         {/* Enhanced Calibrated Precision Atmospheric Spectrum Bar */}
-        <div className="mt-8 pt-6 border-t border-slate-200/80 space-y-3">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs font-mono text-slate-600">
-            <div className="flex items-center gap-2">
-              <span className="font-semibold text-slate-700 font-sans">
-                Index Scale &amp; Position
-              </span>
-              <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 text-slate-600 border border-slate-300">
-                {activeStandard === 'EUROPEAN_EAQI' ? 'European EAQI (0–100+ Scale)' : 'US EPA AQI (0–500 Scale)'}
-              </span>
-            </div>
-            <span className="text-slate-900 font-bold text-sm tabular-nums">
-              Active Value: {hasAqi && effectiveAqi !== null && Number.isFinite(effectiveAqi) ? `${effectiveAqi} (${effectiveTierLabel})` : 'N/A'}
-            </span>
-          </div>
-
-          {/* Segmented Gradient Bar with Dynamic Needle and Hover Tooltip */}
-          <div className="relative pt-7 pb-1">
-            {hasAqi && effectiveAqi !== null && Number.isFinite(effectiveAqi) && effectiveAqi >= 0 && (
-              <div
-                className="absolute top-0 -translate-x-1/2 flex flex-col items-center transition-all duration-300 pointer-events-none z-20"
-                style={{ left: `${spectrumPercent}%` }}
-              >
-                <span
-                  className="px-2.5 py-1 rounded-lg text-xs font-mono font-black text-white shadow-md mb-1 whitespace-nowrap flex items-center gap-1"
-                  style={{ backgroundColor: aqiColor }}
-                >
-                  <span>▼</span>
-                  <span>{providerAqi}</span>
-                  <span>•</span>
-                  <span>{tier?.label || 'Active'}</span>
-                </span>
-                <div
-                  className="w-4 h-4 bg-white border-3 rounded-full shadow-lg"
-                  style={{ borderColor: aqiColor }}
-                />
-              </div>
-            )}
-
-            {/* Hover Tooltip Overlay */}
-            {hoveredBand && (
-              <div className="absolute -top-7 left-1/2 -translate-x-1/2 px-3 py-1 rounded-md bg-slate-900 text-white text-xs font-mono shadow-md z-30 pointer-events-none whitespace-nowrap">
-                {hoveredBand}
-              </div>
-            )}
-
-            {/* Interactive Bar */}
-            <div className="h-5 w-full rounded-xl overflow-hidden flex shadow-inner bg-slate-200 border border-slate-300">
-              {activeStandard === 'EUROPEAN_EAQI' ? (
-                <>
-                  <div
-                    className="flex-1 bg-[#059669] hover:brightness-110 transition-all cursor-pointer"
-                    onMouseEnter={() => setHoveredBand('0–20: Good (Ideal for outdoor activities)')}
-                    onMouseLeave={() => setHoveredBand(null)}
-                  />
-                  <div
-                    className="flex-1 bg-[#10B981] hover:brightness-110 transition-all cursor-pointer"
-                    onMouseEnter={() => setHoveredBand('20–40: Fair (Air quality acceptable)')}
-                    onMouseLeave={() => setHoveredBand(null)}
-                  />
-                  <div
-                    className="flex-1 bg-[#D97706] hover:brightness-110 transition-all cursor-pointer"
-                    onMouseEnter={() => setHoveredBand('40–60: Moderate (Sensitive groups notice irritation)')}
-                    onMouseLeave={() => setHoveredBand(null)}
-                  />
-                  <div
-                    className="flex-1 bg-[#EA580C] hover:brightness-110 transition-all cursor-pointer"
-                    onMouseEnter={() => setHoveredBand('60–80: Poor (General public notice discomfort)')}
-                    onMouseLeave={() => setHoveredBand(null)}
-                  />
-                  <div
-                    className="flex-1 bg-[#DC2626] hover:brightness-110 transition-all cursor-pointer"
-                    onMouseEnter={() => setHoveredBand('80–100: Very Poor (Severe exposure warnings)')}
-                    onMouseLeave={() => setHoveredBand(null)}
-                  />
-                  <div
-                    className="flex-1 bg-[#7C3AED] hover:brightness-110 transition-all cursor-pointer"
-                    onMouseEnter={() => setHoveredBand('100+: Extremely Poor (Hazardous inversion smog)')}
-                    onMouseLeave={() => setHoveredBand(null)}
-                  />
-                </>
-              ) : (
-                <>
-                  <div
-                    className="w-[10%] bg-[#059669] hover:brightness-110 transition-all cursor-pointer"
-                    onMouseEnter={() => setHoveredBand('0–50: Good • CPCB Good (Clean air, no restrictions)')}
-                    onMouseLeave={() => setHoveredBand(null)}
-                  />
-                  <div
-                    className="w-[10%] bg-[#D97706] hover:brightness-110 transition-all cursor-pointer"
-                    onMouseEnter={() => setHoveredBand('51–100: Moderate • CPCB Satisfactory (Acceptable air)')}
-                    onMouseLeave={() => setHoveredBand(null)}
-                  />
-                  <div
-                    className="w-[10%] bg-[#EA580C] hover:brightness-110 transition-all cursor-pointer"
-                    onMouseEnter={() => setHoveredBand('101–150: Sensitive • CPCB Moderate (Children & asthmatics limit exertion)')}
-                    onMouseLeave={() => setHoveredBand(null)}
-                  />
-                  <div
-                    className="w-[10%] bg-[#DC2626] hover:brightness-110 transition-all cursor-pointer"
-                    onMouseEnter={() => setHoveredBand('151–200: Unhealthy • CPCB Poor (Health effects for general population)')}
-                    onMouseLeave={() => setHoveredBand(null)}
-                  />
-                  <div
-                    className="w-[20%] bg-[#9333EA] hover:brightness-110 transition-all cursor-pointer"
-                    onMouseEnter={() => setHoveredBand('201–300: Very Unhealthy • CPCB Very Poor (Health alert: morning inversion)')}
-                    onMouseLeave={() => setHoveredBand(null)}
-                  />
-                  <div
-                    className="w-[40%] bg-[#7F1D1D] hover:brightness-110 transition-all cursor-pointer"
-                    onMouseEnter={() => setHoveredBand('301–500: Hazardous • CPCB Severe (Emergency conditions; stay indoors)')}
-                    onMouseLeave={() => setHoveredBand(null)}
-                  />
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* Dual-Scale Legend (US EPA / EAQI + 🇮🇳 India CPCB Scale) */}
-          <div className="space-y-1 overflow-x-auto scrollbar-none pb-0.5">
-            {activeStandard === 'EUROPEAN_EAQI' ? (
-              <div className="flex justify-between text-xs font-mono text-slate-600 tabular-nums min-w-[340px]">
-                <span>0 Good</span>
-                <span>20 Fair</span>
-                <span>40 Moderate</span>
-                <span>60 Poor</span>
-                <span>80 Very Poor</span>
-                <span>100+ Extr.</span>
-              </div>
-            ) : (
-              <div className="min-w-[480px] sm:min-w-0 space-y-1">
-                <div className="flex justify-between text-xs font-mono font-bold text-slate-700 tabular-nums">
-                  <span>0 Good</span>
-                  <span>50 Mod</span>
-                  <span>100 Sens</span>
-                  <span>150 Unhealthy</span>
-                  <span>200 Very Unhealthy</span>
-                  <span>300+ Haz</span>
-                </div>
-                <div className="flex justify-between text-[11px] font-mono text-emerald-800 font-semibold bg-emerald-50/70 px-2.5 py-1 rounded-lg border border-emerald-200 gap-1.5 whitespace-nowrap">
-                  <span>🇮🇳 CPCB Good (0–50)</span>
-                  <span>Satisfactory (51–100)</span>
-                  <span>Moderate (101–200)</span>
-                  <span>Poor (201–300)</span>
-                  <span>Very Poor (301–400)</span>
-                  <span>Severe (401–500+)</span>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="text-xs font-mono text-slate-500 mt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-            <span>
-              {activeStandard === 'EUROPEAN_EAQI'
-                ? 'European Air Quality Index (0–100+ continuous scale based on EEA 2024 concentration thresholds).'
-                : 'US EPA Air Quality Index (0–500 continuous scale across 6 criteria pollutants; EPA-454/B-18-007).'}
-            </span>
-            <span className="text-slate-400">
-              *AQI is strictly non-negative (0 to 500+). Minus signs in Choices reflect avoided emissions.
-            </span>
-          </div>
-        </div>
+        <AtmosphericSpectrumBar
+          activeStandard={activeStandard}
+          hasAqi={hasAqi}
+          effectiveAqi={effectiveAqi}
+          effectiveTierLabel={effectiveTierLabel}
+          spectrumPercent={spectrumPercent}
+          aqiColor={aqiColor}
+          providerAqi={providerAqi}
+          tierLabel={tier?.label}
+        />
 
         <p className="text-xs text-slate-500 mt-4 leading-relaxed border-t border-slate-200/80 pt-3">
           {averagingPeriodNote}

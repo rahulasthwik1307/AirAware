@@ -12,11 +12,8 @@ import {
   loadCommunityState,
   addLocalIncident,
   deleteLocalIncident,
-  updateIncidentStatus,
   markAlertAsRead,
   markAllAlertsAsRead,
-  INITIAL_COMMUNITY_STATE,
-  COMMUNITY_STORAGE_KEY,
 } from '../storage';
 import { PollutionIncident } from '../types';
 

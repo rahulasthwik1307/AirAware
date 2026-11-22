@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, beforeAll, afterAll } from 'vitest';
 import {
-  loadActivePlanState,
   adoptRecommendation,
   markActionCompleted,
   resetPlanStorageCache,

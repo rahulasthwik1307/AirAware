@@ -124,8 +124,8 @@ export function CommunityKpiStrip({
           </p>
         </div>
         <div className="pt-2 border-t border-indigo-100/80 flex items-center justify-between text-[10px] font-mono text-indigo-700">
-          <span>🔒 100% Private</span>
-          <span>Zero Cloud Tracking</span>
+          <span>🔒 Stored On Device</span>
+          <span>Local Device Journal</span>
         </div>
       </div>
 

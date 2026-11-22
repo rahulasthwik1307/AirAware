@@ -17,6 +17,12 @@ import {
 
 export const runtime = 'nodejs';
 
+/**
+ * POST /api/ai/copilot
+ * Purpose: Answers natural-language environmental inquiries conforming to Master Specification §4.4.
+ * Inputs: Validated JSON body satisfying CopilotRequestSchema.
+ * Never: Never retains chat transcripts on the server or exposes raw unhandled inference failures.
+ */
 export async function POST(req: Request) {
   try {
     if (process.env.NODE_ENV !== 'production' && req.url.includes('reset=1')) {

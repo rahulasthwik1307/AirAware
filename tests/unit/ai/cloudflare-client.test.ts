@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { executeWorkersAiInference } from '@/lib/ai/cloudflare-client';
-import { GuidanceResponseSchema, GuidanceResponse, AiServiceError } from '@/lib/ai/types';
+import { GuidanceResponseSchema, GuidanceResponse } from '@/lib/ai/types';
 import { aiCache } from '@/lib/ai/cache';
 import { CLOUDFLARE_DEFAULTS } from '@/lib/ai/config';
 

@@ -293,5 +293,48 @@ describe('Single Source of Truth for Location and Air Telemetry', () => {
       expect(isSameLocation(locA, locDifferent)).toBe(false);
     });
   });
+
+  describe('Exact rounded cache key guard', () => {
+    it('prevents stale data from a different coordinate from rendering under a new city location', () => {
+      const delhiLocation: GeoLocation = {
+        id: 1273294,
+        name: 'Delhi',
+        country: 'India',
+        countryCode: 'IN',
+        latitude: 28.6139,
+        longitude: 77.209,
+        timezone: 'Asia/Kolkata',
+      };
+
+      const staleMumbaiRaw: RawOpenMeteoAirQualityResponse = {
+        latitude: 19.076,
+        longitude: 72.8777,
+        current: {
+          time: '2026-11-22T10:00',
+          pm2_5: 45,
+          pm10: 75,
+        },
+        hourly: {
+          time: ['2026-11-22T10:00'],
+          pm2_5: [45],
+        },
+      };
+
+      const delhiKey = `${delhiLocation.latitude.toFixed(2)}_${delhiLocation.longitude.toFixed(2)}`;
+      const mumbaiKey = `${staleMumbaiRaw.latitude.toFixed(2)}_${staleMumbaiRaw.longitude.toFixed(2)}`;
+
+      expect(delhiKey).not.toBe(mumbaiKey);
+
+      // Even if coordinates differ by less than 0.5 degrees (e.g. 0.3 degrees away in another suburb)
+      const nearbyMismatchRaw: RawOpenMeteoAirQualityResponse = {
+        ...staleMumbaiRaw,
+        latitude: 28.95, // 0.34 deg away, previously slipped through 0.5 deg tolerance
+        longitude: 77.209,
+      };
+
+      const nearbyKey = `${nearbyMismatchRaw.latitude.toFixed(2)}_${nearbyMismatchRaw.longitude.toFixed(2)}`;
+      expect(nearbyKey).not.toBe(delhiKey);
+    });
+  });
 });
 

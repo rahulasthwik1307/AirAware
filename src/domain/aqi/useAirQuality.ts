@@ -14,6 +14,7 @@ import { z } from 'zod';
 import { AirQualityReport, AqiStandardKey, GeoLocation } from '@/domain/types';
 import { normalizeAirQualityReport, RawOpenMeteoAirQualityResponse } from './normalizer';
 import { WeatherData } from '@/app/api/weather/route';
+import { TELEMETRY_CACHE_TTL_MS, TELEMETRY_FETCH_TIMEOUT_MS } from '../constants/telemetry';
 
 const GeoLocationSchema = z.object({
   id: z.number(),
@@ -40,7 +41,7 @@ export const DEFAULT_LOCATION: GeoLocation = {
 
 const STORAGE_KEY = 'airaware_last_location';
 const LOCATION_CHANGED_EVENT = 'airaware_location_changed';
-const CACHE_TTL_MS = 15 * 60 * 1000; // 15-minute SWR caching
+const CACHE_TTL_MS = TELEMETRY_CACHE_TTL_MS;
 
 export const USER_FRIENDLY_TELEMETRY_ERROR =
   "Couldn't reach the air-quality service. Check your connection and retry.";
@@ -83,11 +84,21 @@ export interface CacheEntry extends TelemetryData {
 export const telemetryCache = new Map<string, CacheEntry>();
 export const inFlightRequests = new Map<string, Promise<TelemetryData>>();
 
+export function getTelemetryCacheKey(latitude: number, longitude: number): string {
+  return `${latitude.toFixed(2)}_${longitude.toFixed(2)}`;
+}
+
+/**
+ * Shared in-flight deduplicated telemetry fetcher with 10-minute client caching.
+ * @param location - Target location.
+ * @param options - Optional flags (e.g. forceRefresh).
+ * @returns Promise resolving raw air quality and weather telemetry. Never throws unhandled network errors.
+ */
 export function fetchSharedTelemetry(
   location: GeoLocation,
   options?: { forceRefresh?: boolean }
 ): Promise<TelemetryData> {
-  const cacheKey = `${location.latitude.toFixed(2)}_${location.longitude.toFixed(2)}`;
+  const cacheKey = getTelemetryCacheKey(location.latitude, location.longitude);
 
   if (!options?.forceRefresh) {
     const cached = telemetryCache.get(cacheKey);
@@ -106,7 +117,7 @@ export function fetchSharedTelemetry(
   const timeoutId = setTimeout(() => {
     timedOut = true;
     controller.abort();
-  }, 12000);
+  }, TELEMETRY_FETCH_TIMEOUT_MS);
 
   const aqiUrl = `/api/air-quality?latitude=${location.latitude}&longitude=${location.longitude}&timezone=${encodeURIComponent(
     location.timezone || 'auto'
@@ -126,7 +137,11 @@ export function fetchSharedTelemetry(
         throw new Error(errJson.error || `Air Quality API responded with ${aqiRes.status}`);
       }
 
-      const rawAqi: RawOpenMeteoAirQualityResponse = await aqiRes.json();
+      const rawAqiData = await aqiRes.json();
+      const rawAqi: RawOpenMeteoAirQualityResponse = {
+        ...rawAqiData,
+        queryCacheKey: cacheKey,
+      };
       let wData: WeatherData | null = null;
       if (weatherRes && weatherRes.ok) {
         wData = await weatherRes.json().catch(() => null);
@@ -283,10 +298,10 @@ function useAirQualityState(standardOverride?: AqiStandardKey): UseAirQualityRet
 
   const report = useMemo(() => {
     if (!rawAirQuality || !location) return null;
-    // Safety guard against cross-city coordinate mismatch during rapid location transitions
-    const latDiff = Math.abs(rawAirQuality.latitude - location.latitude);
-    const lonDiff = Math.abs(rawAirQuality.longitude - location.longitude);
-    if (latDiff > 0.5 || lonDiff > 0.5) {
+    // Exact match on rounded cache key so stale data from another place can never render under a new city name
+    const rawKey = rawAirQuality.queryCacheKey ?? getTelemetryCacheKey(rawAirQuality.latitude, rawAirQuality.longitude);
+    const locKey = getTelemetryCacheKey(location.latitude, location.longitude);
+    if (rawKey !== locKey) {
       return null;
     }
     return normalizeAirQualityReport(rawAirQuality, location, activeStandard);
@@ -344,6 +359,10 @@ export function AirQualityProvider({ children }: { readonly children: React.Reac
   return React.createElement(AirQualityContext.Provider, { value }, children);
 }
 
+/**
+ * Primary reactive hook consuming the single source of truth for location and telemetry.
+ * @returns Reactive UseAirQualityReturn state with location, report, weather, and setters. Never executes outside AirQualityProvider.
+ */
 export function useAirQuality(): UseAirQualityReturn {
   const context = useContext(AirQualityContext);
   if (!context) {

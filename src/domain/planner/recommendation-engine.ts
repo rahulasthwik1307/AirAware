@@ -9,7 +9,7 @@
  * - Evaluates sensitivity tiers with gentle, non-diagnostic guidance.
  */
 
-import { HouseholdMember, MemberScheduleItem } from '../household/types';
+import { HouseholdMember } from '../household/types';
 import { ForecastPoint, AtmosphericModelMetadata } from '../types';
 import { calculateDeltaC, calculateAvoidedTransportEmissions } from './impact-calculator';
 import { PlannerRecommendation, TimeWindow } from './types';

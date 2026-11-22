@@ -4,6 +4,7 @@
  */
 
 import { CopilotChatMessage } from './use-copilot';
+import { CopilotResponse } from './types';
 
 export interface CopilotChatSession {
   readonly id: string;
@@ -81,15 +82,15 @@ export function loadChatSessions(): CopilotChatSession[] {
       createdAt: typeof s.createdAt === 'string' ? s.createdAt : new Date().toISOString(),
       updatedAt: typeof s.updatedAt === 'string' ? s.updatedAt : new Date().toISOString(),
       messages: Array.isArray(s.messages)
-        ? s.messages.slice(0, MAX_MESSAGES_PER_SESSION).map((m: any) => ({
+        ? s.messages.slice(0, MAX_MESSAGES_PER_SESSION).map((m: Record<string, unknown>) => ({
             id: typeof m.id === 'string' ? m.id : `msg-${Date.now()}`,
-            sender: m.sender === 'user' ? 'user' : 'assistant',
+            sender: (m.sender === 'user' ? 'user' : 'assistant') as 'user' | 'assistant',
             text: typeof m.text === 'string' ? sanitizeChatString(m.text) : undefined,
-            response: m.response ? m.response : undefined,
+            response: m.response ? (m.response as CopilotResponse) : undefined,
             timestamp: typeof m.timestamp === 'string' ? m.timestamp : new Date().toISOString(),
             isError: Boolean(m.isError),
             errorMessage: typeof m.errorMessage === 'string' ? sanitizeChatString(m.errorMessage) : undefined,
-            source: m.source === 'cloudflare-ai' ? 'cloudflare-ai' : 'deterministic',
+            source: (m.source === 'cloudflare-ai' ? 'cloudflare-ai' : 'deterministic') as 'cloudflare-ai' | 'deterministic',
           }))
         : [],
     }));

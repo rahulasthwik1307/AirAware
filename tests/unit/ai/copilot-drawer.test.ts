@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { CopilotRequestSchema, WorkspaceEnum, RoomContextSchema } from '@/lib/ai/types';
+import { CopilotRequestSchema, WorkspaceEnum } from '@/lib/ai/types';
 
 describe('Copilot Request & Workspace Context Schema', () => {
   it('validates a default workspace when none is supplied', () => {

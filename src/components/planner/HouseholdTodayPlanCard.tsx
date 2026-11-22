@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { AirQualityReport, GeoLocation } from '@/domain/types';
 import { getPrimaryAqiFacts } from '@/domain/aqi/primary-aqi';
 import { HouseholdStorageState } from '@/domain/household/types';
 import {
+  AqiCategory,
   GuidanceRequest,
   GuidanceResponse,
   GuidanceResponseSchema,
@@ -34,7 +35,7 @@ export function HouseholdTodayPlanCard({
     if (!report || report.providerAqi === null || !primaryFacts) return null;
 
     const aqi = primaryFacts.aqi;
-    const category = primaryFacts.category as any;
+    const category = primaryFacts.category as AqiCategory;
     const pm25Concentration = primaryFacts.pm25Concentration ?? 25;
 
     const members = householdState?.members ?? [];

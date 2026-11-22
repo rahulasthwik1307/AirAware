@@ -9,6 +9,7 @@
 
 import { GuidanceRequest, GuidanceResponse, CopilotRequest, CopilotResponse } from './types';
 import { sanitizeUserQuery } from './prompt-builder';
+import { AI_CACHE_DEFAULT_TTL_MS } from './constants';
 
 interface CacheEntry<T> {
   data: T;
@@ -16,7 +17,7 @@ interface CacheEntry<T> {
 }
 
 // 30 minutes cache TTL (aligned with sensor refresh frequency)
-const DEFAULT_TTL_MS = 30 * 60 * 1000;
+const DEFAULT_TTL_MS = AI_CACHE_DEFAULT_TTL_MS;
 
 class AiCacheManager {
   private guidanceCache = new Map<string, CacheEntry<GuidanceResponse>>();
@@ -75,6 +76,10 @@ class AiCacheManager {
   }
 
   public setGuidance(key: string, data: GuidanceResponse, ttlMs = DEFAULT_TTL_MS): void {
+    // aiCache must never store rule-based fallback answers or timeout/error results
+    if (data.isDeterministicFallback) {
+      return;
+    }
     this.guidanceCache.set(key, {
       data,
       expiresAt: Date.now() + ttlMs,
@@ -92,6 +97,10 @@ class AiCacheManager {
   }
 
   public setCopilot(key: string, data: CopilotResponse, ttlMs = DEFAULT_TTL_MS): void {
+    // aiCache must never store rule-based fallback answers or timeout/error results
+    if (data.isDeterministicFallback || data.fallbackReason) {
+      return;
+    }
     this.copilotCache.set(key, {
       data,
       expiresAt: Date.now() + ttlMs,

@@ -16,17 +16,6 @@ describe('Scientific Trust & Domain Audit Verification', () => {
     timezone: 'Asia/Kolkata',
   };
 
-  const mockParisLocation: GeoLocation = {
-    id: 2988507,
-    name: 'Paris',
-    country: 'France',
-    countryCode: 'FR',
-    admin1: 'Île-de-France',
-    latitude: 48.8534,
-    longitude: 2.3488,
-    timezone: 'Europe/Paris',
-  };
-
   describe('Atmospheric Model Domain & Grid Resolution', () => {
     it('confirms India uses CAMS Global (0.4° ~45km) domain, not CAMS Europe (0.1° ~11km)', () => {
       expect(isEuropeanDomainCountry('IN')).toBe(false);

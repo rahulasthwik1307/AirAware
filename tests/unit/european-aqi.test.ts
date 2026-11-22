@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
   EEA_BREAKPOINTS,
-  EAQI_TIERS,
   getEaqiPollutantLevel,
   getEaqiTierFromValue,
 } from '@/domain/aqi/european-aqi';

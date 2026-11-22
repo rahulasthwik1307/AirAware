@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { GeoLocation, WorkspaceKey } from '@/domain/types';
 
@@ -673,7 +673,7 @@ export function OnboardingModal({
             {step > 1 && (
               <button
                 type="button"
-                onClick={() => setStep((prev) => (prev - 1) as any)}
+                onClick={() => setStep((prev) => (prev === 3 ? 2 : 1))}
                 className="px-4 py-2 text-xs font-mono font-semibold text-slate-700 hover:text-slate-900 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors cursor-pointer"
               >
                 Back
@@ -683,7 +683,7 @@ export function OnboardingModal({
             {step < 3 ? (
               <button
                 type="button"
-                onClick={() => setStep((prev) => (prev + 1) as any)}
+                onClick={() => setStep((prev) => (prev === 1 ? 2 : 3))}
                 className="px-5 py-2 text-xs font-mono font-bold text-white bg-teal-700 hover:bg-teal-800 rounded-xl transition-all shadow-xs cursor-pointer hover:shadow-md"
               >
                 Continue →

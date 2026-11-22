@@ -78,4 +78,31 @@ describe('AI Cache & Request Deduplication', () => {
     expect(aiCache.isDailyQuotaExhausted()).toBe(true);
     expect(aiCache.getDailyQuotaResetTimestamp()).toBeGreaterThan(Date.now());
   });
+
+  it('never stores rule-based fallback answers or timeout/error results', () => {
+    const key = aiCache.getGuidanceKey(sampleReq);
+
+    const fallbackRes: GuidanceResponse = {
+      ...sampleRes,
+      isDeterministicFallback: true,
+    };
+
+    aiCache.setGuidance(key, fallbackRes);
+    expect(aiCache.getGuidance(key)).toBeNull();
+
+    // Copilot test
+    const copilotKey = 'copilot-test-key';
+    aiCache.setCopilot(copilotKey, {
+      directAnswer: 'Fallback answer',
+      environmentalConditions: 'AQI 100',
+      recommendedAction: 'Action',
+      explanation: 'Explanation',
+      practicalAlternatives: ['Alt'],
+      dataSourceAndFreshness: 'CPCB',
+      limitationsOrUncertainty: 'Ambient',
+      isDeterministicFallback: true,
+      fallbackReason: 'AI service busy, showing a standard answer',
+    });
+    expect(aiCache.getCopilot(copilotKey)).toBeNull();
+  });
 });

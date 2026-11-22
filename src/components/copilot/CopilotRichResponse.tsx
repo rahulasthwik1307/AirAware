@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { CopilotResponse } from '@/lib/ai/types';
 import { AirQualityReport, ForecastPoint } from '@/domain/types';
 import { detectCopilotIntent, CopilotQueryIntent } from '@/domain/ai/copilot-intent';
@@ -39,7 +39,6 @@ export function CopilotRichResponse({
   response,
   report,
   onSelectPrompt,
-  isLiveAi = false,
 }: CopilotRichResponseProps) {
   const [copied, setCopied] = useState(false);
   const intent: CopilotQueryIntent = detectCopilotIntent(question, response.directAnswer);

@@ -87,14 +87,6 @@ export function FamilyPlannerWorkspace() {
     return allRecs;
   }, [householdState.members, report]);
 
-  // Recommendations filtered by active view filter
-  const displayedRecommendations = useMemo(() => {
-    if (selectedViewFilter === 'ALL_FAMILY') {
-      return householdRecommendations;
-    }
-    return householdRecommendations.filter((r) => r.memberId === selectedViewFilter);
-  }, [householdRecommendations, selectedViewFilter]);
-
   // Flattened Activities for Secondary Forecast Overlay
   const allActivitiesForTimeline = useMemo(() => {
     const targetMembers =

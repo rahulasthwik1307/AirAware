@@ -8,6 +8,12 @@ const AirQualityQuerySchema = z.object({
   timezone: z.string().default('auto'),
 });
 
+/**
+ * GET /api/air-quality
+ * Purpose: Resolves atmospheric telemetry via Copernicus CAMS with OpenAQ ground-station failover.
+ * Inputs: NextRequest with query parameters latitude, longitude, timezone.
+ * Never: Never modifies client state, stores user identifiers, or queries external APIs without coordinate validation.
+ */
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
 

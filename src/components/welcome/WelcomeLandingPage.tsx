@@ -60,7 +60,7 @@ export function WelcomeLandingPage({
               href="#privacy-commitment"
               className="px-3 py-1 rounded-full text-[12px] font-sans font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200/80 hover:bg-emerald-100/80 transition-all ml-1"
             >
-              100% Private
+              Data Privacy
             </a>
           </nav>
 
@@ -362,13 +362,13 @@ export function WelcomeLandingPage({
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
               <div className="space-y-2 max-w-xl">
                 <span className="text-xs font-sans font-bold text-emerald-800 uppercase tracking-wider block">
-                  100% Private &amp; Local-First
+                  Local-First &amp; Data Control
                 </span>
                 <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-sans">
-                  Your health routines never touch a cloud server.
+                  Your profiles and personal data stay on this device.
                 </h2>
                 <p className="text-sm font-sans text-slate-600 leading-relaxed">
-                  AirAware runs entirely in your browser with zero remote accounts, no telemetry tracking, and zero advertising cookies.
+                  No account needed. Your profile, saved cities and chats are stored on this device. Questions you send to the AI are processed to generate answers. You can clear everything at any time.
                 </p>
               </div>
 

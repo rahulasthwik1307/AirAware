@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
 import { calculateCommuteComparison, calculateDualImpactSummary } from '../calculator';
-import { DEFAULT_CLEANER_HABITS } from '../constants';
 import { CleanerHabit } from '../types';
 
 describe('Cleaner Choices Calculator — Scientific Integrity Tests', () => {

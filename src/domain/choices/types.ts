@@ -9,8 +9,6 @@
  * - Full disclosure of factors, distances, and occupancy baselines.
  */
 
-import { CommuteMode } from '../household/types';
-
 export type CleanerTransitMode =
   | 'PRIVATE_CAR'
   | 'CARPOOL'

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useId } from 'react';
+import { useState, useId } from 'react';
 import { ForecastPoint } from '@/domain/types';
 import { MemberScheduleItem, HouseholdMember } from '@/domain/household/types';
 import { ActiveActionItem } from '@/domain/planner/types';
@@ -158,7 +158,6 @@ export function ScheduleTimeline({
   schedules,
   forecast,
   activePlanActions = [],
-  onSelectMember,
   onAddActivityClick,
 }: ScheduleTimelineProps) {
   const dialogId = useId();
@@ -267,8 +266,6 @@ export function ScheduleTimeline({
       colorClass,
     };
   });
-
-  const timeTicks = [0, 3, 6, 9, 12, 15, 18, 21, 24];
 
   return (
     <section aria-labelledby="timeline-heading" className="space-y-3">
@@ -445,7 +442,7 @@ export function ScheduleTimeline({
 
             {/* Swimlanes for Each Household Member with Synchronized Diurnal Smog Horizon */}
             <div className="divide-y divide-[var(--border-subtle)]">
-              {targetMembers.map((member, memberIdx) => {
+              {targetMembers.map((member) => {
                 const colors =
                   ARCHETYPE_COLORS[member.archetype] || ARCHETYPE_COLORS.CHILD_STUDENT;
                 const icon = ARCHETYPE_ICONS[member.archetype] || '👤';
@@ -522,7 +519,7 @@ export function ScheduleTimeline({
                           )}
                         </div>
                       ) : (
-                        member.schedules.map((schedule, actIdx) => {
+                        member.schedules.map((schedule) => {
                           const startMinutes = parseMinutes(schedule.startTime);
                           const duration = schedule.durationMinutes || 45;
                           const endMinutes = startMinutes + duration;
@@ -547,7 +544,6 @@ export function ScheduleTimeline({
                             ? parseMinutes(displayStart)
                             : startMinutes;
                           const leftPercent = (effectiveStartMinutes / 1440) * 100;
-                          const durationPercent = (duration / 1440) * 100;
 
                           // Keep block nicely positioned within the 24h timeline canvas without clipping off right
                           const clampedLeftPercent = Math.min(Math.max(0, leftPercent), 84);
