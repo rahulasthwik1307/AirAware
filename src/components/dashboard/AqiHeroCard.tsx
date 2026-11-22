@@ -6,8 +6,7 @@ import { AirQualityReport, AqiStandardKey, GeoLocation } from '@/domain/types';
 import { calculateCpcbAqi, calculateCompositeCpcbAqi } from '@/domain/aqi/cpcb-benchmark';
 import { WeatherData } from '@/app/api/weather/route';
 import { GLOBE_REFERENCE_CITIES } from '../globe/world-landmass';
-import { PollutantBars } from '@/components/charts/PollutantBars';
-import { SevenDayTrend } from '@/components/charts/SevenDayTrend';
+import { UnifiedAnalyticsCard } from '@/components/charts/UnifiedAnalyticsCard';
 import { findBestDaytimeWindow } from '@/domain/aqi/best-window';
 
 // Single authoritative constant for right-panel height across Overview, Compare, and 3D Globe
@@ -720,15 +719,35 @@ export function AqiHeroCard({
           </div>
 
           {/* Right Column: 3-Option Segmented Control (Overview | Regional compare | 3D globe) */}
-          <div className="lg:col-span-7 relative flex flex-col items-center justify-between h-full">
-            {/* Visual Viewport Header with 3-Option Segmented Control */}
-            <div className="w-full flex items-center justify-between px-2 mb-2">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-slate-700 font-sans">
+          <div className="lg:col-span-7 relative flex flex-col lg:justify-end gap-2.5 h-full">
+            {/* Visual Viewport Header with 3-Option Segmented Control (Elevated Dock directly atop active panel) */}
+            <div className="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/85 backdrop-blur-md border border-slate-200/90 shadow-2xs">
+                <span className="relative flex h-2 w-2">
+                  <span
+                    className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                      activeView === 'overview'
+                        ? 'bg-emerald-400'
+                        : activeView === 'compare'
+                        ? 'bg-sky-400'
+                        : 'bg-indigo-400'
+                    }`}
+                  />
+                  <span
+                    className={`relative inline-flex rounded-full h-2 w-2 ${
+                      activeView === 'overview'
+                        ? 'bg-emerald-500'
+                        : activeView === 'compare'
+                        ? 'bg-sky-500'
+                        : 'bg-indigo-500'
+                    }`}
+                  />
+                </span>
+                <span className="text-xs font-mono font-bold text-slate-800 tracking-tight">
                   {activeView === 'overview'
-                    ? 'Environmental Overview'
+                    ? 'Live Airshed Telemetry'
                     : activeView === 'compare'
-                    ? 'Regional Air Quality Comparison'
+                    ? 'Regional Airshed Grid'
                     : '3D Earth Atmospheric Dispersion'}
                 </span>
               </div>
@@ -738,7 +757,7 @@ export function AqiHeroCard({
                 ref={tabListRef}
                 role="tablist"
                 aria-label="Environmental view mode"
-                className="inline-flex p-1 rounded-xl bg-slate-100 border border-slate-200/90 shadow-2xs text-xs font-mono font-bold"
+                className="inline-flex p-1 rounded-2xl bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-2xs text-xs font-mono font-bold gap-1 self-start sm:self-auto"
                 onKeyDown={handleTabKeyDown}
               >
                 <button
@@ -749,13 +768,14 @@ export function AqiHeroCard({
                   aria-controls="panel-overview"
                   tabIndex={activeView === 'overview' ? 0 : -1}
                   onClick={() => setActiveView('overview')}
-                  className={`px-3 py-1 rounded-lg transition-all cursor-pointer tactile-btn ${
+                  className={`px-3.5 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 font-bold tactile-btn ${
                     activeView === 'overview'
-                      ? 'bg-sky-600 text-white shadow-xs font-semibold'
-                      : 'text-slate-600 hover:text-slate-900'
+                      ? 'bg-sky-600 text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
                   }`}
                 >
-                  Overview
+                  <span aria-hidden="true">🌤️</span>
+                  <span>Overview</span>
                 </button>
                 <button
                   id="tab-compare"
@@ -765,13 +785,14 @@ export function AqiHeroCard({
                   aria-controls="panel-compare"
                   tabIndex={activeView === 'compare' ? 0 : -1}
                   onClick={() => setActiveView('compare')}
-                  className={`px-3 py-1 rounded-lg transition-all cursor-pointer tactile-btn ${
+                  className={`px-3.5 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 font-bold tactile-btn ${
                     activeView === 'compare'
-                      ? 'bg-sky-600 text-white shadow-xs font-semibold'
-                      : 'text-slate-600 hover:text-slate-900'
+                      ? 'bg-sky-600 text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
                   }`}
                 >
-                  Regional compare
+                  <span aria-hidden="true">🇮🇳</span>
+                  <span>Regional compare</span>
                 </button>
                 <button
                   id="tab-globe"
@@ -781,13 +802,14 @@ export function AqiHeroCard({
                   aria-controls="panel-globe"
                   tabIndex={activeView === 'globe' ? 0 : -1}
                   onClick={() => setActiveView('globe')}
-                  className={`px-3 py-1 rounded-lg transition-all cursor-pointer tactile-btn ${
+                  className={`px-3.5 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 font-bold tactile-btn ${
                     activeView === 'globe'
-                      ? 'bg-sky-600 text-white shadow-xs font-semibold'
-                      : 'text-slate-600 hover:text-slate-900'
+                      ? 'bg-sky-600 text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
                   }`}
                 >
-                  3D globe
+                  <span aria-hidden="true">🌐</span>
+                  <span>3D globe</span>
                 </button>
               </div>
             </div>
@@ -798,15 +820,20 @@ export function AqiHeroCard({
                 id="panel-overview"
                 role="tabpanel"
                 aria-labelledby="tab-overview"
-                className={`${HERO_RIGHT_PANEL_HEIGHT_CLASS} rounded-3xl border border-slate-200/90 bg-white p-4 sm:p-5 overflow-y-auto shadow-sm flex flex-col justify-between animate-fadeIn`}
+                className={`${HERO_RIGHT_PANEL_HEIGHT_CLASS} rounded-3xl border border-slate-200/90 bg-white p-4 sm:p-5 overflow-y-auto shadow-sm flex flex-col justify-start animate-fadeIn`}
               >
-                <div className="space-y-3 flex-1 flex flex-col justify-between">
+                <div className="space-y-3 flex-1 flex flex-col justify-start">
                   {/* Header */}
-                  <div className="border-b border-slate-200/80 pb-2">
-                    <h3 className="text-sm sm:text-base font-bold font-sans text-slate-900 flex items-center gap-2">
-                      <span>🌤️ Environmental Overview: {location.name}</span>
-                    </h3>
-                    <p className="text-xs text-slate-600 mt-0.5 font-sans">
+                  <div className="border-b border-slate-200/80 pb-2.5">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <h3 className="text-sm sm:text-base font-bold font-sans text-slate-900 flex items-center gap-2">
+                        <span>🌤️ Environmental Overview: {location.name}</span>
+                      </h3>
+                      <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200 shadow-2xs">
+                        📍 {coordinates.latitude.toFixed(2)}°N, {coordinates.longitude.toFixed(2)}°E
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-600 mt-1 font-sans">
                       Local atmospheric conditions, ventilation windows, and exposure mitigation.
                     </p>
                   </div>
@@ -904,16 +931,9 @@ export function AqiHeroCard({
                     </div>
                   )}
 
-                  {/* d. Two tiles side by side (stack on mobile) filling remaining height */}
-                  <div
-                    className={`grid grid-cols-1 ${
-                      report.historicalTrend && report.historicalTrend.length > 0 ? 'md:grid-cols-2' : 'grid-cols-1'
-                    } gap-3 flex-1 min-h-0 pt-0.5`}
-                  >
-                    <PollutantBars report={report} />
-                    {report.historicalTrend && report.historicalTrend.length > 0 && (
-                      <SevenDayTrend trend={report.historicalTrend} />
-                    )}
+                  {/* d. Unified Environmental Analytics Card (Interactive Segmented Switcher) */}
+                  <div className="w-full pt-0.5">
+                    <UnifiedAnalyticsCard report={report} />
                   </div>
                 </div>
               </div>
@@ -928,15 +948,15 @@ export function AqiHeroCard({
                 className="w-full h-[540px] sm:h-[620px] lg:h-[680px] rounded-3xl border border-slate-200/90 bg-white p-5 sm:p-6 overflow-y-auto space-y-4 shadow-lg animate-fadeIn"
               >
                 <div className="border-b border-slate-200/80 pb-3">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
                     <h3 className="text-base font-bold font-sans text-slate-900 flex items-center gap-2">
                       <span>🇮🇳 Regional Air Quality Comparison</span>
                     </h3>
-                    <span className="text-xs font-mono font-bold text-amber-900 bg-amber-50 px-2 py-0.5 rounded border border-amber-300">
+                    <span className="text-xs font-mono font-bold text-amber-900 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-300 shadow-2xs">
                       Modeled estimates
                     </span>
                   </div>
-                  <p className="text-xs text-slate-600 mt-1">
+                  <p className="text-xs text-slate-600 mt-1 font-sans">
                     Live modeled estimates from Copernicus Atmosphere Monitoring Service (CAMS) via Open-Meteo (~45 km horizontal grid). Click any city to switch your active location.
                   </p>
                 </div>
