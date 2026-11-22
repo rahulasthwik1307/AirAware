@@ -26,6 +26,7 @@ function formatDataAge(timestampStr?: string): string {
 
 export function ProvenanceFooter({ report }: ProvenanceFooterProps) {
   const isEurope = report?.modelMetadata.domain === 'CAMS_EUROPE';
+  const isStation = report?.sourceType === 'station';
 
   return (
     <footer
@@ -43,19 +44,19 @@ export function ProvenanceFooter({ report }: ProvenanceFooterProps) {
                 <span>🌐</span>
                 <span>Scientific Data Provenance</span>
               </span>
-              <span className="text-[var(--ink-secondary)]">Attribution &amp; Model Domain</span>
+              <span className="text-[var(--ink-secondary)]">Attribution &amp; Source Verification</span>
               <span aria-hidden="true" className="text-xs text-[var(--ink-muted)] group-open:rotate-180 transition-transform duration-200 ml-1">
                 ▼
               </span>
             </h2>
             <span className="text-xs font-mono font-bold text-[var(--brand-primary)] bg-[var(--surface-card)] px-2.5 py-0.5 rounded border border-[var(--border-subtle)] shadow-2xs">
-              Open Science
+              {isStation ? 'OpenAQ Reference Monitor' : 'Open Science'}
             </span>
           </div>
 
           <div className="flex items-center gap-2 text-xs font-mono text-[var(--ink-muted)]">
             <span className="group-open:hidden">
-              Copernicus CAMS IFS and Open-Meteo disclosure ▾
+              {isStation ? `Ground station: ${report?.stationName || 'Nearby'} (${report?.distanceKm} km away) ▾` : 'Copernicus CAMS IFS and Open-Meteo disclosure ▾'}
             </span>
             <span className="hidden group-open:inline text-[var(--brand-primary)] font-semibold">
               Hide Details ▴
@@ -65,36 +66,65 @@ export function ProvenanceFooter({ report }: ProvenanceFooterProps) {
 
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-5 mt-4 pt-4 border-t border-[var(--border-subtle)]">
           <div className="max-w-2xl space-y-3">
-            <p className="leading-relaxed text-xs sm:text-sm text-[var(--ink-secondary)]">
-              Current modelled air-quality data from{' '}
-              <a
-                href="https://open-meteo.com/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-bold text-[var(--brand-primary)] underline hover:text-[var(--brand-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] rounded"
-              >
-                Open-Meteo
-              </a>
-              , powered by the{' '}
-              <a
-                href="https://atmosphere.copernicus.eu/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-bold text-[var(--brand-primary)] underline hover:text-[var(--brand-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] rounded"
-              >
-                Copernicus Atmosphere Monitoring Service (CAMS)
-              </a>
-              . Numerical models assimilate satellite atmospheric observations, meteorological forecasts, and emission inventories.
-            </p>
+            {isStation ? (
+              <p className="leading-relaxed text-xs sm:text-sm text-[var(--ink-secondary)]">
+                In-situ particulate matter measurements (PM2.5 and PM10) from ground monitoring station{' '}
+                <strong className="text-[var(--ink-primary)]">{report?.stationName}</strong> ({report?.distanceKm} km away), accessed via the{' '}
+                <a
+                  href="https://openaq.org/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-bold text-[var(--brand-primary)] underline hover:text-[var(--brand-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] rounded"
+                >
+                  OpenAQ v3 Platform
+                </a>
+                . Gaseous background species and hourly forecasts remain integrated via the{' '}
+                <a
+                  href="https://atmosphere.copernicus.eu/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-bold text-[var(--brand-primary)] underline hover:text-[var(--brand-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] rounded"
+                >
+                  Copernicus Atmosphere Monitoring Service (CAMS)
+                </a>
+                .
+              </p>
+            ) : (
+              <p className="leading-relaxed text-xs sm:text-sm text-[var(--ink-secondary)]">
+                Current modelled air-quality data from{' '}
+                <a
+                  href="https://open-meteo.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-bold text-[var(--brand-primary)] underline hover:text-[var(--brand-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] rounded"
+                >
+                  Open-Meteo
+                </a>
+                , powered by the{' '}
+                <a
+                  href="https://atmosphere.copernicus.eu/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-bold text-[var(--brand-primary)] underline hover:text-[var(--brand-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] rounded"
+                >
+                  Copernicus Atmosphere Monitoring Service (CAMS)
+                </a>
+                . Numerical models assimilate satellite atmospheric observations, meteorological forecasts, and emission inventories.
+              </p>
+            )}
 
             <div className="p-3.5 rounded-xl bg-[var(--surface-card)] border border-[var(--border-subtle)] text-xs text-[var(--ink-secondary)] leading-relaxed font-mono">
-              {isEurope ? (
+              {isStation ? (
+                <span>
+                  <strong className="text-[var(--ink-primary)]">Telemetry Source:</strong> Ground station: {report?.stationName}, {report?.distanceKm} km away · OpenAQ · Observed {report?.observedAt || report?.modelTimestamp} ({formatDataAge(report?.observedAt || report?.modelTimestamp)}).
+                </span>
+              ) : isEurope ? (
                 <span>
                   <strong className="text-[var(--ink-primary)]">Model Domain:</strong> CAMS European regional ensemble (~11 km horizontal grid, 0.1° resolution).
                 </span>
               ) : (
                 <span>
-                  <strong className="text-[var(--ink-primary)]">Model Domain:</strong> CAMS Global atmospheric composition (~45 km horizontal grid, 0.4° resolution). Modelled regional grid output does not provide street-level precision and reflects atmospheric transport simulations rather than in-situ ground monitoring stations (such as physical CAAQMS stations in India).
+                  <strong className="text-[var(--ink-primary)]">Model Domain:</strong> Modeled estimate (Copernicus CAMS via Open-Meteo, ~45 km grid) · no recent station within 25 km. CAMS Global atmospheric composition (~45 km horizontal grid). Modelled regional grid output does not provide street-level precision and reflects atmospheric transport simulations rather than in-situ ground monitoring stations (such as physical CAAQMS stations in India).
                 </span>
               )}
             </div>

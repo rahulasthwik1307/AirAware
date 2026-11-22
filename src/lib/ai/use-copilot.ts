@@ -322,8 +322,11 @@ export function useAirCopilot({
 
       const userContext = deriveUserContextFromHousehold(householdState, activeMember);
       const cityName = location?.name || report.location.name;
-      const observationTime = report.localTime || report.modelTimestamp;
-      const dataSource = 'Modeled estimate (Copernicus CAMS via Open-Meteo, ~45 km grid)';
+      const observationTime = report.observedAt || report.localTime || report.modelTimestamp;
+      const isStation = report.sourceType === 'station';
+      const dataSource = isStation
+        ? `Ground station: ${report.stationName || 'Nearby Station'}${report.distanceKm !== null && report.distanceKm !== undefined ? `, ${report.distanceKm} km away` : ''} · OpenAQ`
+        : 'Modeled estimate (Copernicus CAMS via Open-Meteo, ~45 km grid) · no recent station within 25 km';
 
       const payload = {
         question: q.slice(0, 200),
@@ -343,6 +346,9 @@ export function useAirCopilot({
         cityName,
         observationTime,
         dataSource,
+        sourceType: report.sourceType,
+        stationName: report.stationName,
+        distanceKm: report.distanceKm,
       };
 
       try {

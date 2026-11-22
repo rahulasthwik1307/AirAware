@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { getNearestOpenAqStation } from '@/domain/aqi/openaq-adapter';
 
 const AirQualityQuerySchema = z.object({
   latitude: z.coerce.number().min(-90).max(90),
@@ -63,21 +64,25 @@ export async function GET(request: NextRequest) {
       timezone
     )}`;
 
-    const res = await fetch(targetUrl, {
-      next: { revalidate: 900 }, // 15-minute SWR caching
-      headers: {
-        Accept: 'application/json',
-      },
-    });
+    // Query CAMS numerical model and OpenAQ in-situ ground station in parallel
+    const [camsRes, stationResult] = await Promise.all([
+      fetch(targetUrl, {
+        next: { revalidate: 600 }, // 10-minute caching
+        headers: {
+          Accept: 'application/json',
+        },
+      }),
+      getNearestOpenAqStation(latitude, longitude).catch(() => null),
+    ]);
 
-    if (!res.ok) {
+    if (!camsRes.ok) {
       return NextResponse.json(
-        { error: `Air Quality provider responded with status ${res.status}` },
+        { error: `Air Quality provider responded with status ${camsRes.status}` },
         { status: 502 }
       );
     }
 
-    const data = await res.json();
+    const data = await camsRes.json();
 
     if (!data.current || !data.hourly) {
       return NextResponse.json(
@@ -86,9 +91,19 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    return NextResponse.json(data, {
+    const payload = {
+      ...data,
+      sourceType: stationResult ? 'station' : 'model',
+      stationName: stationResult ? stationResult.stationName : null,
+      distanceKm: stationResult ? stationResult.distanceKm : null,
+      observedAt: stationResult ? stationResult.observedAt : null,
+      stationPm25: stationResult ? stationResult.pm25 : null,
+      stationPm10: stationResult ? stationResult.pm10 : null,
+    };
+
+    return NextResponse.json(payload, {
       headers: {
-        'Cache-Control': 'public, s-maxage=900, stale-while-revalidate=300',
+        'Cache-Control': 'public, s-maxage=600, stale-while-revalidate=300',
       },
     });
   } catch (err) {

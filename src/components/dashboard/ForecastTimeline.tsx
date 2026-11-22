@@ -194,13 +194,16 @@ export function ForecastTimeline({
             id="forecast-telemetry-heading"
             className="text-base font-bold tracking-tight text-[var(--ink-primary)] font-sans flex items-center gap-2"
           >
-            <span>24-Hour Modelled Forecast</span>
-            <span className="text-[10px] font-mono font-normal text-[var(--ink-muted)] bg-[var(--surface-subtle)] px-2 py-0.5 rounded border border-[var(--border-subtle)]">
+            <span>24-Hour Forecast</span>
+            <span className="text-[10px] font-mono font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-300">
+              Forecast: modeled
+            </span>
+            <span className="text-[10px] font-mono font-normal text-[var(--ink-muted)] bg-[var(--surface-subtle)] px-2 py-0.5 rounded border border-[var(--border-subtle)] hidden sm:inline">
               Hourly resolution
             </span>
           </h2>
           <p className="text-xs text-[var(--ink-secondary)] mt-0.5">
-            Modelled Projections ({standardLabel}) from Copernicus Atmosphere Monitoring Service (CAMS) numerical simulations via Open-Meteo.
+            Forecast: modeled · Modelled Projections ({standardLabel}) from Copernicus Atmosphere Monitoring Service (CAMS) numerical simulations via Open-Meteo (~45 km grid).
           </p>
         </div>
 

@@ -86,6 +86,10 @@ export function HouseholdTodayPlanCard({
         .flatMap((m) => m.schedules.map((s) => `${m.nickname}: ${s.activityName} at ${s.startTime}`))
         .slice(0, 4)
         .join(', '),
+      sourceType: report.sourceType,
+      stationName: report.stationName,
+      distanceKm: report.distanceKm,
+      observationTime: report.observedAt || report.modelTimestamp,
     };
   }, [report, householdState, location]);
 

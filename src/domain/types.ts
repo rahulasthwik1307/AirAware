@@ -113,6 +113,8 @@ export interface CpcbComparisonContext {
   readonly estimatedAqiRange: string;
   readonly stationContext: string;
   readonly methodologyDifference: string;
+  readonly compositeAqi?: number | null;
+  readonly indexLabel?: string;
 }
 
 export type AtmosphericModelDomain = 'CAMS_EUROPE' | 'CAMS_GLOBAL';
@@ -130,8 +132,8 @@ export interface AirQualityReport {
   readonly modelTimestamp: string;
   readonly localTime: string;
   readonly intervalSeconds: number;
-  readonly dataSource: 'OPEN_METEO_CAMS';
-  readonly isModelled: true;
+  readonly dataSource: 'OPEN_METEO_CAMS' | 'OPENAQ_GROUND_STATION';
+  readonly isModelled: boolean;
   readonly isStale: boolean;
   readonly activeStandard: AqiStandardKey;
   readonly standardMetadata: AqiStandardMetadata;
@@ -149,4 +151,8 @@ export interface AirQualityReport {
   readonly averagingPeriodNote: string;
   readonly cpcbComparison: CpcbComparisonContext | null;
   readonly modelMetadata: AtmosphericModelMetadata;
+  readonly stationName?: string | null;
+  readonly distanceKm?: number | null;
+  readonly observedAt?: string | null;
+  readonly sourceType: 'station' | 'model';
 }

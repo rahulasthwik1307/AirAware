@@ -93,6 +93,10 @@ export const GuidanceRequestSchema = z.object({
   cityName: z.string().optional(),
   householdMembers: z.array(HouseholdMemberSummarySchema).optional(),
   scheduleSummary: z.string().optional(),
+  sourceType: z.enum(['station', 'model']).optional(),
+  stationName: z.string().optional().nullable(),
+  distanceKm: z.number().optional().nullable(),
+  observationTime: z.string().optional().nullable(),
 });
 export type GuidanceRequest = z.infer<typeof GuidanceRequestSchema>;
 
@@ -157,6 +161,9 @@ export const CopilotRequestSchema = z.object({
   cityName: z.string().optional(),
   observationTime: z.string().optional(),
   dataSource: z.string().optional(),
+  sourceType: z.enum(['station', 'model']).optional(),
+  stationName: z.string().optional().nullable(),
+  distanceKm: z.number().optional().nullable(),
 });
 export type CopilotRequest = Omit<z.infer<typeof CopilotRequestSchema>, 'workspace'> & {
   workspace?: WorkspaceContext;

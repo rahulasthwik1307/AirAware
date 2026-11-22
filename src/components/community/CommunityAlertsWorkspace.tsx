@@ -68,6 +68,9 @@ export function CommunityAlertsWorkspace({
         onOpenRwaModal={() => setIsRwaModalOpen(true)}
         aqi={liveAqi}
         isDelhiNcr={isDelhiNcr}
+        sourceType={report?.sourceType}
+        stationName={report?.stationName}
+        distanceKm={report?.distanceKm}
       />
 
       {/* Asymmetric 7 / 5 Bento Grid (Dominant Alert Stream & Retrospective History on Left) */}

@@ -138,14 +138,34 @@ export function getDeterministicGuidance(data: GuidanceRequest): GuidanceRespons
   const isSevere = aqi >= 300;
   const isPoor = aqi >= 200;
 
+  const hasPediatric = data.householdMembers?.some(
+    (m) =>
+      m.archetype.toLowerCase().includes('child') ||
+      m.archetype.toLowerCase().includes('pediatric') ||
+      m.sensitivityTier.toLowerCase().includes('pediatric')
+  );
+  const hasSenior = data.householdMembers?.some(
+    (m) =>
+      m.archetype.toLowerCase().includes('senior') ||
+      m.sensitivityTier.toLowerCase().includes('senior')
+  );
+
   const todayHouseholdPlan = {
     morning: {
       period: 'morning' as const,
       area: 'Low-emission routine',
       action: isSevere
-        ? 'Shift school runs and morning travel past 9:30 AM; cancel early park runs for children and seniors.'
+        ? hasPediatric
+          ? 'Shift school runs past 9:30 AM; keep children indoors during morning smog peak.'
+          : hasSenior
+          ? 'Postpone senior morning walks until afternoon; keep indoor windows closed.'
+          : 'Shift morning commute past 9:30 AM or telecommute; avoid walking near heavy diesel traffic.'
         : isPoor
-        ? 'Shift outdoor cardio to indoor workout; ensure children wear fitted N95 masks during morning school transit.'
+        ? hasPediatric
+          ? 'Shift outdoor play indoors; ensure children wear fitted N95 masks during morning school transit.'
+          : hasSenior
+          ? 'Postpone morning outdoor walks; exercise indoors in filtered room.'
+          : 'Shift outdoor cardio indoors; wear fitted N95 respirator during commute and run recirculating vehicle AC.'
         : 'Proceed with normal morning activities; combine early market trips to minimize cold vehicle starts.',
       why: 'Nocturnal radiation cooling traps particulate matter below a shallow 120m boundary layer until solar heating commences.',
       expectedImpact: isSevere
@@ -282,10 +302,17 @@ export function getDeterministicCopilotAnswer(data: CopilotRequest): CopilotResp
 
   const locPrefix = data.cityName ? `In ${data.cityName}: ` : '';
   const environmentalConditions = `${locPrefix}Current AQI: ${aqi} (${category}), Dominant Pollutant: ${dominantPollutant.toUpperCase()} (${data.pollutantConcentration} ${data.pollutantUnit}), Temp: ${weather.temperatureC}°C, Humidity: ${weather.humidityPercent}%.`;
-  const dataSourceAndFreshness = data.dataSource
-    ? `Source: ${data.dataSource}${data.observationTime ? ` (${data.observationTime})` : ''}.`
-    : 'Source: Grounded deterministic rules derived from US EPA breakpoints and WHO air quality guidelines (15-min refresh).';
-  const limitationsOrUncertainty = 'Regional ambient estimate; microclimates near roadways, building seal quality, and individual health factors introduce variability.';
+  const dataSourceAndFreshness =
+    data.sourceType === 'station'
+      ? `Ground station: ${data.stationName || 'Nearby Station'}${data.distanceKm ? `, ${data.distanceKm} km away` : ''} · OpenAQ · Observed ${data.observationTime || 'recent'}.`
+      : data.dataSource
+      ? `Source: ${data.dataSource}${data.observationTime ? ` (${data.observationTime})` : ''}.`
+      : 'Source: Grounded deterministic rules derived from US EPA breakpoints and WHO air quality guidelines. Modeled estimate (Copernicus CAMS via Open-Meteo, ~45 km grid) · no recent station within 25 km.';
+
+  const limitationsOrUncertainty =
+    data.sourceType === 'station'
+      ? 'Physical in-situ ground monitor; localized indoor infiltration and street microclimates may vary.'
+      : 'Regional ambient estimate; microclimates near roadways, building seal quality, and individual health factors introduce variability.';
 
   return {
     directAnswer,

@@ -11,6 +11,9 @@ interface CommunityKpiStripProps {
   readonly onOpenRwaModal: () => void;
   readonly aqi?: number;
   readonly isDelhiNcr?: boolean;
+  readonly sourceType?: 'station' | 'model';
+  readonly stationName?: string | null;
+  readonly distanceKm?: number | null;
 }
 
 export function CommunityKpiStrip({
@@ -21,6 +24,9 @@ export function CommunityKpiStrip({
   onOpenRwaModal,
   aqi,
   isDelhiNcr = false,
+  sourceType = 'model',
+  stationName,
+  distanceKm,
 }: CommunityKpiStripProps) {
   return (
     <section
@@ -56,8 +62,12 @@ export function CommunityKpiStrip({
           </p>
         </div>
         <div className="pt-2 border-t border-rose-100/80 flex items-center justify-between text-[10px] font-mono text-rose-700">
-          <span>{isDelhiNcr ? '🚨 CAQM Mandate' : '📋 CPCB Benchmark'}</span>
-          <span>{aqi && aqi >= 300 ? 'High Alert' : 'Advisory'}</span>
+          <span className="truncate max-w-[150px]">
+            {sourceType === 'station'
+              ? `📡 ${stationName || 'Ground Station'}${distanceKm ? ` (${distanceKm}km)` : ''}`
+              : (isDelhiNcr ? '🚨 CAQM Mandate' : '📋 CPCB Benchmark')}
+          </span>
+          <span>{sourceType === 'station' ? 'OpenAQ Station' : (aqi && aqi >= 300 ? 'High Alert' : 'Advisory')}</span>
         </div>
       </div>
 

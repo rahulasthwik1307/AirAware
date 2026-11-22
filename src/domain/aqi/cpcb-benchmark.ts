@@ -38,15 +38,112 @@ export interface CpcbAqiResult {
   readonly colorToken: string;
   readonly bgToken: string;
   readonly methodologyNote: string;
+  readonly indexLabel?: string;
+  readonly dominantSubIndexPollutant?: 'PM2.5' | 'PM10' | null;
 }
 
-export function calculateCpcbAqi(pm25: number | null | undefined): CpcbAqiResult {
-  if (
-    pm25 === null ||
-    pm25 === undefined ||
-    !Number.isFinite(pm25) ||
-    pm25 < 0
-  ) {
+export function calculateCpcbPm25SubIndex(pm25: number | null | undefined): number | null {
+  if (pm25 === null || pm25 === undefined || !Number.isFinite(pm25) || pm25 < 0) {
+    return null;
+  }
+  if (pm25 <= 30) {
+    return Math.round((50 / 30) * pm25);
+  }
+  if (pm25 <= 60) {
+    return Math.round(50 + ((100 - 50) / (60 - 30)) * (pm25 - 30));
+  }
+  if (pm25 <= 90) {
+    return Math.round(100 + ((200 - 100) / (90 - 60)) * (pm25 - 60));
+  }
+  if (pm25 <= 120) {
+    return Math.round(200 + ((300 - 200) / (120 - 90)) * (pm25 - 90));
+  }
+  if (pm25 <= 250) {
+    return Math.round(300 + ((400 - 300) / (250 - 120)) * (pm25 - 120));
+  }
+  return Math.min(500, Math.round(400 + ((500 - 400) / (380 - 250)) * (pm25 - 250)));
+}
+
+export function calculateCpcbPm10SubIndex(pm10: number | null | undefined): number | null {
+  if (pm10 === null || pm10 === undefined || !Number.isFinite(pm10) || pm10 < 0) {
+    return null;
+  }
+  if (pm10 <= 50) {
+    return Math.round(pm10);
+  }
+  if (pm10 <= 100) {
+    return Math.round(pm10);
+  }
+  if (pm10 <= 250) {
+    return Math.round(100 + ((200 - 100) / (250 - 100)) * (pm10 - 100));
+  }
+  if (pm10 <= 350) {
+    return Math.round(200 + ((300 - 200) / (350 - 250)) * (pm10 - 250));
+  }
+  if (pm10 <= 430) {
+    return Math.round(300 + ((400 - 300) / (430 - 350)) * (pm10 - 350));
+  }
+  return Math.min(500, Math.round(400 + ((500 - 400) / (500 - 430)) * (pm10 - 430)));
+}
+
+export function calculateCompositeCpcbAqi(
+  pm25: number | null | undefined,
+  pm10?: number | null | undefined,
+  isStationData = false
+): CpcbAqiResult {
+  const pm25Sub = calculateCpcbPm25SubIndex(pm25);
+  const pm10Sub = calculateCpcbPm10SubIndex(pm10);
+
+  if (isStationData) {
+    let finalAqi: number | null = null;
+    let dominant: 'PM2.5' | 'PM10' | null = null;
+
+    if (pm25Sub !== null && pm10Sub !== null) {
+      if (pm25Sub >= pm10Sub) {
+        finalAqi = pm25Sub;
+        dominant = 'PM2.5';
+      } else {
+        finalAqi = pm10Sub;
+        dominant = 'PM10';
+      }
+    } else if (pm25Sub !== null) {
+      finalAqi = pm25Sub;
+      dominant = 'PM2.5';
+    } else if (pm10Sub !== null) {
+      finalAqi = pm10Sub;
+      dominant = 'PM10';
+    }
+
+    if (finalAqi === null) {
+      return {
+        aqi: null,
+        category: 'Unavailable',
+        aqiRange: 'N/A',
+        concentrationRange: 'Data not reported',
+        colorToken: 'var(--ink-muted)',
+        bgToken: '#F1F5F9',
+        methodologyNote: 'In-situ ground station: PM2.5/PM10 concentrations unavailable for index calculation.',
+        indexLabel: 'CPCB AQI (PM2.5/PM10 sub-index)',
+        dominantSubIndexPollutant: null,
+      };
+    }
+
+    const { category, aqiRange, colorToken, bgToken } = getCategoryDetailsFromAqi(finalAqi);
+    return {
+      aqi: finalAqi,
+      category,
+      aqiRange,
+      concentrationRange: `PM2.5: ${pm25 ?? 'N/A'}, PM10: ${pm10 ?? 'N/A'} μg/m³`,
+      colorToken,
+      bgToken,
+      methodologyNote: `In-situ ground monitor composite CPCB AQI determined from maximum sub-index (dominant: ${dominant}).`,
+      indexLabel: 'CPCB AQI (PM2.5/PM10 sub-index)',
+      dominantSubIndexPollutant: dominant,
+    };
+  }
+
+  // CAMS fallback: PM2.5 sub-index modeled
+  if (pm25Sub === null) {
     return {
       aqi: null,
       category: 'Unavailable',
@@ -54,92 +151,47 @@ export function calculateCpcbAqi(pm25: number | null | undefined): CpcbAqiResult
       concentrationRange: 'Data not reported',
       colorToken: 'var(--ink-muted)',
       bgToken: '#F1F5F9',
-      methodologyNote:
-        'Single-pollutant PM2.5 benchmark: Concentration unavailable for reference comparison.',
+      methodologyNote: 'Single-pollutant PM2.5 benchmark: Concentration unavailable for reference comparison.',
+      indexLabel: 'PM2.5 sub-index, modeled',
+      dominantSubIndexPollutant: null,
     };
   }
 
-  if (pm25 <= 30) {
-    const aqi = Math.round((50 / 30) * pm25);
-    return {
-      aqi,
-      category: 'Good',
-      aqiRange: '0–50',
-      concentrationRange: '0–30 μg/m³',
-      colorToken: '#059669',
-      bgToken: '#ECFDF5',
-      methodologyNote:
-        'Single-pollutant PM2.5 benchmark: Current concentration falls within India CPCB NAQI "Good" range (0–30 μg/m³, AQI 0–50).',
-    };
-  }
-
-  if (pm25 <= 60) {
-    const aqi = Math.round(50 + ((100 - 50) / (60 - 30)) * (pm25 - 30));
-    return {
-      aqi,
-      category: 'Satisfactory',
-      aqiRange: '51–100',
-      concentrationRange: '31–60 μg/m³',
-      colorToken: '#84cc16',
-      bgToken: '#F7FEE7',
-      methodologyNote:
-        'Single-pollutant PM2.5 benchmark: Current concentration falls within India CPCB NAQI "Satisfactory" range (31–60 μg/m³, AQI 51–100).',
-    };
-  }
-
-  if (pm25 <= 90) {
-    const aqi = Math.round(100 + ((200 - 100) / (90 - 60)) * (pm25 - 60));
-    return {
-      aqi,
-      category: 'Moderate',
-      aqiRange: '101–200',
-      concentrationRange: '61–90 μg/m³',
-      colorToken: '#D97706',
-      bgToken: '#FFFBEB',
-      methodologyNote:
-        'Single-pollutant PM2.5 benchmark: Current concentration falls within India CPCB NAQI "Moderate" range (61–90 μg/m³, AQI 101–200).',
-    };
-  }
-
-  if (pm25 <= 120) {
-    const aqi = Math.round(200 + ((300 - 200) / (120 - 90)) * (pm25 - 90));
-    return {
-      aqi,
-      category: 'Poor',
-      aqiRange: '201–300',
-      concentrationRange: '91–120 μg/m³',
-      colorToken: '#EA580C',
-      bgToken: '#FFF7ED',
-      methodologyNote:
-        'Single-pollutant PM2.5 benchmark: Current concentration falls within India CPCB NAQI "Poor" range (91–120 μg/m³, AQI 201–300).',
-    };
-  }
-
-  if (pm25 <= 250) {
-    const aqi = Math.round(300 + ((400 - 300) / (250 - 120)) * (pm25 - 120));
-    return {
-      aqi,
-      category: 'Very Poor',
-      aqiRange: '301–400',
-      concentrationRange: '121–250 μg/m³',
-      colorToken: '#DC2626',
-      bgToken: '#FEF2F2',
-      methodologyNote:
-        'Single-pollutant PM2.5 benchmark: Current concentration falls within India CPCB NAQI "Very Poor" range (121–250 μg/m³, AQI 301–400).',
-    };
-  }
-
-  const aqi = Math.min(500, Math.round(400 + ((500 - 400) / (380 - 250)) * (pm25 - 250)));
+  const { category, aqiRange, colorToken, bgToken } = getCategoryDetailsFromAqi(pm25Sub);
   return {
-    aqi,
-    category: 'Severe',
-    aqiRange: '401–500',
-    concentrationRange: '> 250 μg/m³',
-    colorToken: '#7F1D1D',
-    bgToken: '#450A0A',
-    methodologyNote:
-      'Single-pollutant PM2.5 benchmark: Current concentration exceeds India CPCB NAQI "Severe" threshold (>250 μg/m³, AQI 401–500).',
+    aqi: pm25Sub,
+    category,
+    aqiRange,
+    concentrationRange: `${pm25} μg/m³`,
+    colorToken,
+    bgToken,
+    methodologyNote: `Single-pollutant PM2.5 benchmark: Current concentration falls within India CPCB NAQI "${category}" range.`,
+    indexLabel: 'PM2.5 sub-index, modeled',
+    dominantSubIndexPollutant: 'PM2.5',
   };
+}
+
+function getCategoryDetailsFromAqi(aqi: number) {
+  if (aqi <= 50) {
+    return { category: 'Good' as CpcbCategory, aqiRange: '0–50', colorToken: '#059669', bgToken: '#ECFDF5' };
+  }
+  if (aqi <= 100) {
+    return { category: 'Satisfactory' as CpcbCategory, aqiRange: '51–100', colorToken: '#84cc16', bgToken: '#F7FEE7' };
+  }
+  if (aqi <= 200) {
+    return { category: 'Moderate' as CpcbCategory, aqiRange: '101–200', colorToken: '#D97706', bgToken: '#FFFBEB' };
+  }
+  if (aqi <= 300) {
+    return { category: 'Poor' as CpcbCategory, aqiRange: '201–300', colorToken: '#EA580C', bgToken: '#FFF7ED' };
+  }
+  if (aqi <= 400) {
+    return { category: 'Very Poor' as CpcbCategory, aqiRange: '301–400', colorToken: '#DC2626', bgToken: '#FEF2F2' };
+  }
+  return { category: 'Severe' as CpcbCategory, aqiRange: '401–500', colorToken: '#7F1D1D', bgToken: '#450A0A' };
+}
+
+export function calculateCpcbAqi(pm25: number | null | undefined): CpcbAqiResult {
+  return calculateCompositeCpcbAqi(pm25, null, false);
 }
 
 export function classifyCpcbPm25(

@@ -35,7 +35,7 @@ import {
   calculatePollutantEpaSubIndex,
   getEpaTierFromValue,
 } from './epa-aqi';
-import { classifyCpcbPm25 } from './cpcb-benchmark';
+import { classifyCpcbPm25, calculateCompositeCpcbAqi } from './cpcb-benchmark';
 import { POLLUTANT_METADATA } from './unit-converters';
 
 export interface RawOpenMeteoAirQualityResponse {
@@ -43,6 +43,12 @@ export interface RawOpenMeteoAirQualityResponse {
   readonly longitude: number;
   readonly elevation?: number;
   readonly timezone?: string;
+  readonly sourceType?: 'station' | 'model';
+  readonly stationName?: string | null;
+  readonly distanceKm?: number | null;
+  readonly observedAt?: string | null;
+  readonly stationPm25?: number | null;
+  readonly stationPm10?: number | null;
   readonly current: {
     readonly time: string;
     readonly interval?: number;
@@ -88,7 +94,20 @@ export function normalizeAirQualityReport(
   const activeStandard = requestedStandard ?? getDefaultStandardForCountry(location.countryCode);
   const standardMetadata = resolveStandardMetadata(activeStandard, location.countryCode);
 
-  const current = raw.current;
+  const isStation = raw.sourceType === 'station' && raw.stationPm25 !== null && raw.stationPm25 !== undefined;
+  const effectiveSourceType: 'station' | 'model' = isStation ? 'station' : 'model';
+  const stationName = isStation ? (raw.stationName ?? null) : null;
+  const distanceKm = isStation ? (raw.distanceKm ?? null) : null;
+  const observedAt = isStation ? (raw.observedAt ?? null) : null;
+
+  // If station measurements are present, override PM2.5 (and PM10 if present)
+  const current = isStation
+    ? {
+        ...raw.current,
+        pm2_5: raw.stationPm25!,
+        ...(raw.stationPm10 !== null && raw.stationPm10 !== undefined ? { pm10: raw.stationPm10 } : {}),
+      }
+    : raw.current;
   const currentUnits = raw.current_units ?? {};
 
   // Primary Provider AQI
@@ -284,14 +303,23 @@ export function normalizeAirQualityReport(
   // CPCB Comparison Context for Indian Locations
   let cpcbComparison: CpcbComparisonContext | null = null;
   if (location.countryCode.toUpperCase() === 'IN') {
-    const cpcbResult = classifyCpcbPm25(current.pm2_5);
+    const cpcbResult = calculateCompositeCpcbAqi(
+      current.pm2_5,
+      current.pm10,
+      isStation
+    );
+
+    const stationContext = isStation
+      ? `Ground station: ${stationName || 'Nearby Monitor'}, ${distanceKm !== null ? `${distanceKm} km away` : ''} · OpenAQ · Observed ${observedAt || current.time}`
+      : 'Modelled ~45km regional grid (CAMS Global IFS). Physical CAAQMS monitors measure localized ground plumes which typically report higher concentrations during thermal inversions. Live physical station observations are not provided via this open model API. Modeled estimate (Copernicus CAMS via Open-Meteo, ~45 km grid) · no recent station within 25 km';
 
     cpcbComparison = {
       equivalentCategory: cpcbResult.category,
       estimatedAqiRange: cpcbResult.aqiRange,
-      stationContext:
-        'Modelled ~45km regional grid (CAMS Global IFS). Physical CAAQMS monitors (e.g. Sanathnagar, Zoo Park, Central University) measure localized ground plumes which typically report higher concentrations during thermal inversions. Live physical station observations are not provided via this open model API.',
+      stationContext,
       methodologyDifference: cpcbResult.methodologyNote,
+      compositeAqi: cpcbResult.aqi,
+      indexLabel: cpcbResult.indexLabel,
     };
   }
 
@@ -300,11 +328,11 @@ export function normalizeAirQualityReport(
 
   return {
     location,
-    modelTimestamp: current.time,
+    modelTimestamp: isStation && observedAt ? observedAt : current.time,
     localTime,
     intervalSeconds: current.interval || 3600,
-    dataSource: 'OPEN_METEO_CAMS',
-    isModelled: true,
+    dataSource: isStation ? 'OPENAQ_GROUND_STATION' : 'OPEN_METEO_CAMS',
+    isModelled: !isStation,
     isStale: false,
     activeStandard,
     standardMetadata,
@@ -322,6 +350,10 @@ export function normalizeAirQualityReport(
     averagingPeriodNote,
     cpcbComparison,
     modelMetadata,
+    stationName,
+    distanceKm,
+    observedAt,
+    sourceType: effectiveSourceType,
   };
 }
 

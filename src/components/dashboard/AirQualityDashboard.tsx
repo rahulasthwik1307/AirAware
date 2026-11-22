@@ -182,6 +182,10 @@ export function AirQualityDashboard({ onSelectWorkspace }: AirQualityDashboardPr
             modelTimestamp={report.modelTimestamp}
             localTime={report.localTime}
             dominantPollutant={report.dominantPollutant}
+            sourceType={report.sourceType}
+            stationName={report.stationName}
+            distanceKm={report.distanceKm}
+            observedAt={report.observedAt}
           />
 
           {/* 6. Scientific Grounding & Multi-Standard Calibration */}

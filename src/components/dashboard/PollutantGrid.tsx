@@ -13,6 +13,10 @@ interface PollutantGridProps {
   readonly modelTimestamp?: string;
   readonly localTime?: string;
   readonly dominantPollutant?: string | null;
+  readonly sourceType?: 'station' | 'model';
+  readonly stationName?: string | null;
+  readonly distanceKm?: number | null;
+  readonly observedAt?: string | null;
 }
 
 const ORDERED_POLLUTANT_KEYS: readonly PollutantKey[] = [
@@ -269,9 +273,14 @@ export function PollutantGrid({
   modelTimestamp,
   localTime,
   dominantPollutant,
+  sourceType = 'model',
+  stationName,
+  distanceKm,
+  observedAt,
 }: PollutantGridProps) {
   const isEaqi = activeStandard === 'EUROPEAN_EAQI';
   const standardName = isEaqi ? 'European EAQI' : 'US EPA AQI';
+  const isStation = sourceType === 'station' && Boolean(stationName);
 
   // Identify dominant pollutant strictly from calculated positive sub-indices under the active standard
   // NEVER infer dominant pollutant from raw concentration!
@@ -294,7 +303,7 @@ export function PollutantGrid({
     }
   }
 
-  const effectiveTimestamp = localTime || modelTimestamp || null;
+  const effectiveTimestamp = observedAt || localTime || modelTimestamp || null;
 
   return (
     <section aria-labelledby="pollutants-telemetry-heading" className="w-full">
@@ -311,18 +320,22 @@ export function PollutantGrid({
             </span>
           </h2>
           <p className="text-xs sm:text-sm text-[var(--ink-secondary)] mt-0.5">
-            Current instantaneous 1-hour modelled environmental estimates evaluated against regulatory index methods and WHO 2021 health-based guideline levels.
+            {isStation
+              ? 'In-situ ground monitor measurements for PM2.5/PM10 combined with regional numerical model estimates for gaseous species.'
+              : 'Current instantaneous 1-hour modelled environmental estimates evaluated against regulatory index methods and WHO 2021 health-based guideline levels.'}
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5 self-start sm:self-auto shrink-0">
           {effectiveTimestamp && (
             <span className="text-xs font-mono text-[var(--ink-muted)] bg-[var(--surface-subtle)] px-2 py-1 rounded border border-[var(--border-subtle)]">
-              Observation: {effectiveTimestamp} ({formatDataAge(modelTimestamp)})
+              Observation: {effectiveTimestamp} ({formatDataAge(observedAt || modelTimestamp)})
             </span>
           )}
           <span className="text-xs font-mono font-semibold text-[var(--brand-primary)] bg-[var(--brand-surface)] px-2.5 py-1 rounded border border-[var(--brand-primary)]/30">
-            Modeled estimate (Copernicus CAMS via Open-Meteo, ~45 km grid)
+            {isStation
+              ? `Ground station: ${stationName}, ${distanceKm !== null && distanceKm !== undefined ? `${distanceKm} km away` : ''} · OpenAQ`
+              : 'Modeled estimate (Copernicus CAMS via Open-Meteo, ~45 km grid) · no recent station within 25 km'}
           </span>
         </div>
       </div>

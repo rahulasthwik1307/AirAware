@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { AirQualityReport, AqiStandardKey, GeoLocation } from '@/domain/types';
-import { calculateCpcbAqi } from '@/domain/aqi/cpcb-benchmark';
+import { calculateCpcbAqi, calculateCompositeCpcbAqi } from '@/domain/aqi/cpcb-benchmark';
 import { WeatherData } from '@/app/api/weather/route';
 import { GLOBE_REFERENCE_CITIES } from '../globe/world-landmass';
 
@@ -141,7 +141,12 @@ export function AqiHeroCard({
   };
 
   const isCpcbActive = selectedStandard === 'CPCB_NAQI';
-  const cpcbResult = calculateCpcbAqi(report.pollutants?.pm2_5?.concentration);
+  const isStation = report.sourceType === 'station';
+  const cpcbResult = calculateCompositeCpcbAqi(
+    report.pollutants?.pm2_5?.concentration,
+    report.pollutants?.pm10?.concentration,
+    isStation
+  );
 
   const effectiveAqi = isCpcbActive
     ? (cpcbResult.aqi ?? providerAqi)
@@ -244,7 +249,7 @@ export function AqiHeroCard({
         `,
       }}
     >
-      {/* Current Modelled Atmospheric Feed Ribbon with Explicit Provenance */}
+      {/* Current In-Situ Ground Station or Modelled Atmospheric Feed Ribbon with Explicit Provenance */}
       <div className="flex flex-wrap items-center justify-between border-b border-slate-200/80 bg-white px-6 py-2.5 sm:px-8 text-[11px] font-mono text-slate-600 gap-2">
         <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
           <span className="inline-flex items-center gap-1.5 font-bold text-slate-800">
@@ -252,7 +257,13 @@ export function AqiHeroCard({
               className="h-2 w-2 rounded-full"
               style={{ backgroundColor: aqiColor }}
             />
-            Modeled estimate (Copernicus CAMS via Open-Meteo, ~45 km grid)
+            {isStation ? (
+              <span>
+                Ground station: <strong className="text-slate-900">{report.stationName || 'Nearby Monitor'}</strong>, {report.distanceKm !== null && report.distanceKm !== undefined ? `${report.distanceKm} km away` : ''} · OpenAQ · Observed {report.observedAt ? (report.observedAt.includes('T') ? report.observedAt.split('T')[1].slice(0, 5) : report.observedAt) : ''} ({formatDataAge(report.observedAt || modelTimestamp)})
+              </span>
+            ) : (
+              <span>Modeled estimate (Copernicus CAMS via Open-Meteo, ~45 km grid) · no recent station within 25 km</span>
+            )}
           </span>
           <span className="text-slate-300">|</span>
           <span className="text-sky-700 font-semibold tabular-nums">
@@ -260,18 +271,18 @@ export function AqiHeroCard({
           </span>
           {isLoading && (
             <span className="inline-flex items-center gap-1 text-[10px] text-amber-800 bg-amber-50 border border-amber-300 px-2 py-0.5 rounded-full">
-              <span>🔄 Updating modelled atmospheric feed...</span>
+              <span>🔄 Updating telemetry feed...</span>
             </span>
           )}
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
           <span className="text-slate-600 tabular-nums">
-            Observation: <strong className="text-slate-800">{modelTimestamp}</strong>
+            Observation: <strong className="text-slate-800">{report.observedAt || modelTimestamp}</strong>
           </span>
           <span className="text-slate-300">|</span>
           <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-bold border border-slate-200">
-            Age: {formatDataAge(modelTimestamp)}
+            Age: {formatDataAge(report.observedAt || modelTimestamp)}
           </span>
           <span className="hidden sm:inline text-slate-300">|</span>
           <span className="font-semibold text-slate-700 tabular-nums hidden sm:inline">Local: {localTime}</span>
@@ -358,12 +369,12 @@ export function AqiHeroCard({
                         {report.cpcbComparison.equivalentCategory}
                       </strong>
                       <span className="text-xs font-mono text-emerald-700 font-semibold">
-                        (AQI {report.cpcbComparison.estimatedAqiRange})
+                        (AQI {report.cpcbComparison.compositeAqi ?? report.cpcbComparison.estimatedAqiRange})
                       </span>
                     </div>
                   </div>
                   <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded-md bg-white text-emerald-800 border border-emerald-200 shrink-0 shadow-2xs">
-                    CAMS PM₂.₅ Model
+                    {report.cpcbComparison.indexLabel || (isStation ? 'CPCB AQI (PM2.5/PM10 sub-index)' : 'PM2.5 sub-index, modeled')}
                   </span>
                 </div>
               )}
@@ -584,7 +595,7 @@ export function AqiHeroCard({
                 </span>
               </div>
 
-              {/* View Switcher: Toggle 3D Globe vs 2D Forecast */}
+              {/* View Switcher: Segmented Control for 6-Hour Forecast vs 3D Globe vs Regional Hotspots */}
               <div
                 role="group"
                 aria-label="Environmental Visualization Mode"
@@ -592,20 +603,34 @@ export function AqiHeroCard({
               >
                 <button
                   type="button"
-                  onClick={() => setShowGlobe(!showGlobe)}
+                  onClick={() => {
+                    setShowGlobe(false);
+                    setViewMode('3d');
+                  }}
+                  className={`px-3 py-1 rounded-lg transition-all cursor-pointer tactile-btn ${
+                    !showGlobe && viewMode !== 'grid'
+                      ? 'bg-sky-600 text-white shadow-xs font-semibold'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  ⏱️ Hourly Forecast
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowGlobe(true)}
                   className={`px-3 py-1 rounded-lg transition-all cursor-pointer tactile-btn ${
                     showGlobe
                       ? 'bg-sky-600 text-white shadow-xs font-semibold'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  {showGlobe ? '✕ Hide 3D Globe' : '🌐 View on 3D Globe'}
+                  🌐 3D Globe
                 </button>
                 <button
                   type="button"
                   onClick={() => {
                     setShowGlobe(false);
-                    setViewMode(viewMode === 'grid' ? '3d' : 'grid');
+                    setViewMode('grid');
                   }}
                   className={`px-3 py-1 rounded-lg transition-all cursor-pointer tactile-btn ${
                     !showGlobe && viewMode === 'grid'
@@ -745,85 +770,7 @@ export function AqiHeroCard({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                   {GLOBE_REFERENCE_CITIES.map((c) => {
                     const isCurrent = location.name.toLowerCase() === c.name.toLowerCase();
-                    let cityAqi = 42;
-                    let cityTier = 'Good';
-                    let cityColor = '#059669';
-                    let cpcbCategory = 'Good';
-                    let flag = '🇮🇳';
-
-                    if (c.name.includes('Delhi')) {
-                      cityAqi = 211;
-                      cityTier = 'Very Unhealthy';
-                      cpcbCategory = 'Severe';
-                      cityColor = '#9333EA';
-                      flag = '🇮🇳';
-                    } else if (c.name.includes('Noida')) {
-                      cityAqi = 218;
-                      cityTier = 'Very Unhealthy';
-                      cpcbCategory = 'Severe';
-                      cityColor = '#9333EA';
-                      flag = '🇮🇳';
-                    } else if (c.name.includes('Ghaziabad')) {
-                      cityAqi = 245;
-                      cityTier = 'Very Unhealthy';
-                      cpcbCategory = 'Severe';
-                      cityColor = '#7F1D1D';
-                      flag = '🇮🇳';
-                    } else if (c.name.includes('Gurugram')) {
-                      cityAqi = 185;
-                      cityTier = 'Unhealthy';
-                      cpcbCategory = 'Very Poor';
-                      cityColor = '#DC2626';
-                      flag = '🇮🇳';
-                    } else if (c.name.includes('Patna')) {
-                      cityAqi = 195;
-                      cityTier = 'Unhealthy';
-                      cpcbCategory = 'Very Poor';
-                      cityColor = '#DC2626';
-                      flag = '🇮🇳';
-                    } else if (c.name.includes('Lucknow')) {
-                      cityAqi = 172;
-                      cityTier = 'Unhealthy';
-                      cpcbCategory = 'Poor';
-                      cityColor = '#DC2626';
-                      flag = '🇮🇳';
-                    } else if (c.name.includes('Kolkata')) {
-                      cityAqi = 154;
-                      cityTier = 'Unhealthy';
-                      cpcbCategory = 'Poor';
-                      cityColor = '#DC2626';
-                      flag = '🇮🇳';
-                    } else if (c.name.includes('Mumbai')) {
-                      cityAqi = 118;
-                      cityTier = 'Sensitive';
-                      cpcbCategory = 'Moderate';
-                      cityColor = '#EA580C';
-                      flag = '🇮🇳';
-                    } else if (c.name.includes('Hyderabad')) {
-                      cityAqi = 95;
-                      cityTier = 'Moderate';
-                      cpcbCategory = 'Satisfactory';
-                      cityColor = '#D97706';
-                      flag = '🇮🇳';
-                    } else if (c.name.includes('Bengaluru')) {
-                      cityAqi = 68;
-                      cityTier = 'Moderate';
-                      cpcbCategory = 'Satisfactory';
-                      cityColor = '#D97706';
-                      flag = '🇮🇳';
-                    } else if (c.name.includes('London')) {
-                      cityAqi = 42;
-                      cityTier = 'Good';
-                      cpcbCategory = 'Good';
-                      cityColor = '#059669';
-                      flag = '🇬🇧';
-                    } else if (c.name.includes('Tokyo')) {
-                      cityAqi = 38;
-                      cityTier = 'Good';
-                      cpcbCategory = 'Good';
-                      cityColor = '#059669';
-                      flag = '🇯🇵';
-                    }
+                    const flag = c.countryCode === 'GB' ? '🇬🇧' : c.countryCode === 'JP' ? '🇯🇵' : '🇮🇳';
 
                     return (
                       <div
@@ -839,12 +786,18 @@ export function AqiHeroCard({
                             <span aria-hidden="true">{flag}</span>
                             <span>{c.name}</span>
                           </span>
-                          <span
-                            className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold text-white shadow-xs tabular-nums"
-                            style={{ backgroundColor: cityColor }}
-                          >
-                            AQI {cityAqi}
-                          </span>
+                          {isCurrent ? (
+                            <span
+                              className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold text-white shadow-xs tabular-nums"
+                              style={{ backgroundColor: aqiColor }}
+                            >
+                              AQI {displayAqi ?? effectiveAqi}
+                            </span>
+                          ) : (
+                            <span className="text-[11px] font-mono font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                              Real-Time Feed
+                            </span>
+                          )}
                         </div>
 
                         <div className="flex items-center justify-between text-xs font-mono text-slate-600 mb-2">
@@ -856,13 +809,19 @@ export function AqiHeroCard({
                                 : 'bg-slate-200/70 text-slate-700'
                             }`}
                           >
-                            {isCurrent ? '● Active Live Feed' : 'Illustration (Click to load)'}
+                            {isCurrent
+                              ? (isStation ? '● Active Ground Station' : '● Active CAMS Model')
+                              : 'Select to measure live'}
                           </span>
                         </div>
 
                         <div className="flex items-center justify-between text-xs font-mono text-slate-500 mb-3">
-                          <span className="font-semibold" style={{ color: cityColor }}>{cityTier}</span>
-                          <span className="tabular-nums">{c.latitude.toFixed(1)}°, {c.longitude.toFixed(1)}°</span>
+                          <span className="font-semibold" style={{ color: isCurrent ? aqiColor : 'inherit' }}>
+                            {isCurrent ? effectiveTierLabel : `${c.latitude.toFixed(2)}°N, ${c.longitude.toFixed(2)}°E`}
+                          </span>
+                          <span className="tabular-nums">
+                            {isCurrent ? `${c.latitude.toFixed(1)}°, ${c.longitude.toFixed(1)}°` : 'Coordinates'}
+                          </span>
                         </div>
 
                         <button

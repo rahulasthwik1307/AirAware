@@ -33,13 +33,20 @@ export function buildGuidancePayload(data: GuidanceRequest, modelId: string) {
         .join('; ')
     : 'General Household';
 
+  const sourceInfo =
+    data.sourceType === 'station'
+      ? `Data Source: Ground station (${data.stationName || 'Nearby Station'}${data.distanceKm ? `, ${data.distanceKm} km away` : ''}, OpenAQ) [Physical In-Situ Sensor]`
+      : 'Data Source: Modeled estimate (Copernicus CAMS via Open-Meteo, ~45 km grid) · no recent station within 25 km [Atmospheric Numerical Model]';
+  const observationTimeInfo = data.observationTime ? `- Observation Time: ${data.observationTime}` : '';
+
   const systemPrompt = `You are the AirAware Environmental Intelligence Assistant.
 Authoritative facts (do not calculate or alter):
 - AQI: ${data.aqi} (${data.category})
 - Dominant Pollutant: ${data.dominantPollutant.toUpperCase()} (${data.pollutantConcentration} ${data.pollutantUnit})
 - Weather: ${data.weather.temperatureC}°C, Humidity: ${data.weather.humidityPercent}%, Wind: ${data.weather.windSpeedKmh}km/h
 - Location / City: ${data.cityName || 'Local Area'}
-- Household Members: ${membersInfo}
+- ${sourceInfo}
+${observationTimeInfo ? `${observationTimeInfo}\n` : ''}- Household Members: ${membersInfo}
 - Primary Activity: ${data.userContext.primaryActivity}
 ${data.scheduleSummary ? `- Schedules: ${data.scheduleSummary}` : ''}
 
@@ -115,7 +122,11 @@ export function buildCopilotPayload(data: CopilotRequest, modelId: string) {
     : '';
   const locationContext = data.cityName ? `Location / City: ${data.cityName}` : '';
   const timeContext = data.observationTime ? `Observation Time: ${data.observationTime}` : '';
-  const sourceContext = data.dataSource ? `Data Source: ${data.dataSource}` : '';
+  const resolvedSource =
+    data.sourceType === 'station'
+      ? `Ground station (${data.stationName || 'Nearby Station'}${data.distanceKm ? `, ${data.distanceKm} km away` : ''}, OpenAQ) [Physical In-Situ Sensor]`
+      : (data.dataSource || 'Modeled estimate (Copernicus CAMS via Open-Meteo, ~45 km grid) · no recent station within 25 km [Atmospheric Numerical Model]');
+  const sourceContext = `Data Source: ${resolvedSource}`;
   const vulnerabilityContext =
     data.userContext?.vulnerabilityTiers && data.userContext.vulnerabilityTiers.length > 0
       ? `Vulnerability Tiers: ${data.userContext.vulnerabilityTiers.join(', ')}`
