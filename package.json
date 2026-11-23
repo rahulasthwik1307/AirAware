@@ -7,8 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "check": "npm run lint && npm run typecheck && npm test"
   },
   "dependencies": {
     "@astryxdesign/core": "^0.7.16",
@@ -28,6 +31,7 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@types/three": "^0.187.0",
+    "@vitest/coverage-v8": "^5.1.0",
     "eslint": "^9.39.5",
     "eslint-config-next": "^16.4.6",
     "jsdom": "^31.0.1",

@@ -1,0 +1,25 @@
+name: CI
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+        env:
+          CLOUDFLARE_API_TOKEN: dummy_cf_token
+          CLOUDFLARE_ACCOUNT_ID: dummy_cf_account
+          OPENAQ_API_KEY: dummy_openaq_key
