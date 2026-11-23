@@ -280,9 +280,9 @@ export function FamilyPlannerWorkspace() {
             <span className="text-base select-none" aria-hidden="true">
               🔬
             </span>
-            <h3 className="font-bold text-[var(--ink-primary)] font-sans">
+            <h2 className="font-bold text-[var(--ink-primary)] font-sans">
               Scientific Method &amp; Privacy Boundary
-            </h3>
+            </h2>
           </div>
           <button
             type="button"

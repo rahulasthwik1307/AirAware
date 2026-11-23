@@ -29,6 +29,7 @@ export function CleanerChoicesWorkspace({ onAskCopilot }: CleanerChoicesWorkspac
 
   return (
     <div className="space-y-6 animate-fadeIn py-2" role="region" aria-label="Cleaner Choices and Impact Workspace">
+      <h1 className="sr-only">Cleaner Choices &amp; Environmental Impact</h1>
       {/* Top Enterprise / Power BI Stat Ribbon */}
       <CleanerChoicesKpiStrip
         commute={commuteComparison}

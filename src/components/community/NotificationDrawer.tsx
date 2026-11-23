@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { AlertItem } from '@/domain/community/types';
 import { WorkspaceKey } from '@/domain/types';
@@ -25,30 +25,61 @@ export function NotificationDrawer({
   onNavigateWorkspace,
 }: NotificationDrawerProps) {
   const [mounted, setMounted] = useState(false);
+  const drawerRef = useRef<HTMLDivElement>(null);
+  const openerRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Lock body scroll when drawer is open
+  // Lock body scroll and trap focus when drawer is open
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      if (openerRef.current) {
+        openerRef.current.focus();
+      }
+      return;
+    }
+
+    openerRef.current = document.activeElement as HTMLElement | null;
     const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = originalOverflow;
-    };
-  }, [isOpen]);
 
-  // Handle escape key
-  useEffect(() => {
+    // Focus close button on open
+    setTimeout(() => {
+      const closeBtn = drawerRef.current?.querySelector<HTMLElement>('button[aria-label*="Close"], button');
+      closeBtn?.focus();
+    }, 50);
+
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
+      if (e.key === 'Escape') {
         onClose();
+        return;
+      }
+
+      if (e.key === 'Tab') {
+        const focusables = drawerRef.current?.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), input:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusables && focusables.length > 0) {
+          const first = focusables[0];
+          const last = focusables[focusables.length - 1];
+          if (e.shiftKey && document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          } else if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
       }
     };
+
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, [isOpen, onClose]);
 
   if (!isOpen || !mounted) return null;
@@ -64,7 +95,7 @@ export function NotificationDrawer({
       <div className="flex-1" onClick={onClose} aria-hidden="true" />
 
       {/* Slide-Over Drawer Panel */}
-      <div className="w-full max-w-md bg-white border-l border-slate-200 h-full flex flex-col justify-between shadow-2xl p-5 sm:p-6 space-y-4 animate-slideLeft">
+      <div ref={drawerRef} className="w-full max-w-md bg-white border-l border-slate-200 h-full flex flex-col justify-between shadow-2xl p-5 sm:p-6 space-y-4 animate-slideLeft">
         {/* Drawer Header */}
         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
           <div className="flex items-center gap-2.5">

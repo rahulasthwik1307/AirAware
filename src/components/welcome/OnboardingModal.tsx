@@ -195,6 +195,8 @@ export function OnboardingModal({
   const [gpsStatus, setGpsStatus] = useState<string | null>(null);
 
   const searchContainerRef = useRef<HTMLDivElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const openerRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -235,14 +237,46 @@ export function OnboardingModal({
 
   // Keyboard navigation & body scroll lock
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      if (openerRef.current) {
+        openerRef.current.focus();
+      }
+      return;
+    }
 
+    openerRef.current = document.activeElement as HTMLElement | null;
     const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
+
+    // Focus first interactive element in modal
+    setTimeout(() => {
+      const firstFocusable = modalRef.current?.querySelector<HTMLElement>(
+        'button:not([disabled]), input:not([disabled]), select:not([disabled])'
+      );
+      firstFocusable?.focus();
+    }, 50);
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         onCancel();
+        return;
+      }
+
+      if (e.key === 'Tab') {
+        const focusables = modalRef.current?.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusables && focusables.length > 0) {
+          const first = focusables[0];
+          const last = focusables[focusables.length - 1];
+          if (e.shiftKey && document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          } else if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
       }
     };
 
@@ -349,7 +383,7 @@ export function OnboardingModal({
       />
 
       {/* Modal Dialog Card */}
-      <div className="relative w-full max-w-2xl rounded-3xl bg-white border border-slate-200/90 shadow-2xl p-5 sm:p-7 space-y-4 sm:space-y-5 z-10 max-h-[92vh] flex flex-col justify-between overflow-y-auto scrollbar-none animate-scaleUp">
+      <div ref={modalRef} className="relative w-full max-w-2xl rounded-3xl bg-white border border-slate-200/90 shadow-2xl p-5 sm:p-7 space-y-4 sm:space-y-5 z-10 max-h-[92vh] flex flex-col justify-between overflow-y-auto scrollbar-none animate-scaleUp">
         {/* Step Indicator Header */}
         <div className="space-y-3 pb-4 border-b border-slate-100">
           <div className="flex items-center justify-between">

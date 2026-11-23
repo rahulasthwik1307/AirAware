@@ -87,9 +87,9 @@ export const ViewSwitcher = React.memo(function ViewSwitcher({
           aria-controls="panel-overview"
           tabIndex={activeView === 'overview' ? 0 : -1}
           onClick={() => onSelectView('overview')}
-          className={`px-3.5 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 font-bold tactile-btn ${
+          className={`px-3.5 py-1.5 min-h-[44px] rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 font-bold tactile-btn ${
             activeView === 'overview'
-              ? 'bg-sky-600 text-white shadow-xs'
+              ? 'bg-sky-700 text-white shadow-xs'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
           }`}
         >
@@ -104,9 +104,9 @@ export const ViewSwitcher = React.memo(function ViewSwitcher({
           aria-controls="panel-compare"
           tabIndex={activeView === 'compare' ? 0 : -1}
           onClick={() => onSelectView('compare')}
-          className={`px-3.5 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 font-bold tactile-btn ${
+          className={`px-3.5 py-1.5 min-h-[44px] rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 font-bold tactile-btn ${
             activeView === 'compare'
-              ? 'bg-sky-600 text-white shadow-xs'
+              ? 'bg-sky-700 text-white shadow-xs'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
           }`}
         >
@@ -121,9 +121,9 @@ export const ViewSwitcher = React.memo(function ViewSwitcher({
           aria-controls="panel-globe"
           tabIndex={activeView === 'globe' ? 0 : -1}
           onClick={() => onSelectView('globe')}
-          className={`px-3.5 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 font-bold tactile-btn ${
+          className={`px-3.5 py-1.5 min-h-[44px] rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 font-bold tactile-btn ${
             activeView === 'globe'
-              ? 'bg-sky-600 text-white shadow-xs'
+              ? 'bg-sky-700 text-white shadow-xs'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
           }`}
         >

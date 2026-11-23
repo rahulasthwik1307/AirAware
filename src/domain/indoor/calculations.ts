@@ -343,13 +343,13 @@ export function classifyIndoorPm25(pm25: number): {
 } {
   const val = Math.max(0, pm25);
   if (val <= 30) {
-    return { category: 'Good', colorToken: '#059669', bgToken: '#ECFDF5' };
+    return { category: 'Good', colorToken: '#047857', bgToken: '#ECFDF5' };
   }
   if (val <= 60) {
-    return { category: 'Satisfactory', colorToken: '#84cc16', bgToken: '#F7FEE7' };
+    return { category: 'Satisfactory', colorToken: '#4d7c0f', bgToken: '#F7FEE7' };
   }
   if (val <= 90) {
-    return { category: 'Moderate', colorToken: '#D97706', bgToken: '#FFFBEB' };
+    return { category: 'Moderate', colorToken: '#92400E', bgToken: '#FFFBEB' };
   }
   if (val <= 120) {
     return { category: 'Poor', colorToken: '#EA580C', bgToken: '#FFF7ED' };

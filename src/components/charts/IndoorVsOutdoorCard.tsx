@@ -14,9 +14,9 @@ interface IndoorVsOutdoorCardProps {
 
 function getCpcbCategory(aqi: number | null): { label: string; color: string } {
   if (aqi === null) return { label: 'N/A', color: '#94A3B8' };
-  if (aqi <= 50) return { label: 'Good', color: '#059669' };
-  if (aqi <= 100) return { label: 'Satisfactory', color: '#84CC16' };
-  if (aqi <= 200) return { label: 'Moderate', color: '#D97706' };
+  if (aqi <= 50) return { label: 'Good', color: '#047857' };
+  if (aqi <= 100) return { label: 'Satisfactory', color: '#4d7c0f' };
+  if (aqi <= 200) return { label: 'Moderate', color: '#92400e' };
   if (aqi <= 300) return { label: 'Poor', color: '#EA580C' };
   if (aqi <= 400) return { label: 'Very Poor', color: '#DC2626' };
   return { label: 'Severe', color: '#7F1D1D' };

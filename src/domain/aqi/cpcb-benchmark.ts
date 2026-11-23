@@ -197,13 +197,13 @@ export function calculateCompositeCpcbAqi(
 
 function getCategoryDetailsFromAqi(aqi: number) {
   if (aqi <= 50) {
-    return { category: 'Good' as CpcbCategory, aqiRange: '0–50', colorToken: '#059669', bgToken: '#ECFDF5' };
+    return { category: 'Good' as CpcbCategory, aqiRange: '0–50', colorToken: '#047857', bgToken: '#ECFDF5' };
   }
   if (aqi <= 100) {
-    return { category: 'Satisfactory' as CpcbCategory, aqiRange: '51–100', colorToken: '#84cc16', bgToken: '#F7FEE7' };
+    return { category: 'Satisfactory' as CpcbCategory, aqiRange: '51–100', colorToken: '#4d7c0f', bgToken: '#F7FEE7' };
   }
   if (aqi <= 200) {
-    return { category: 'Moderate' as CpcbCategory, aqiRange: '101–200', colorToken: '#D97706', bgToken: '#FFFBEB' };
+    return { category: 'Moderate' as CpcbCategory, aqiRange: '101–200', colorToken: '#92400E', bgToken: '#FFFBEB' };
   }
   if (aqi <= 300) {
     return { category: 'Poor' as CpcbCategory, aqiRange: '201–300', colorToken: '#EA580C', bgToken: '#FFF7ED' };
@@ -253,7 +253,7 @@ export function classifyCpcbPm25(
       category: 'Satisfactory',
       aqiRange: '51–100',
       concentrationRange: '31–60 μg/m³',
-      colorToken: '#84cc16',
+      colorToken: '#4d7c0f',
       methodologyNote:
         'Single-pollutant PM2.5 benchmark: Current concentration falls within India CPCB NAQI "Satisfactory" range (31–60 μg/m³, AQI 51–100). For comparison, US EPA classifies >35.4 μg/m³ as Unhealthy for Sensitive Groups (>100). Official composite CPCB AQI requires ≥3 pollutants at physical CAAQMS stations and is not claimed here.',
     };

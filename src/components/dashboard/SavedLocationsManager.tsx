@@ -166,7 +166,7 @@ export function SavedLocationsManager({
         <button
           type="button"
           onClick={handleToggleSaveCurrent}
-          aria-label={isCurrentSaved ? 'Remove from saved locations' : 'Save this location'}
+          aria-label={isCurrentSaved ? 'SAVED — Remove from saved locations' : 'SAVE CITY — Bookmark this location'}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
             isCurrentSaved
               ? 'bg-[var(--brand-surface)] text-[var(--brand-primary)] border-[var(--brand-primary)] shadow-xs'

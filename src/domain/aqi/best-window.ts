@@ -18,9 +18,9 @@ export interface BestWindowResult {
 }
 
 function getCpcbCategory(aqi: number): { category: string; colorToken: string } {
-  if (aqi <= 50) return { category: 'Good', colorToken: '#059669' };
-  if (aqi <= 100) return { category: 'Satisfactory', colorToken: '#84CC16' };
-  if (aqi <= 200) return { category: 'Moderate', colorToken: '#D97706' };
+  if (aqi <= 50) return { category: 'Good', colorToken: '#047857' };
+  if (aqi <= 100) return { category: 'Satisfactory', colorToken: '#4D7C0F' };
+  if (aqi <= 200) return { category: 'Moderate', colorToken: '#92400E' };
   if (aqi <= 300) return { category: 'Poor', colorToken: '#EA580C' };
   if (aqi <= 400) return { category: 'Very Poor', colorToken: '#DC2626' };
   return { category: 'Severe', colorToken: '#7F1D1D' };

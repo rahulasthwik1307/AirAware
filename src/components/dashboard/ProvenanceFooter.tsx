@@ -76,6 +76,7 @@ export function ProvenanceFooter({ report }: ProvenanceFooterProps) {
                   href="https://openaq.org/"
                   target="_blank"
                   rel="noopener noreferrer"
+                  aria-label="OpenAQ v3 Platform (opens in a new tab)"
                   className="font-bold text-[var(--brand-primary)] underline hover:text-[var(--brand-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] rounded"
                 >
                   OpenAQ v3 Platform
@@ -85,6 +86,7 @@ export function ProvenanceFooter({ report }: ProvenanceFooterProps) {
                   href="https://atmosphere.copernicus.eu/"
                   target="_blank"
                   rel="noopener noreferrer"
+                  aria-label="Copernicus Atmosphere Monitoring Service (opens in a new tab)"
                   className="font-bold text-[var(--brand-primary)] underline hover:text-[var(--brand-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] rounded"
                 >
                   Copernicus Atmosphere Monitoring Service (CAMS)
@@ -98,6 +100,7 @@ export function ProvenanceFooter({ report }: ProvenanceFooterProps) {
                   href="https://open-meteo.com/"
                   target="_blank"
                   rel="noopener noreferrer"
+                  aria-label="Open-Meteo Weather API (opens in a new tab)"
                   className="font-bold text-[var(--brand-primary)] underline hover:text-[var(--brand-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] rounded"
                 >
                   Open-Meteo
@@ -107,6 +110,7 @@ export function ProvenanceFooter({ report }: ProvenanceFooterProps) {
                   href="https://atmosphere.copernicus.eu/"
                   target="_blank"
                   rel="noopener noreferrer"
+                  aria-label="Copernicus Atmosphere Monitoring Service (opens in a new tab)"
                   className="font-bold text-[var(--brand-primary)] underline hover:text-[var(--brand-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] rounded"
                 >
                   Copernicus Atmosphere Monitoring Service (CAMS)

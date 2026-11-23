@@ -15,7 +15,7 @@
   /* Ink / Typography */
   --ink-primary: #1E2530;
   --ink-secondary: #475569;
-  --ink-muted: #64748B;
+  --ink-muted: #475569;
   --ink-inverse: #FFFFFF;
 
   /* Brand & Atmosphere Accents */
@@ -28,7 +28,11 @@
   --aqi-good-bg: #ECFDF5;
   --aqi-good-border: #A7F3D0;
 
-  --aqi-moderate: #B45309;
+  --aqi-satisfactory: #4D7C0F;
+  --aqi-satisfactory-bg: #F7FEE7;
+  --aqi-satisfactory-border: #D9F99D;
+
+  --aqi-moderate: #92400E;
   --aqi-moderate-bg: #FFFBEB;
   --aqi-moderate-border: #FDE68A;
 

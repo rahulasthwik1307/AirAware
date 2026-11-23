@@ -59,6 +59,7 @@ export function CommunityAlertsWorkspace({
       role="region"
       aria-label="Community Air Intelligence and Alerts Workspace"
     >
+      <h1 className="sr-only">Community Air Intelligence &amp; Society Alerts</h1>
       {/* Top Executive KPI Strip */}
       <CommunityKpiStrip
         unreadCount={unreadCount}

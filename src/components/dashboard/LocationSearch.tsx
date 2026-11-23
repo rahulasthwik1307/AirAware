@@ -252,11 +252,7 @@ export function LocationSearch({
   };
 
   return (
-    <section aria-labelledby="location-search-heading" className="w-full">
-      <h2 id="location-search-heading" className="sr-only">
-        Global Environmental Location Selection
-      </h2>
-
+    <section aria-label="Global Environmental Location Selection" className="w-full">
       {/* Accessible Polite Status Messenger for Screen Readers */}
       <div role="status" aria-live="polite" className="sr-only">
         {statusMessage}
@@ -378,7 +374,7 @@ export function LocationSearch({
             type="button"
             onClick={handleGpsLocation}
             disabled={gpsLoading || isLoading}
-            aria-label="Acquire coordinates from browser GPS"
+            aria-label="Locate — Acquire coordinates from browser GPS"
             className="w-full sm:w-auto h-11 px-4 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-card)] text-xs font-semibold text-[var(--ink-primary)] shadow-xs hover:bg-[var(--surface-subtle)] hover:border-[var(--border-strong)] tactile-btn focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]/40 disabled:opacity-50 transition-all flex items-center justify-center gap-2 cursor-pointer font-mono shrink-0"
           >
             {gpsLoading ? (

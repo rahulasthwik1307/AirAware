@@ -21,9 +21,9 @@ const CPCB_24H_LIMITS: Record<
 };
 
 function getBarColor(ratio: number): string {
-  if (ratio <= 0.5) return '#059669'; // <= 50% of limit: Good green
-  if (ratio <= 1.0) return '#16a34a'; // 50-100% of limit: Satisfactory green
-  if (ratio <= 1.5) return '#d97706'; // 100-150% of limit: Moderate amber
+  if (ratio <= 0.5) return '#047857'; // <= 50% of limit: Good green
+  if (ratio <= 1.0) return '#4d7c0f'; // 50-100% of limit: Satisfactory green
+  if (ratio <= 1.5) return '#92400e'; // 100-150% of limit: Moderate amber
   if (ratio <= 2.5) return '#ea580c'; // 150-250% of limit: Poor orange
   return '#dc2626'; // > 250% of limit: Severe red
 }
@@ -373,7 +373,7 @@ export function UnifiedAnalyticsCard({ report }: UnifiedAnalyticsCardProps) {
                 )}
               </span>
             </span>
-            <span className="text-[10px] text-slate-500 hidden sm:inline">NAAQS 2009 Standards</span>
+            <span className="text-[10px] text-slate-600 hidden sm:inline">NAAQS 2009 Standards</span>
           </div>
         </div>
       )}

@@ -180,9 +180,11 @@ export function AirAwareShell() {
   const [clearedToast, setClearedToast] = useState(false);
   const cancelBtnRef = useRef<HTMLButtonElement | null>(null);
   const clearDialogRef = useRef<HTMLDivElement | null>(null);
+  const clearOpenerRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     if (showClearConfirm) {
+      clearOpenerRef.current = document.activeElement as HTMLElement | null;
       cancelBtnRef.current?.focus();
       const handleKeyDown = (e: KeyboardEvent) => {
         if (e.key === 'Escape') {
@@ -191,8 +193,35 @@ export function AirAwareShell() {
       };
       window.addEventListener('keydown', handleKeyDown);
       return () => window.removeEventListener('keydown', handleKeyDown);
+    } else if (clearOpenerRef.current) {
+      clearOpenerRef.current.focus();
     }
   }, [showClearConfirm]);
+
+  // Synchronize document title and description with active workspace for a11y & context
+  useEffect(() => {
+    const titles: Record<WorkspaceKey, string> = {
+      'air-intelligence': 'AirAware — Global Environmental Intelligence',
+      'family-planner': 'Family Daily Planner — AirAware',
+      'indoor-air': 'Indoor Air Intelligence — AirAware',
+      'cleaner-choices': 'Cleaner Choices & Impact — AirAware',
+      'community-alerts': 'Community Air Intelligence — AirAware',
+    };
+    const title = titles[activeWorkspace] || 'AirAware — Global Environmental Intelligence';
+    document.title = title;
+
+    const descriptions: Record<WorkspaceKey, string> = {
+      'air-intelligence': 'Real-time, hyperlocal environmental intelligence and actionable health guidance powered by open public science.',
+      'family-planner': 'Personalized family schedules coordinated with live diurnal smog forecasts for vulnerable members.',
+      'indoor-air': 'Indoor room micro-climates, particle clearance kinetics, air cleaner sizing, and evidence-backed mitigations.',
+      'cleaner-choices': 'Evidence-backed daily commute alternatives and quantifiable emissions reduction impact.',
+      'community-alerts': 'Hyperlocal pollution incident reporting, society airshed alerts, and collective environmental action.',
+    };
+    const metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc) {
+      metaDesc.setAttribute('content', descriptions[activeWorkspace] || descriptions['air-intelligence']);
+    }
+  }, [activeWorkspace]);
 
   const handleClearDataConfirm = () => {
     clearAllAirAwareData();

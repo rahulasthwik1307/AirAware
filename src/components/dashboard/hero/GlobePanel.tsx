@@ -41,7 +41,7 @@ export function GlobePanel({
       id="panel-globe"
       role="tabpanel"
       aria-labelledby="tab-globe"
-      className="w-full relative flex items-center justify-center animate-fadeIn"
+      className="w-full relative flex items-center justify-center animate-fadeIn overflow-y-auto"
     >
       <ComponentErrorBoundary
         fallbackTitle="3D Atmospheric Globe Unavailable"

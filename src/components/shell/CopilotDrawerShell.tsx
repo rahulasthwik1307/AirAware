@@ -73,6 +73,8 @@ export function CopilotDrawerShell({
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const drawerRef = useRef<HTMLDivElement>(null);
+  const openerRef = useRef<HTMLElement | null>(null);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -105,22 +107,43 @@ export function CopilotDrawerShell({
 
   // Handle focus trapping and Escape key
   useEffect(() => {
-    if (!isOpen) return;
+    if (isOpen) {
+      openerRef.current = document.activeElement as HTMLElement | null;
+      closeButtonRef.current?.focus();
 
-    closeButtonRef.current?.focus();
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        if (isHistoryOpen) {
-          setIsHistoryOpen(false);
-        } else {
-          onClose();
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          if (isHistoryOpen) {
+            setIsHistoryOpen(false);
+          } else {
+            onClose();
+          }
+          return;
         }
-      }
-    };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+        if (e.key === 'Tab') {
+          const focusables = drawerRef.current?.querySelectorAll<HTMLElement>(
+            'button:not([disabled]), input:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+          );
+          if (focusables && focusables.length > 0) {
+            const first = focusables[0];
+            const last = focusables[focusables.length - 1];
+            if (e.shiftKey && document.activeElement === first) {
+              e.preventDefault();
+              last.focus();
+            } else if (!e.shiftKey && document.activeElement === last) {
+              e.preventDefault();
+              first.focus();
+            }
+          }
+        }
+      };
+
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    } else if (openerRef.current) {
+      openerRef.current.focus();
+    }
   }, [isOpen, onClose, isHistoryOpen]);
 
   // Lock body scroll when drawer is open
@@ -186,7 +209,7 @@ export function CopilotDrawerShell({
       />
 
       {/* Slide-Over Drawer Container */}
-      <div className="relative z-10 flex h-full w-full max-w-lg flex-col bg-white shadow-2xl border-l border-[var(--border-subtle)] text-[var(--ink-primary)] drawer-slide-in">
+      <div ref={drawerRef} className="relative z-10 flex h-full w-full max-w-lg flex-col bg-white shadow-2xl border-l border-[var(--border-subtle)] text-[var(--ink-primary)] drawer-slide-in">
         {/* Drawer Header */}
         <div className="flex items-center justify-between border-b border-[var(--border-subtle)] px-4 py-3 sm:px-5 sm:py-4 bg-[var(--surface-subtle)]/70">
           <div className="flex items-center gap-2.5 min-w-0">

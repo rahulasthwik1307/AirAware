@@ -50,19 +50,19 @@ describe('Indoor Air Data & Action Logic (Part C)', () => {
     it('classifies 0–30 as Good', () => {
       const res = classifyIndoorPm25(18.5);
       expect(res.category).toBe('Good');
-      expect(res.colorToken).toBe('#059669');
+      expect(res.colorToken).toBe('#047857');
     });
 
     it('classifies 31–60 as Satisfactory', () => {
       const res = classifyIndoorPm25(45);
       expect(res.category).toBe('Satisfactory');
-      expect(res.colorToken).toBe('#84cc16');
+      expect(res.colorToken).toBe('#4d7c0f');
     });
 
     it('classifies 61–90 as Moderate', () => {
       const res = classifyIndoorPm25(75);
       expect(res.category).toBe('Moderate');
-      expect(res.colorToken).toBe('#D97706');
+      expect(res.colorToken).toBe('#92400E');
     });
 
     it('classifies 91–120 as Poor', () => {

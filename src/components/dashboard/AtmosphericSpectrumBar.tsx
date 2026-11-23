@@ -77,7 +77,7 @@ export function AtmosphericSpectrumBar({
           {activeStandard === 'EUROPEAN_EAQI' ? (
             <>
               <div
-                className="flex-1 bg-[#059669] hover:brightness-110 transition-all cursor-pointer"
+                className="flex-1 bg-[#047857] hover:brightness-110 transition-all cursor-pointer"
                 onMouseEnter={() => setHoveredBand('0–20: Good (Ideal for outdoor activities)')}
                 onMouseLeave={() => setHoveredBand(null)}
               />
@@ -87,7 +87,7 @@ export function AtmosphericSpectrumBar({
                 onMouseLeave={() => setHoveredBand(null)}
               />
               <div
-                className="flex-1 bg-[#D97706] hover:brightness-110 transition-all cursor-pointer"
+                className="flex-1 bg-[#92400E] hover:brightness-110 transition-all cursor-pointer"
                 onMouseEnter={() => setHoveredBand('40–60: Moderate (Sensitive groups notice irritation)')}
                 onMouseLeave={() => setHoveredBand(null)}
               />
@@ -110,12 +110,12 @@ export function AtmosphericSpectrumBar({
           ) : (
             <>
               <div
-                className="w-[10%] bg-[#059669] hover:brightness-110 transition-all cursor-pointer"
+                className="w-[10%] bg-[#047857] hover:brightness-110 transition-all cursor-pointer"
                 onMouseEnter={() => setHoveredBand('0–50: Good • CPCB Good (Clean air, no restrictions)')}
                 onMouseLeave={() => setHoveredBand(null)}
               />
               <div
-                className="w-[10%] bg-[#D97706] hover:brightness-110 transition-all cursor-pointer"
+                className="w-[10%] bg-[#92400E] hover:brightness-110 transition-all cursor-pointer"
                 onMouseEnter={() => setHoveredBand('51–100: Moderate • CPCB Satisfactory (Acceptable air)')}
                 onMouseLeave={() => setHoveredBand(null)}
               />

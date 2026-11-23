@@ -18,9 +18,9 @@ const CPCB_24H_LIMITS: Record<PollutantKey, { limit: number; unit: string; name:
 };
 
 function getBarColor(ratio: number): string {
-  if (ratio <= 0.5) return '#059669'; // <= 50% of limit: Good green
-  if (ratio <= 1.0) return '#84CC16'; // 50-100% of limit: Satisfactory lime
-  if (ratio <= 1.5) return '#D97706'; // 100-150% of limit: Moderate amber
+  if (ratio <= 0.5) return '#047857'; // <= 50% of limit: Good green
+  if (ratio <= 1.0) return '#4d7c0f'; // 50-100% of limit: Satisfactory lime
+  if (ratio <= 1.5) return '#92400e'; // 100-150% of limit: Moderate amber
   if (ratio <= 2.5) return '#EA580C'; // 150-250% of limit: Poor orange
   return '#DC2626'; // > 250% of limit: Severe red
 }

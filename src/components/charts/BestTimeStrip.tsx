@@ -10,9 +10,9 @@ interface BestTimeStripProps {
 }
 
 function getCpcbColor(aqi: number): string {
-  if (aqi <= 50) return '#059669'; // Good
-  if (aqi <= 100) return '#84CC16'; // Satisfactory
-  if (aqi <= 200) return '#D97706'; // Moderate
+  if (aqi <= 50) return '#047857'; // Good
+  if (aqi <= 100) return '#4d7c0f'; // Satisfactory
+  if (aqi <= 200) return '#92400e'; // Moderate
   if (aqi <= 300) return '#EA580C'; // Poor
   if (aqi <= 400) return '#DC2626'; // Very Poor
   return '#7F1D1D'; // Severe

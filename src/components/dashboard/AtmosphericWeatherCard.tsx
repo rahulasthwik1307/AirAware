@@ -29,7 +29,7 @@ export function AtmosphericWeatherCard({
     >
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[var(--border-subtle)] pb-2.5 mb-3">
         <div>
-          <h3
+          <h2
             id="surface-weather-heading"
             className="text-xs font-semibold text-[var(--ink-primary)] font-sans flex items-center gap-2"
           >
@@ -37,7 +37,7 @@ export function AtmosphericWeatherCard({
             <span className="text-[9px] font-normal text-[var(--ink-muted)] bg-[var(--surface-card)] px-2 py-0.5 rounded border border-[var(--border-subtle)]">
               Open-Meteo Feed
             </span>
-          </h3>
+          </h2>
           <p className="text-[11px] text-[var(--ink-secondary)] mt-0.5">
             Modelled surface parameters at ground level.
           </p>
@@ -139,7 +139,7 @@ export function AtmosphericWeatherCard({
             className={`py-1 rounded font-bold transition-all ${
               weather.windSpeed !== null && weather.windSpeed < 2.5
                 ? 'bg-rose-100 text-rose-900 border border-rose-300 shadow-2xs'
-                : 'bg-slate-100/70 text-slate-400'
+                : 'bg-slate-100 text-slate-600'
             }`}
           >
             ● Trapping / Calm Air
@@ -148,7 +148,7 @@ export function AtmosphericWeatherCard({
             className={`py-1 rounded font-bold transition-all ${
               weather.windSpeed !== null && weather.windSpeed >= 2.5 && weather.windSpeed < 8.0
                 ? 'bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs'
-                : 'bg-slate-100/70 text-slate-400'
+                : 'bg-slate-100 text-slate-600'
             }`}
           >
             ● Moderate Flow
@@ -157,7 +157,7 @@ export function AtmosphericWeatherCard({
             className={`py-1 rounded font-bold transition-all ${
               weather.windSpeed !== null && weather.windSpeed >= 8.0
                 ? 'bg-emerald-100 text-emerald-900 border border-emerald-300 shadow-2xs'
-                : 'bg-slate-100/70 text-slate-400'
+                : 'bg-slate-100 text-slate-600'
             }`}
           >
             ● Active Clearing

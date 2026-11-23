@@ -88,7 +88,7 @@ const ARCHETYPE_COLORS: Record<
     blockBg: 'bg-amber-50/90 dark:bg-amber-950/60',
     blockBorder: 'border-amber-400 dark:border-amber-600',
     blockText: 'text-amber-950 dark:text-amber-100',
-    accentColor: '#d97706',
+    accentColor: '#92400e',
   },
   SENIOR_VULNERABLE: {
     laneBadge: 'bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-500/20',

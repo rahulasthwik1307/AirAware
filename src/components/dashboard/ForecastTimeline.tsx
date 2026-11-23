@@ -224,10 +224,11 @@ export function ForecastTimeline({
             <button
               type="button"
               onClick={() => setShowTableView(false)}
+              aria-pressed={!showTableView}
               className={`px-2.5 py-1 text-xs font-mono font-semibold rounded-md transition-all cursor-pointer ${
                 !showTableView
                   ? 'bg-[var(--surface-card)] text-[var(--brand-primary)] shadow-xs border border-[var(--border-subtle)]'
-                  : 'text-[var(--ink-muted)] hover:text-[var(--ink-primary)]'
+                  : 'text-[var(--ink-secondary)] hover:text-[var(--ink-primary)]'
               }`}
             >
               Diurnal Wave
@@ -235,10 +236,11 @@ export function ForecastTimeline({
             <button
               type="button"
               onClick={() => setShowTableView(true)}
+              aria-pressed={showTableView}
               className={`px-2.5 py-1 text-xs font-mono font-semibold rounded-md transition-all cursor-pointer ${
                 showTableView
                   ? 'bg-[var(--surface-card)] text-[var(--brand-primary)] shadow-xs border border-[var(--border-subtle)]'
-                  : 'text-[var(--ink-muted)] hover:text-[var(--ink-primary)]'
+                  : 'text-[var(--ink-secondary)] hover:text-[var(--ink-primary)]'
               }`}
             >
               Data Table
@@ -374,7 +376,8 @@ export function ForecastTimeline({
                 viewBox="0 0 1000 220"
                 preserveAspectRatio="none"
                 className="w-full h-full overflow-visible select-none"
-                aria-hidden="true"
+                role="img"
+                aria-label="24-Hour Diurnal Forecast Continuous Spline Curve Chart"
               >
                 <defs>
                   {/* Atmospheric Glow Gradient Fill under the Curve */}
@@ -522,9 +525,6 @@ export function ForecastTimeline({
                     key={point.time}
                     type="button"
                     tabIndex={0}
-                    aria-label={`Forecast for ${point.displayTime}: ${aqi !== null ? `${aqi} AQI` : 'Not Reported'}, ${
-                      tier?.label || 'Unknown Category'
-                    }${point.isCurrentHour ? ', Current Model Hour' : ''}`}
                     aria-pressed={isSelected}
                     onClick={() => setSelectedIndex(index)}
                     onMouseEnter={() => setHoveredIndex(index)}
@@ -547,6 +547,9 @@ export function ForecastTimeline({
                       }`}
                     >
                       {aqi !== null ? aqi : '—'}
+                    </span>
+                    <span className="sr-only">
+                      {aqi !== null ? ' AQI' : ' Not Reported'}, {tier?.label || 'Unknown Category'}{point.isCurrentHour ? ', Current Model Hour' : ''}
                     </span>
                   </button>
                 );

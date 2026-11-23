@@ -267,7 +267,7 @@ export function VentilationAdvisor({ report, onAskCopilot }: VentilationAdvisorP
                     return i === 0 ? `M ${pt.x} ${o3Y}` : `${acc} L ${pt.x} ${o3Y}`;
                   }, '')}
                   fill="none"
-                  stroke="#d97706"
+                  stroke="#92400e"
                   strokeWidth="1.5"
                   strokeDasharray="3,3"
                 />

@@ -150,15 +150,16 @@ export function AppHeader({
               type="button"
               onClick={onOpenNotifications}
               className="relative p-2 rounded-xl bg-[var(--surface-subtle)] hover:bg-[var(--surface-card)] text-[var(--ink-primary)] hover:text-[var(--brand-primary)] border border-[var(--border-subtle)] transition-all cursor-pointer shadow-xs tactile-btn focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
-              aria-label={`View notifications (${unreadAlertCount} unread)`}
               title="Open Notifications"
             >
               <span className="text-base select-none" aria-hidden="true">
                 🔔
               </span>
+              <span className="sr-only">Notifications</span>
               {unreadAlertCount > 0 && (
                 <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-rose-600 text-white font-mono text-[9px] font-bold shadow-xs">
                   {unreadAlertCount}
+                  <span className="sr-only"> unread</span>
                 </span>
               )}
             </button>
@@ -169,7 +170,7 @@ export function AppHeader({
             type="button"
             onClick={onOpenCopilot}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[var(--surface-subtle)] hover:bg-[var(--brand-surface)] text-[var(--ink-primary)] hover:text-[var(--brand-primary)] text-xs font-mono font-bold border border-[var(--border-subtle)] hover:border-[var(--brand-primary)]/40 transition-all cursor-pointer shadow-xs tactile-btn focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
-            aria-label="Open AI Air Copilot panel"
+            aria-label="Ask Copilot — Environmental AI Assistant"
           >
             <span className="text-sm select-none" aria-hidden="true">
               🤖
