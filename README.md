@@ -25,14 +25,14 @@ AirAware addresses **PromptWars Challenge 6**:
 
 ---
 
-## Visual Showcase
+## Landing page artwork
 
-| View | Feature & Capability |
-|------|----------------------|
-| ![Winter Smog Navigation](public/images/landing/winter_smog_city.webp) | **Air Intelligence Studio:** Real-time CPCB/EPA telemetry, 6 criteria pollutants, and diurnal trend. |
-| ![Clean Sky Transition](public/images/landing/clean_sky_city.webp) | **Source Ribbon & Provenance:** Explicit ground station distance, age, and modeled fallback notices. |
-| ![Indoor Sanctuary](public/images/landing/indoor_air_sanctuary.webp) | **Indoor Air Sanctuary:** Room CADR purifier sizing, solar ventilation countdown, and indoor reading analysis. |
-| ![Community Alerts](public/images/landing/community_action_alert.webp) | **Community & Alerts:** Qualitative source knowledge, civic incident logging, and WhatsApp RWA bulletin drafting. |
+| Artwork | Scene |
+|---------|-------|
+| ![Winter smog on a city street](public/images/landing/winter_smog_city.webp) | Winter smog on a city street |
+| ![The same street on a clean-air day](public/images/landing/clean_sky_city.webp) | The same street on a clean-air day |
+| ![A family indoors with an air purifier](public/images/landing/indoor_air_sanctuary.webp) | A family indoors with an air purifier |
+| ![Neighbors sharing a clean-air alert](public/images/landing/community_action_alert.webp) | Neighbors sharing a clean-air alert |
 
 ---
 
