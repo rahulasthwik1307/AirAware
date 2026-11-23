@@ -1,19 +1,18 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { AirQualityReport, AqiStandardKey, GeoLocation } from '@/domain/types';
 import { calculateCompositeCpcbAqi } from '@/domain/aqi/cpcb-benchmark';
 import { WeatherData } from '@/app/api/weather/route';
-import { GLOBE_REFERENCE_CITIES, GlobeCityPin } from '../globe/world-landmass';
-import type { RegionalCityEstimate } from '@/app/api/regional-hotspots/route';
-import { UnifiedAnalyticsCard } from '@/components/charts/UnifiedAnalyticsCard';
-import { findBestDaytimeWindow } from '@/domain/aqi/best-window';
-import { ComponentErrorBoundary } from '@/components/common/ComponentErrorBoundary';
 import { AtmosphericSpectrumBar } from './AtmosphericSpectrumBar';
+import { SourceRibbon } from './hero/SourceRibbon';
+import { ViewSwitcher } from './hero/ViewSwitcher';
+import { OverviewPanel } from './hero/OverviewPanel';
+import { HERO_RIGHT_PANEL_HEIGHT_CLASS } from './hero/constants';
+import type { HeroViewMode } from './hero/types';
 
-// Single authoritative constant for right-panel height across Overview, Compare, and 3D Globe
-export const HERO_RIGHT_PANEL_HEIGHT_CLASS = 'w-full h-auto lg:h-[680px]';
+export { HERO_RIGHT_PANEL_HEIGHT_CLASS };
 
 // Tactile number roll hook for smooth instrument calibration feel
 function useAnimatedNumber(target: number | null, durationMs = 450): number | null {
@@ -59,17 +58,43 @@ function useAnimatedNumber(target: number | null, durationMs = 450): number | nu
   return current;
 }
 
-// Dynamically import MapLibre 3D Globe with SSR disabled to protect WebGL contexts
-const MapLibreGlobe = dynamic(
-  () => import('@/components/globe/MapLibreGlobe').then((mod) => mod.MapLibreGlobe),
+// Lazy-loaded GlobePanel (MapLibre/three separated from initial dashboard bundle)
+const LazyGlobePanel = dynamic(
+  () => import('./hero/GlobePanel').then((mod) => mod.GlobePanel),
   {
     ssr: false,
     loading: () => (
-      <div className="w-full h-[540px] sm:h-[620px] lg:h-[680px] rounded-3xl flex flex-col items-center justify-center bg-[#0F172A] text-slate-200 gap-3 border border-slate-800/90 shadow-[0_20px_50px_-12px_rgba(15,23,42,0.5)] select-none">
+      <div
+        id="panel-globe"
+        role="tabpanel"
+        aria-labelledby="tab-globe"
+        className="w-full h-[540px] sm:h-[620px] lg:h-[680px] rounded-3xl flex flex-col items-center justify-center bg-[#0F172A] text-slate-200 gap-3 border border-slate-800/90 shadow-[0_20px_50px_-12px_rgba(15,23,42,0.5)] select-none"
+      >
         <div className="h-9 w-9 animate-spin rounded-full border-3 border-teal-500 border-t-transparent" />
         <span className="text-xs font-mono text-slate-400 font-medium">
           Loading 3D Atmospheric Globe...
         </span>
+      </div>
+    ),
+  }
+);
+
+// Lazy-loaded RegionalComparePanel (only fetches regional hotspots when opened)
+const LazyRegionalComparePanel = dynamic(
+  () => import('./hero/RegionalComparePanel').then((mod) => mod.RegionalComparePanel),
+  {
+    ssr: false,
+    loading: () => (
+      <div
+        id="panel-compare"
+        role="tabpanel"
+        aria-labelledby="tab-compare"
+        className="w-full h-[540px] sm:h-[620px] lg:h-[680px] rounded-3xl border border-slate-200/90 bg-white p-5 sm:p-6 overflow-y-auto space-y-4 shadow-lg flex flex-col items-center justify-center gap-3"
+      >
+        <div className="h-7 w-7 animate-spin rounded-full border-3 border-sky-600 border-t-transparent" />
+        <p className="text-xs font-mono text-slate-500">
+          Loading live regional comparison estimates...
+        </p>
       </div>
     ),
   }
@@ -134,129 +159,77 @@ export function AqiHeroCard({
   } = report;
 
   const [selectedStandard, setSelectedStandard] = useState<'CPCB_NAQI' | 'US_EPA'>('CPCB_NAQI');
-  type HeroViewMode = 'overview' | 'compare' | 'globe';
   const [activeView, setActiveView] = useState<HeroViewMode>('overview');
-  const tabListRef = useRef<HTMLDivElement>(null);
-
-  // Regional comparisons state (cached 15 minutes via /api/regional-hotspots)
-  const [regionalHotspots, setRegionalHotspots] = useState<readonly RegionalCityEstimate[]>([]);
-  const [isHotspotsLoading, setIsHotspotsLoading] = useState(false);
-  const [hotspotsError, setHotspotsError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (activeView !== 'compare' || regionalHotspots.length > 0) return;
-
-    let cancelled = false;
-    setIsHotspotsLoading(true);
-    setHotspotsError(null);
-
-    fetch('/api/regional-hotspots')
-      .then((res) => {
-        if (!res.ok) throw new Error('Failed to fetch');
-        return res.json();
-      })
-      .then((data) => {
-        if (!cancelled) {
-          if (data.success && Array.isArray(data.cities)) {
-            setRegionalHotspots(data.cities);
-          } else {
-            setHotspotsError(data.error || 'Could not load regional comparisons right now. Please try again later.');
-          }
-          setIsHotspotsLoading(false);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setHotspotsError('Could not load regional comparisons right now. Please try again later.');
-          setIsHotspotsLoading(false);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [activeView, regionalHotspots.length]);
-
-  const handleTabKeyDown = (e: React.KeyboardEvent) => {
-    const tabKeys: HeroViewMode[] = ['overview', 'compare', 'globe'];
-    const currentIndex = tabKeys.indexOf(activeView);
-    let nextIndex = currentIndex;
-    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-      e.preventDefault();
-      nextIndex = (currentIndex + 1) % tabKeys.length;
-    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-      e.preventDefault();
-      nextIndex = (currentIndex - 1 + tabKeys.length) % tabKeys.length;
-    } else if (e.key === 'Home') {
-      e.preventDefault();
-      nextIndex = 0;
-    } else if (e.key === 'End') {
-      e.preventDefault();
-      nextIndex = tabKeys.length - 1;
-    } else {
-      return;
-    }
-    const nextView = tabKeys[nextIndex];
-    setActiveView(nextView);
-    const targetBtn = tabListRef.current?.querySelector<HTMLButtonElement>(`#tab-${nextView}`);
-    targetBtn?.focus();
-  };
 
   const [mousePos, setMousePos] = useState({ x: 50, y: 50 });
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     if (rect.width > 0 && rect.height > 0) {
       const x = ((e.clientX - rect.left) / rect.width) * 100;
       const y = ((e.clientY - rect.top) / rect.height) * 100;
       setMousePos({ x: Math.round(x), y: Math.round(y) });
     }
-  };
+  }, []);
 
   const isCpcbActive = selectedStandard === 'CPCB_NAQI';
   const isStation = report.sourceType === 'station';
-  const stationMeasuredPm10 = isStation
-    ? (report.pollutants?.pm10?.isStationMeasurement ? report.pollutants?.pm10?.concentration : null)
-    : report.pollutants?.pm10?.concentration;
-  const cpcbResult = calculateCompositeCpcbAqi(
-    report.pollutants?.pm2_5?.concentration,
-    stationMeasuredPm10,
-    isStation
-  );
+
+  const stationMeasuredPm10 = useMemo(() => {
+    return isStation
+      ? (report.pollutants?.pm10?.isStationMeasurement ? report.pollutants?.pm10?.concentration : null)
+      : report.pollutants?.pm10?.concentration;
+  }, [isStation, report.pollutants?.pm10]);
+
+  const cpcbResult = useMemo(() => {
+    return calculateCompositeCpcbAqi(
+      report.pollutants?.pm2_5?.concentration,
+      stationMeasuredPm10,
+      isStation
+    );
+  }, [report.pollutants?.pm2_5?.concentration, stationMeasuredPm10, isStation]);
 
   const effectiveAqi = isCpcbActive
     ? (cpcbResult.aqi ?? providerAqi)
     : providerAqi;
-
-  const bestDaytimeWindow = findBestDaytimeWindow(report.forecast, 2);
 
   const hasAqi = effectiveAqi !== null;
   const isIndia = location.countryCode === 'IN' || location.country.toLowerCase().includes('india');
   const animatedAqi = useAnimatedNumber(hasAqi ? effectiveAqi : null);
   const displayAqi = hasAqi ? (animatedAqi ?? effectiveAqi) : null;
 
-  const effectiveTierLabel = isCpcbActive
-    ? (cpcbResult.category !== 'Unavailable' ? cpcbResult.category : (tier?.label ?? 'Moderate'))
-    : (tier ? tier.label : 'Moderate');
+  const effectiveTierLabel = useMemo(() => {
+    return isCpcbActive
+      ? (cpcbResult.category !== 'Unavailable' ? cpcbResult.category : (tier?.label ?? 'Moderate'))
+      : (tier ? tier.label : 'Moderate');
+  }, [isCpcbActive, cpcbResult.category, tier]);
 
-  const aqiColor = isCpcbActive
-    ? (cpcbResult.colorToken !== 'var(--ink-muted)' ? cpcbResult.colorToken : (tier?.colorToken ?? '#059669'))
-    : (tier ? tier.colorToken : '#059669');
+  const aqiColor = useMemo(() => {
+    return isCpcbActive
+      ? (cpcbResult.colorToken !== 'var(--ink-muted)' ? cpcbResult.colorToken : (tier?.colorToken ?? '#059669'))
+      : (tier ? tier.colorToken : '#059669');
+  }, [isCpcbActive, cpcbResult.colorToken, tier]);
 
   // Calculate percentage along the spectrum for the visual marker (strictly 0–500 scale)
-  let spectrumPercent = 0;
-  if (hasAqi && Number.isFinite(effectiveAqi) && effectiveAqi >= 0) {
-    spectrumPercent = Math.min(100, Math.max(0, (effectiveAqi / 500) * 100));
-  }
+  const spectrumPercent = useMemo(() => {
+    if (hasAqi && Number.isFinite(effectiveAqi) && effectiveAqi >= 0) {
+      return Math.min(100, Math.max(0, (effectiveAqi / 500) * 100));
+    }
+    return 0;
+  }, [hasAqi, effectiveAqi]);
 
   // Graded Response Action Plan (GRAP) for Delhi-NCR, or Standard Clean Air Advisory for other Indian Cities
-  const isDelhiNcr =
-    isIndia &&
-    /delhi|noida|gurugram|gurgaon|ghaziabad|faridabad|rohtak/i.test(
-      location.name + ' ' + (location.admin1 || '')
+  const isDelhiNcr = useMemo(() => {
+    return (
+      isIndia &&
+      /delhi|noida|gurugram|gurgaon|ghaziabad|faridabad|rohtak/i.test(
+        location.name + ' ' + (location.admin1 || '')
+      )
     );
+  }, [isIndia, location.name, location.admin1]);
 
-  const getGrapProtocol = (aqi: number | null) => {
+  const grapInfo = useMemo(() => {
+    const aqi = providerAqi;
     if (!isIndia || aqi === null || !Number.isFinite(aqi)) return null;
 
     if (isDelhiNcr) {
@@ -335,14 +308,16 @@ export function AqiHeroCard({
       };
     }
     return null;
-  };
-
-  const grapInfo = getGrapProtocol(providerAqi);
+  }, [providerAqi, isIndia, isDelhiNcr]);
 
   // SVG Gauge calculations
   const gaugeRadius = 40;
   const gaugeCircumference = Math.PI * gaugeRadius; // Semi-circle arc
   const gaugeStrokeDashoffset = gaugeCircumference - (gaugeCircumference * (spectrumPercent / 100));
+
+  const handleSwitchToOverview = useCallback(() => {
+    setActiveView('overview');
+  }, []);
 
   return (
     <article
@@ -360,52 +335,10 @@ export function AqiHeroCard({
       }}
     >
       {/* Current In-Situ Ground Station or Modelled Atmospheric Feed Ribbon with Explicit Provenance */}
-      <div className="flex flex-wrap items-center justify-between border-b border-slate-200/80 bg-white px-6 py-2.5 sm:px-8 text-[11px] font-mono text-slate-600 gap-2">
-        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-          <span className="inline-flex items-center gap-1.5 font-bold text-slate-800">
-            <span
-              className="h-2 w-2 rounded-full"
-              style={{ backgroundColor: aqiColor }}
-            />
-            {isStation ? (
-              <span>
-                Ground station: <strong className="text-slate-900">{report.stationName || 'Nearby Monitor'}</strong>, {report.distanceKm !== null && report.distanceKm !== undefined ? `${report.distanceKm} km away` : ''} · OpenAQ · Observed {report.observedAt ? (report.observedAt.includes('T') ? report.observedAt.split('T')[1].slice(0, 5) : report.observedAt) : ''} ({formatDataAge(report.observedAt || modelTimestamp)})
-                {report.distanceKm !== null && report.distanceKm !== undefined && report.distanceKm > 10 && (
-                  <span className="text-amber-800 ml-1.5 font-normal">
-                    · This station is far from you; air near you may differ.
-                  </span>
-                )}
-              </span>
-            ) : (
-              <span>Modeled estimate (Copernicus CAMS via Open-Meteo, ~45 km grid) · {report.modelFallbackReason || 'no recent station within 25 km'}</span>
-            )}
-          </span>
-          <span className="text-slate-300">|</span>
-          <span className="text-sky-700 font-semibold tabular-nums">
-            {coordinates.latitude.toFixed(2)}°N, {coordinates.longitude.toFixed(2)}°E
-          </span>
-          {isLoading && (
-            <span className="inline-flex items-center gap-1 text-[10px] text-amber-800 bg-amber-50 border border-amber-300 px-2 py-0.5 rounded-full">
-              <span>🔄 Updating telemetry feed...</span>
-            </span>
-          )}
-        </div>
-
-        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-          <span className="text-slate-600 tabular-nums">
-            Observation: <strong className="text-slate-800">{report.observedAt || modelTimestamp}</strong>
-          </span>
-          <span className="text-slate-300">|</span>
-          <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-bold border border-slate-200">
-            Age: {formatDataAge(report.observedAt || modelTimestamp)}
-          </span>
-          <span className="hidden sm:inline text-slate-300">|</span>
-          <span className="font-semibold text-slate-700 tabular-nums hidden sm:inline">Local: {localTime}</span>
-        </div>
-      </div>
+      <SourceRibbon report={report} aqiColor={aqiColor} isLoading={isLoading} />
 
       <div className="p-6 sm:p-8">
-        {/* Main Stage Grid: Left = Compact Intelligence Deck (5/12 ~ 41.7%), Right = Dominant 3D Globe (7/12 ~ 58.3%) */}
+        {/* Main Stage Grid: Left = Compact Intelligence Deck (5/12 ~ 41.7%), Right = Dominant 3D Globe / Overview (7/12 ~ 58.3%) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start lg:items-stretch">
           {/* Left Column: Focused Intelligence Deck (5/12) */}
           <div className="lg:col-span-5 flex flex-col justify-between gap-4 z-10 h-full">
@@ -553,7 +486,7 @@ export function AqiHeroCard({
                       className="transition-all duration-700 ease-out"
                     />
                   </svg>
-                  {/* Center Visual Indicator (Option A: Severity Icon & Dominant Pollutant, Balanced Centering) */}
+                  {/* Center Visual Indicator */}
                   <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none select-none">
                     <span className="text-xl leading-none" aria-hidden="true">
                       {providerAqi !== null && providerAqi > 300
@@ -719,407 +652,43 @@ export function AqiHeroCard({
 
           {/* Right Column: 3-Option Segmented Control (Overview | Regional compare | 3D globe) */}
           <div className="lg:col-span-7 relative flex flex-col lg:justify-end gap-2.5 h-full">
-            {/* Visual Viewport Header with 3-Option Segmented Control (Elevated Dock directly atop active panel) */}
-            <div className="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/85 backdrop-blur-md border border-slate-200/90 shadow-2xs">
-                <span className="relative flex h-2 w-2">
-                  <span
-                    className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
-                      activeView === 'overview'
-                        ? 'bg-emerald-400'
-                        : activeView === 'compare'
-                        ? 'bg-sky-400'
-                        : 'bg-indigo-400'
-                    }`}
-                  />
-                  <span
-                    className={`relative inline-flex rounded-full h-2 w-2 ${
-                      activeView === 'overview'
-                        ? 'bg-emerald-500'
-                        : activeView === 'compare'
-                        ? 'bg-sky-500'
-                        : 'bg-indigo-500'
-                    }`}
-                  />
-                </span>
-                <span className="text-xs font-mono font-bold text-slate-800 tracking-tight">
-                  {activeView === 'overview'
-                    ? 'Live Airshed Telemetry'
-                    : activeView === 'compare'
-                    ? 'Regional Airshed Grid'
-                    : '3D Earth Atmospheric Dispersion'}
-                </span>
-              </div>
-
-              {/* View Switcher: Accessible 3-Option Segmented Control */}
-              <div
-                ref={tabListRef}
-                role="tablist"
-                aria-label="Environmental view mode"
-                className="inline-flex p-1 rounded-2xl bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-2xs text-xs font-mono font-bold gap-1 self-start sm:self-auto"
-                onKeyDown={handleTabKeyDown}
-              >
-                <button
-                  id="tab-overview"
-                  role="tab"
-                  type="button"
-                  aria-selected={activeView === 'overview'}
-                  aria-controls="panel-overview"
-                  tabIndex={activeView === 'overview' ? 0 : -1}
-                  onClick={() => setActiveView('overview')}
-                  className={`px-3.5 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 font-bold tactile-btn ${
-                    activeView === 'overview'
-                      ? 'bg-sky-600 text-white shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
-                  }`}
-                >
-                  <span aria-hidden="true">🌤️</span>
-                  <span>Overview</span>
-                </button>
-                <button
-                  id="tab-compare"
-                  role="tab"
-                  type="button"
-                  aria-selected={activeView === 'compare'}
-                  aria-controls="panel-compare"
-                  tabIndex={activeView === 'compare' ? 0 : -1}
-                  onClick={() => setActiveView('compare')}
-                  className={`px-3.5 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 font-bold tactile-btn ${
-                    activeView === 'compare'
-                      ? 'bg-sky-600 text-white shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
-                  }`}
-                >
-                  <span aria-hidden="true">🇮🇳</span>
-                  <span>Regional compare</span>
-                </button>
-                <button
-                  id="tab-globe"
-                  role="tab"
-                  type="button"
-                  aria-selected={activeView === 'globe'}
-                  aria-controls="panel-globe"
-                  tabIndex={activeView === 'globe' ? 0 : -1}
-                  onClick={() => setActiveView('globe')}
-                  className={`px-3.5 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 font-bold tactile-btn ${
-                    activeView === 'globe'
-                      ? 'bg-sky-600 text-white shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
-                  }`}
-                >
-                  <span aria-hidden="true">🌐</span>
-                  <span>3D globe</span>
-                </button>
-              </div>
-            </div>
+            {/* Visual Viewport Header with 3-Option Segmented Control */}
+            <ViewSwitcher activeView={activeView} onSelectView={setActiveView} />
 
             {/* Panel 1: Overview */}
             {activeView === 'overview' && (
-              <div
-                id="panel-overview"
-                role="tabpanel"
-                aria-labelledby="tab-overview"
-                className={`${HERO_RIGHT_PANEL_HEIGHT_CLASS} rounded-3xl border border-slate-200/90 bg-white p-4 sm:p-5 overflow-y-auto shadow-sm flex flex-col justify-start animate-fadeIn`}
-              >
-                <div className="space-y-3 flex-1 flex flex-col justify-start">
-                  {/* Header */}
-                  <div className="border-b border-slate-200/80 pb-2.5">
-                    <div className="flex items-center justify-between gap-2 flex-wrap">
-                      <h3 className="text-sm sm:text-base font-bold font-sans text-slate-900 flex items-center gap-2">
-                        <span>🌤️ Environmental Overview: {location.name}</span>
-                      </h3>
-                      <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200 shadow-2xs">
-                        📍 {coordinates.latitude.toFixed(2)}°N, {coordinates.longitude.toFixed(2)}°E
-                      </span>
-                    </div>
-                    <p className="text-xs text-slate-600 mt-1 font-sans">
-                      Local atmospheric conditions, ventilation windows, and exposure mitigation.
-                    </p>
-                  </div>
-
-                  {/* a. Conditional advisory based on live CPCB category (1-2 lines max) */}
-                  {effectiveTierLabel === 'Severe' ||
-                  effectiveTierLabel === 'Very Poor' ||
-                  effectiveTierLabel === 'Poor' ? (
-                    <div className="p-2.5 rounded-xl bg-amber-50/90 border border-amber-300 text-xs flex items-center gap-2">
-                      <span className="text-base shrink-0" aria-hidden="true">🛡️</span>
-                      <p className="text-amber-900 leading-snug font-sans text-xs">
-                        <strong className="font-semibold">Winter Smog Advisory: </strong>
-                        Night ground cooling traps particulate below a shallow boundary layer. Avoid morning exertion; shift outdoor activities to afternoon solar breakup.
-                      </p>
-                    </div>
-                  ) : effectiveTierLabel === 'Moderate' ? (
-                    <div className="p-2.5 rounded-xl bg-amber-50/60 border border-amber-200 text-xs flex items-center gap-2">
-                      <span className="text-base shrink-0" aria-hidden="true">⚠️</span>
-                      <p className="text-amber-900 leading-snug font-sans text-xs">
-                        <strong className="font-semibold">Moderate Air Quality Notice: </strong>
-                        Air quality is acceptable; sensitive groups (children, asthmatics, seniors) should limit prolonged morning outdoor exertion.
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="p-2.5 rounded-xl bg-emerald-50/80 border border-emerald-200 text-xs flex items-center gap-2">
-                      <span className="text-base shrink-0" aria-hidden="true">🌿</span>
-                      <p className="text-emerald-950 leading-snug font-sans text-xs">
-                        <strong className="font-semibold">Good Air Quality: </strong>
-                        Safe ambient air. Favorable conditions for morning workouts, airing out living spaces, and outdoor sports.
-                      </p>
-                    </div>
-                  )}
-
-                  {/* b. Compact merged row: Data source + Primary concern */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-mono">
-                    <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-2">
-                      <div className="min-w-0">
-                        <span className="text-[10px] text-slate-500 uppercase font-bold block">Data source</span>
-                        <p className="text-xs font-bold text-slate-800 truncate">
-                          {isStation
-                            ? `${report.stationName || 'Nearby Station'} (${report.distanceKm ?? 0} km)`
-                            : 'Copernicus CAMS (~45 km grid)'}
-                        </p>
-                      </div>
-                      <span className="text-[10px] text-slate-500 shrink-0 font-medium bg-white px-1.5 py-0.5 rounded border border-slate-200">
-                        {formatDataAge(report.observedAt || report.modelTimestamp)}
-                      </span>
-                    </div>
-
-                    <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-2">
-                      <div className="min-w-0">
-                        <span className="text-[10px] text-slate-500 uppercase font-bold block">Primary Concern</span>
-                        <p className="text-xs font-bold text-slate-800 truncate">
-                          {dominantPollutant ? dominantPollutant.toUpperCase() : 'PM2.5'}
-                        </p>
-                      </div>
-                      <span
-                        className="text-[10px] font-bold px-2 py-0.5 rounded-md border shrink-0"
-                        style={{
-                          backgroundColor: `${aqiColor}15`,
-                          borderColor: `${aqiColor}40`,
-                          color: aqiColor,
-                        }}
-                      >
-                        {effectiveTierLabel}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* c. Best time to be outside compact chip */}
-                  {bestDaytimeWindow && (
-                    <div
-                      className="p-2 rounded-xl border flex items-center justify-between gap-2 shadow-2xs text-xs font-sans"
-                      style={{
-                        backgroundColor: `${bestDaytimeWindow.colorToken}10`,
-                        borderColor: `${bestDaytimeWindow.colorToken}35`,
-                      }}
-                    >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="text-sm select-none" aria-hidden="true">✨</span>
-                        <span className="text-slate-800 truncate text-xs">
-                          <strong className="text-slate-900 font-bold">Best time to be outside: </strong>
-                          <span className="font-bold text-teal-950 font-mono">{bestDaytimeWindow.displayWindow}</span>
-                          <span className="text-slate-600 ml-1.5 font-mono text-[11px]">
-                            (AQI ~{bestDaytimeWindow.averageAqi}, {bestDaytimeWindow.category})
-                          </span>
-                        </span>
-                      </div>
-                      <span
-                        className="text-[9px] font-mono font-bold px-2 py-0.5 rounded-md text-white shrink-0 uppercase tracking-tight"
-                        style={{ backgroundColor: bestDaytimeWindow.colorToken }}
-                      >
-                        Recommended
-                      </span>
-                    </div>
-                  )}
-
-                  {/* d. Unified Environmental Analytics Card (Interactive Segmented Switcher) */}
-                  <div className="w-full pt-0.5">
-                    <ComponentErrorBoundary
-                      fallbackTitle="Environmental Analytics Unavailable"
-                      fallbackMessage="The comparative air quality charts could not be displayed. Numerical station telemetry remains available above."
-                    >
-                      <UnifiedAnalyticsCard report={report} />
-                    </ComponentErrorBoundary>
-                  </div>
-                </div>
-              </div>
+              <OverviewPanel
+                report={report}
+                effectiveTierLabel={effectiveTierLabel}
+                dominantPollutant={dominantPollutant}
+                aqiColor={aqiColor}
+                isStation={isStation}
+              />
             )}
 
-            {/* Panel 2: Regional compare (Live batched Open-Meteo CAMS data) */}
+            {/* Panel 2: Regional compare (Lazy loaded) */}
             {activeView === 'compare' && (
-              <div
-                id="panel-compare"
-                role="tabpanel"
-                aria-labelledby="tab-compare"
-                className="w-full h-[540px] sm:h-[620px] lg:h-[680px] rounded-3xl border border-slate-200/90 bg-white p-5 sm:p-6 overflow-y-auto space-y-4 shadow-lg animate-fadeIn"
-              >
-                <div className="border-b border-slate-200/80 pb-3">
-                  <div className="flex items-center justify-between gap-2 flex-wrap">
-                    <h3 className="text-base font-bold font-sans text-slate-900 flex items-center gap-2">
-                      <span>🇮🇳 Regional Air Quality Comparison</span>
-                    </h3>
-                    <span className="text-xs font-mono font-bold text-amber-900 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-300 shadow-2xs">
-                      Modeled estimates
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-600 mt-1 font-sans">
-                    Live modeled estimates from Copernicus Atmosphere Monitoring Service (CAMS) via Open-Meteo (~45 km horizontal grid). Click any city to switch your active location.
-                  </p>
-                </div>
-
-                {isHotspotsLoading && (
-                  <div className="p-8 text-center space-y-3">
-                    <div className="h-7 w-7 animate-spin rounded-full border-3 border-sky-600 border-t-transparent mx-auto" />
-                    <p className="text-xs font-mono text-slate-500">
-                      Loading live regional comparison estimates...
-                    </p>
-                  </div>
-                )}
-
-                {hotspotsError && !isHotspotsLoading && (
-                  <div className="p-6 rounded-2xl bg-amber-50 border border-amber-200 text-center space-y-2">
-                    <span className="text-xl">⚠️</span>
-                    <p className="text-xs font-sans text-amber-900 font-semibold">
-                      {hotspotsError}
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setHotspotsError(null);
-                        setRegionalHotspots([]);
-                      }}
-                      className="px-3 py-1 text-xs font-mono font-bold bg-amber-200 text-amber-900 rounded-lg hover:bg-amber-300 transition-colors cursor-pointer"
-                    >
-                      Try Again
-                    </button>
-                  </div>
-                )}
-
-                {!isHotspotsLoading && !hotspotsError && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                    {(regionalHotspots.length > 0 ? regionalHotspots : GLOBE_REFERENCE_CITIES).map((c) => {
-                      const typedItem = c as RegionalCityEstimate | (GlobeCityPin & { aqi?: number | null; pm25?: number | null; pm10?: number | null; tierLabel?: string; colorToken?: string });
-                      const isCurrent = location.name.toLowerCase() === typedItem.name.toLowerCase();
-                      const flag = typedItem.countryCode === 'GB' ? '🇬🇧' : typedItem.countryCode === 'JP' ? '🇯🇵' : '🇮🇳';
-                      const cityAqi = typeof typedItem.aqi === 'number' ? typedItem.aqi : null;
-
-                      return (
-                        <div
-                          key={typedItem.name}
-                          className={`p-4 rounded-2xl border transition-all ${
-                            isCurrent
-                              ? 'bg-sky-50/90 border-sky-400 shadow-sm ring-2 ring-sky-300'
-                              : 'bg-slate-50/80 border-slate-200/80 hover:border-slate-300 hover:bg-white'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="font-bold text-sm text-slate-900 font-sans flex items-center gap-1.5">
-                              <span aria-hidden="true">{flag}</span>
-                              <span>{typedItem.name}</span>
-                            </span>
-                            {cityAqi !== null ? (
-                              <span
-                                className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold text-white shadow-xs tabular-nums"
-                                style={{ backgroundColor: typedItem.colorToken || aqiColor }}
-                              >
-                                AQI {cityAqi}
-                              </span>
-                            ) : isCurrent ? (
-                              <span
-                                className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold text-white shadow-xs tabular-nums"
-                                style={{ backgroundColor: aqiColor }}
-                              >
-                                AQI {displayAqi ?? effectiveAqi}
-                              </span>
-                            ) : (
-                              <span className="text-[11px] font-mono font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
-                                Modeled
-                              </span>
-                            )}
-                          </div>
-
-                          <div className="flex items-center justify-between text-xs font-mono text-slate-600 mb-2">
-                            <span className="text-slate-500">{typedItem.admin1}, {typedItem.country}</span>
-                            <span
-                              className={`font-bold px-1.5 py-0.5 rounded text-[10px] ${
-                                isCurrent
-                                  ? 'bg-emerald-100 text-emerald-800'
-                                  : 'bg-slate-200/70 text-slate-700'
-                              }`}
-                            >
-                              {isCurrent
-                                ? (isStation ? '● Active Ground Station' : '● Active Model Grid')
-                                : (typedItem.tierLabel || 'Modeled')}
-                            </span>
-                          </div>
-
-                          <div className="flex items-center justify-between text-xs font-mono text-slate-500 mb-3">
-                            <span className="font-semibold" style={{ color: isCurrent ? aqiColor : (typedItem.colorToken || 'inherit') }}>
-                              {isCurrent
-                                ? effectiveTierLabel
-                                : typedItem.pm25 !== null && typedItem.pm25 !== undefined
-                                ? `PM₂.₅: ${typedItem.pm25} µg/m³`
-                                : `${typedItem.latitude.toFixed(2)}°N, ${typedItem.longitude.toFixed(2)}°E`}
-                            </span>
-                            <span className="tabular-nums">
-                              {typedItem.pm10 !== null && typedItem.pm10 !== undefined
-                                ? `PM₁₀: ${typedItem.pm10} µg/m³`
-                                : `${typedItem.latitude.toFixed(1)}°, ${typedItem.longitude.toFixed(1)}°`}
-                            </span>
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={() => {
-                              onSelectLocation({
-                                id: typedItem.id,
-                                name: typedItem.name,
-                                latitude: typedItem.latitude,
-                                longitude: typedItem.longitude,
-                                country: typedItem.country,
-                                countryCode: typedItem.countryCode,
-                                admin1: typedItem.admin1,
-                                timezone: 'timezone' in typedItem && typeof typedItem.timezone === 'string' ? typedItem.timezone : 'UTC',
-                              });
-                              setActiveView('overview');
-                            }}
-                            disabled={isCurrent}
-                            className={`w-full py-2 px-3 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer ${
-                              isCurrent
-                                ? 'bg-slate-100 text-slate-400 cursor-default'
-                                : 'bg-sky-600 hover:bg-sky-500 text-white shadow-xs tactile-btn'
-                            }`}
-                          >
-                            {isCurrent ? 'Current Active Location' : 'Select as Active Location ↵'}
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
+              <LazyRegionalComparePanel
+                location={location}
+                onSelectLocation={onSelectLocation}
+                onSwitchToOverview={handleSwitchToOverview}
+                aqiColor={aqiColor}
+                effectiveTierLabel={effectiveTierLabel}
+                displayAqi={displayAqi}
+                effectiveAqi={effectiveAqi}
+                isStation={isStation}
+              />
             )}
 
-            {/* Panel 3: MapLibre 3D Globe */}
+            {/* Panel 3: MapLibre 3D Globe (Lazy loaded) */}
             {activeView === 'globe' && (
-              <div
-                id="panel-globe"
-                role="tabpanel"
-                aria-labelledby="tab-globe"
-                className="w-full relative flex items-center justify-center animate-fadeIn"
-              >
-                <ComponentErrorBoundary
-                  fallbackTitle="3D Atmospheric Globe Unavailable"
-                  fallbackMessage="WebGL 3D globe visualization could not initialize on this hardware. Planetary dispersion data remains accessible via Regional Compare."
-                >
-                  <MapLibreGlobe
-                    selectedLocation={location}
-                    onSelectLocation={onSelectLocation}
-                    aqiColor={aqiColor}
-                    aqiTierLabel={effectiveTierLabel}
-                    currentAqi={effectiveAqi}
-                    theme="light"
-                  />
-                </ComponentErrorBoundary>
-              </div>
+              <LazyGlobePanel
+                selectedLocation={location}
+                onSelectLocation={onSelectLocation}
+                aqiColor={aqiColor}
+                effectiveTierLabel={effectiveTierLabel}
+                effectiveAqi={effectiveAqi}
+              />
             )}
           </div>
         </div>

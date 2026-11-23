@@ -19,6 +19,7 @@ import {
 } from '@/lib/ai/rate-limiter';
 
 export const runtime = 'nodejs';
+export const maxDuration = 30;
 
 /**
  * POST /api/ai/copilot

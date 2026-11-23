@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useSyncExternalStore, useRef } from 'react';
+import dynamic from 'next/dynamic';
 import { WorkspaceKey } from '@/domain/types';
 import { useAirQuality } from '@/domain/aqi/useAirQuality';
 import {
@@ -10,7 +11,6 @@ import {
 } from '@/domain/household/storage';
 import { AppHeader } from './AppHeader';
 import { MobileBottomNav } from './MobileBottomNav';
-import { CopilotDrawerShell } from './CopilotDrawerShell';
 import { UpcomingWorkspacePlaceholder } from './UpcomingWorkspacePlaceholder';
 import { AirQualityDashboard } from '@/components/dashboard/AirQualityDashboard';
 import { FamilyPlannerWorkspace } from '@/components/planner/FamilyPlannerWorkspace';
@@ -20,9 +20,19 @@ import { CommunityAlertsWorkspace } from '@/components/community/CommunityAlerts
 import { NotificationDrawer } from '@/components/community/NotificationDrawer';
 import { useCommunityAlerts } from '@/domain/community/useCommunityAlerts';
 import { WelcomeLandingPage } from '@/components/welcome/WelcomeLandingPage';
-import { OnboardingModal, OnboardingResult } from '@/components/welcome/OnboardingModal';
+import type { OnboardingResult } from '@/components/welcome/OnboardingModal';
 import { HouseholdMember } from '@/domain/household/types';
 import { clearAllAirAwareData } from '@/domain/constants/storage-keys';
+
+const CopilotDrawerShell = dynamic(
+  () => import('./CopilotDrawerShell').then((mod) => mod.CopilotDrawerShell),
+  { ssr: false }
+);
+
+const OnboardingModal = dynamic(
+  () => import('@/components/welcome/OnboardingModal').then((mod) => mod.OnboardingModal),
+  { ssr: false }
+);
 
 function createHouseholdMembersFromSensitivities(sensitivities: readonly string[]): HouseholdMember[] {
   const members: HouseholdMember[] = [];

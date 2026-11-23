@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { AirQualityReport, PollutantKey, HistoricalAirshedPoint } from '@/domain/types';
 
 interface UnifiedAnalyticsCardProps {
@@ -54,52 +54,41 @@ export function UnifiedAnalyticsCard({ report }: UnifiedAnalyticsCardProps) {
   const trend = report.historicalTrend;
 
   // Pollutants data parsing (top 3 critical CPCB criteria pollutants)
-  const pollutantKeys: PollutantKey[] = ['pm2_5', 'pm10', 'ozone'];
-  const availableItems = pollutants
-    ? pollutantKeys
-        .map((key) => {
-          const item = pollutants[key];
-          const standard = CPCB_24H_LIMITS[key];
-          const conc = item?.concentration;
-          if (conc === null || conc === undefined) return null;
-          const ratio = conc / standard.limit;
-          const pct = Math.min(100, Math.round(ratio * 100));
-          const barColor = getBarColor(ratio);
-          const isItemStation = isStation && Boolean(item.isStationMeasurement);
-          const badge = getStatusBadge(ratio);
-          return {
-            key,
-            formula: standard.formula,
-            fullName: standard.fullName,
-            conc,
-            unit: standard.unit,
-            limit: standard.limit,
-            ratio,
-            pct,
-            barColor,
-            isItemStation,
-            badge,
-          };
-        })
-        .filter((item): item is NonNullable<typeof item> => item !== null)
-    : [];
+  const pollutantKeys: PollutantKey[] = useMemo(() => ['pm2_5', 'pm10', 'ozone'], []);
+  const availableItems = useMemo(() => {
+    if (!pollutants) return [];
+    return pollutantKeys
+      .map((key) => {
+        const item = pollutants[key];
+        const standard = CPCB_24H_LIMITS[key];
+        const conc = item?.concentration;
+        if (conc === null || conc === undefined) return null;
+        const ratio = conc / standard.limit;
+        const pct = Math.min(100, Math.round(ratio * 100));
+        const barColor = getBarColor(ratio);
+        const isItemStation = isStation && Boolean(item.isStationMeasurement);
+        const badge = getStatusBadge(ratio);
+        return {
+          key,
+          formula: standard.formula,
+          fullName: standard.fullName,
+          conc,
+          unit: standard.unit,
+          limit: standard.limit,
+          ratio,
+          pct,
+          barColor,
+          isItemStation,
+          badge,
+        };
+      })
+      .filter((item): item is NonNullable<typeof item> => item !== null);
+  }, [pollutants, pollutantKeys, isStation]);
 
-  const exceededCount = availableItems.filter((item) => item.conc > item.limit).length;
-
-  // Trend data parsing
-  const points: readonly HistoricalAirshedPoint[] = trend && trend.length > 0 ? trend.slice(-7) : [];
-  const hasTrend = points.length > 0;
-
-  const currentAqi = points.length > 0 ? points[points.length - 1].aqi : (report.providerAqi ?? 100);
-  const avgAqi = hasTrend ? Math.round(points.reduce((acc, p) => acc + p.aqi, 0) / points.length) : currentAqi;
-  const minAqiPoint = hasTrend
-    ? points.reduce((prev, curr) => (curr.aqi < prev.aqi ? curr : prev), points[0])
-    : null;
-  const maxAqiPoint = hasTrend
-    ? points.reduce((prev, curr) => (curr.aqi > prev.aqi ? curr : prev), points[0])
-    : null;
-
-  const pctDiffFromAvg = avgAqi > 0 ? Math.round(((currentAqi - avgAqi) / avgAqi) * 100) : 0;
+  const exceededCount = useMemo(
+    () => availableItems.filter((item) => item.conc > item.limit).length,
+    [availableItems]
+  );
 
   // SVG Chart Dimensions (Expanded, generous viewBox)
   const svgWidth = 540;
@@ -111,25 +100,71 @@ export function UnifiedAnalyticsCard({ report }: UnifiedAnalyticsCardProps) {
   const plotWidth = svgWidth - paddingLeft - paddingRight;
   const plotHeight = svgHeight - paddingTop - paddingBottom;
 
-  const maxPlotScale = hasTrend ? Math.max(...points.map((p) => p.aqi), 220) * 1.1 : 250;
+  const trendData = useMemo(() => {
+    const points: readonly HistoricalAirshedPoint[] = trend && trend.length > 0 ? trend.slice(-7) : [];
+    const hasTrend = points.length > 0;
 
-  const getX = (index: number) => paddingLeft + (index / Math.max(1, points.length - 1)) * plotWidth;
-  const getY = (val: number) => {
-    const ratio = Math.min(1, Math.max(0, val / maxPlotScale));
-    return svgHeight - paddingBottom - ratio * plotHeight;
-  };
+    const currentAqi = points.length > 0 ? points[points.length - 1].aqi : (report.providerAqi ?? 100);
+    const avgAqi = hasTrend ? Math.round(points.reduce((acc, p) => acc + p.aqi, 0) / points.length) : currentAqi;
+    const minAqiPoint = hasTrend
+      ? points.reduce((prev, curr) => (curr.aqi < prev.aqi ? curr : prev), points[0])
+      : null;
+    const maxAqiPoint = hasTrend
+      ? points.reduce((prev, curr) => (curr.aqi > prev.aqi ? curr : prev), points[0])
+      : null;
 
-  const linePoints = hasTrend ? points.map((p, i) => `${getX(i).toFixed(1)},${getY(p.aqi).toFixed(1)}`).join(' ') : '';
-  const areaPoints = hasTrend
-    ? `${getX(0).toFixed(1)},${(svgHeight - paddingBottom).toFixed(1)} ${linePoints} ${getX(points.length - 1).toFixed(1)},${(svgHeight - paddingBottom).toFixed(1)}`
-    : '';
+    const pctDiffFromAvg = avgAqi > 0 ? Math.round(((currentAqi - avgAqi) / avgAqi) * 100) : 0;
+    const maxPlotScale = hasTrend ? Math.max(...points.map((p) => p.aqi), 220) * 1.1 : 250;
 
-  // Horizontal Threshold Guides
-  const thresholdGuides = [
-    { value: 50, label: '50 Safe', color: '#10b981' },
-    { value: 100, label: '100 Mod', color: '#f59e0b' },
-    { value: 200, label: '200 Poor', color: '#f97316' },
-  ].filter((t) => t.value <= maxPlotScale);
+    const getXCoord = (index: number) => paddingLeft + (index / Math.max(1, points.length - 1)) * plotWidth;
+    const getYCoord = (val: number) => {
+      const ratio = Math.min(1, Math.max(0, val / maxPlotScale));
+      return svgHeight - paddingBottom - ratio * plotHeight;
+    };
+
+    const linePoints = hasTrend ? points.map((p, i) => `${getXCoord(i).toFixed(1)},${getYCoord(p.aqi).toFixed(1)}`).join(' ') : '';
+    const areaPoints = hasTrend
+      ? `${getXCoord(0).toFixed(1)},${(svgHeight - paddingBottom).toFixed(1)} ${linePoints} ${getXCoord(points.length - 1).toFixed(1)},${(svgHeight - paddingBottom).toFixed(1)}`
+      : '';
+
+    const thresholdGuides = [
+      { value: 50, label: '50 Safe', color: '#10b981' },
+      { value: 100, label: '100 Mod', color: '#f59e0b' },
+      { value: 200, label: '200 Poor', color: '#f97316' },
+    ].filter((t) => t.value <= maxPlotScale);
+
+    return {
+      points,
+      hasTrend,
+      currentAqi,
+      avgAqi,
+      minAqiPoint,
+      maxAqiPoint,
+      pctDiffFromAvg,
+      maxPlotScale,
+      linePoints,
+      areaPoints,
+      thresholdGuides,
+      getX: getXCoord,
+      getY: getYCoord,
+    };
+  }, [trend, report.providerAqi, plotWidth, plotHeight]);
+
+  const {
+    points,
+    hasTrend,
+    currentAqi,
+    avgAqi,
+    minAqiPoint,
+    maxAqiPoint,
+    pctDiffFromAvg,
+    maxPlotScale,
+    linePoints,
+    areaPoints,
+    thresholdGuides,
+    getX,
+    getY,
+  } = trendData;
 
   return (
     <div
