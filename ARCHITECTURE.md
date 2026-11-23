@@ -221,7 +221,7 @@ Managed centrally in `src/domain/constants/storage-keys.ts`:
 - `airaware_indoor_v1`: Room dimensions, custom CADR targets, filter vacuuming dates, and indoor sensor readings.
 - `airaware_onboarding_completed_v1`: Onboarding completion flag.
 - `airaware_cleaner_choices_v1`: Commute comparison distances, active transit modes, and adopted habit IDs.
-- `airaware_community_v1`: Local incident journal and notification state.
+- `airaware_community_v1`: Local citizen incident journal and alert read state (stores real user-reported incidents on device; initialized with zero mock data).
 - `airaware_personalization_banner_dismissed`: UI banner display preference.
 - `airaware_active_plan`: Active daily plan routine states.
 

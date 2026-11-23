@@ -50,6 +50,18 @@ describe('Community & Alerts Domain Tests', () => {
       expect(grapAlert?.title).toContain('GRAP Stage III');
     });
 
+    it('generates GRAP Stage I alert when AQI is 220 in Delhi-NCR', () => {
+      const alerts = generateAirshedAlerts('New Delhi, India', 220, 'PM2.5', 14);
+      const grapAlert = alerts.find((a) => a.id === 'alert-grap-i');
+      expect(grapAlert).toBeDefined();
+      expect(grapAlert?.title).toContain('GRAP Stage I');
+    });
+
+    it('returns empty alerts array when AQI is satisfactory (< 200) without inversion threat', () => {
+      const alerts = generateAirshedAlerts('Bengaluru, Karnataka', 65, 'PM2.5', 14);
+      expect(alerts).toEqual([]);
+    });
+
     it('generates vulnerable family health advisory when AQI >= 250', () => {
       const alerts = generateAirshedAlerts('Kolkata, India', 320, 'PM2.5', 11);
       const healthAlert = alerts.find((a) => a.category === 'FAMILY_HEALTH');
@@ -178,10 +190,10 @@ describe('Community & Alerts Domain Tests', () => {
       }
     });
 
-    it('loads initial state when localStorage is empty', () => {
+    it('loads initial state when localStorage is empty with zero mock incidents', () => {
       const state = loadCommunityState();
       expect(state.version).toBe(1);
-      expect(state.incidents.length).toBeGreaterThan(0);
+      expect(state.incidents.length).toBe(0);
     });
 
     it('adds a new local incident and persists to localStorage', () => {
@@ -214,9 +226,66 @@ describe('Community & Alerts Domain Tests', () => {
 
     it('deletes a local incident by id', () => {
       const current = loadCommunityState();
-      const idToDelete = current.incidents[0].id;
-      const updated = deleteLocalIncident(current, idToDelete);
+      const withIncident = addLocalIncident(current, {
+        category: 'CONSTRUCTION_DUST',
+        title: 'Temporary incident to delete',
+        description: 'Will be deleted in test',
+        locationName: 'Test Area',
+        severity: 'LOW',
+      });
+      const idToDelete = withIncident.incidents[0].id;
+      const updated = deleteLocalIncident(withIncident, idToDelete);
       expect(updated.incidents.some((i) => i.id === idToDelete)).toBe(false);
+    });
+
+    it('filters out legacy demo incidents when loading from localStorage', () => {
+      const mockStore: Record<string, string> = {
+        airaware_community_v1: JSON.stringify({
+          version: 1,
+          incidents: [
+            {
+              id: 'inc-demo-1',
+              category: 'WASTE_BURNING',
+              title: 'Legacy demo incident',
+              description: 'Demo',
+              locationName: 'Delhi',
+              timestamp: new Date().toISOString(),
+              status: 'LOGGED_LOCALLY',
+              severity: 'HIGH',
+            },
+            {
+              id: 'inc-real-1',
+              category: 'CONSTRUCTION_DUST',
+              title: 'Real user report',
+              description: 'Real dust issue',
+              locationName: 'Sector 5',
+              timestamp: new Date().toISOString(),
+              status: 'LOGGED_LOCALLY',
+              severity: 'MEDIUM',
+            },
+          ],
+          readAlertIds: [],
+          customAlertThreshold: 300,
+          rwaSocietyName: 'Test RWA',
+          lastUpdated: new Date().toISOString(),
+        }),
+      };
+
+      vi.stubGlobal('window', {
+        localStorage: {
+          getItem: (key: string) => mockStore[key] || null,
+          setItem: vi.fn(),
+          removeItem: vi.fn(),
+          clear: vi.fn(),
+          length: 1,
+          key: vi.fn(),
+        },
+      });
+
+      const state = loadCommunityState();
+      expect(state.incidents.length).toBe(1);
+      expect(state.incidents[0].id).toBe('inc-real-1');
+      expect(state.incidents.some((i) => i.id.startsWith('inc-demo-'))).toBe(false);
     });
   });
 });

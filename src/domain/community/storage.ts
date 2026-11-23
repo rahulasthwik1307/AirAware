@@ -44,32 +44,10 @@ const CommunityStorageStateSchema = z.object({
 
 export const INITIAL_COMMUNITY_STATE: CommunityStorageState = {
   version: 1,
-  incidents: [
-    {
-      id: 'inc-demo-1',
-      category: 'WASTE_BURNING',
-      title: 'Municipal waste burning near neighborhood park boundary',
-      description: 'Persistent leaf and solid plastic waste fire producing dense black acrid smoke trapped at breathing height.',
-      locationName: 'Near Pocket A Community Park, New Delhi',
-      coordinates: { latitude: 28.6139, longitude: 77.209 },
-      timestamp: new Date(Date.now() - 3600000 * 3).toISOString(), // 3 hours ago
-      status: 'LOGGED_LOCALLY',
-      severity: 'HIGH',
-    },
-    {
-      id: 'inc-demo-2',
-      category: 'CONSTRUCTION_DUST',
-      title: 'Uncovered commercial demolition and silica dust plume',
-      description: 'Unsprinkled rubble excavation blowing coarse particulate plume across the pedestrian school crossing.',
-      locationName: 'Main Arterial Avenue, New Delhi',
-      timestamp: new Date(Date.now() - 3600000 * 18).toISOString(), // 18 hours ago
-      status: 'EXPORTED_CPCB',
-      severity: 'MEDIUM',
-    },
-  ],
+  incidents: [],
   readAlertIds: [],
   customAlertThreshold: 300,
-  rwaSocietyName: 'Green Meadows Apartment RWA',
+  rwaSocietyName: '',
   lastUpdated: new Date().toISOString(),
 };
 
@@ -87,7 +65,11 @@ export function loadCommunityState(): CommunityStorageState {
     const parsed = JSON.parse(raw);
     const validated = CommunityStorageStateSchema.safeParse(parsed);
     if (validated.success) {
-      return validated.data as CommunityStorageState;
+      const data = validated.data as CommunityStorageState;
+      return {
+        ...data,
+        incidents: data.incidents.filter((inc) => !inc.id.startsWith('inc-demo-')),
+      };
     }
   } catch (err) {
     console.warn('[AirAware] Failed to parse community storage state, falling back to initial state:', err);

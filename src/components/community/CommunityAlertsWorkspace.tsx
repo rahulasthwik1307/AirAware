@@ -93,6 +93,7 @@ export function CommunityAlertsWorkspace({
 
           <AirshedSourceAttributionCard
             locationName={displayLocation}
+            incidents={incidents}
             onNavigateWorkspace={onSelectWorkspace}
             onAskCopilot={onAskCopilot}
           />

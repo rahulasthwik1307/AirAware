@@ -27,15 +27,12 @@ AirAware addresses **PromptWars Challenge 6**:
 
 ## Visual Showcase
 
-| View | Caption |
-|------|---------|
-| ![Dashboard](docs/screenshots/dashboard.png) | **Air Intelligence Studio:** Real-time CPCB/EPA telemetry, 6 criteria pollutants, and diurnal trend. |
-| ![Overview](docs/screenshots/overview.png) | **Source Ribbon & Provenance:** Explicit ground station distance, age, and modeled fallback notices. |
-| ![3D Globe](docs/screenshots/globe.png) | **MapLibre 3D Earth:** Global atmospheric visualization with lazy loading and regional compare. |
-| ![Air Copilot](docs/screenshots/copilot.png) | **AI Air Copilot:** Grounded conversational assistant with 7-part structured scientific answers. |
-| ![Family Planner](docs/screenshots/planner.png) | **Family Daily Planner:** Multi-member schedule shifts and chronological morning/afternoon/evening plan. |
-| ![Indoor Sanctuary](docs/screenshots/indoor.png) | **Indoor Air Sanctuary:** Room CADR purifier sizing, solar ventilation countdown, and indoor reading analysis. |
-| ![Community Alerts](docs/screenshots/community.png) | **Community & Alerts:** Source attribution, civic incident logging, and WhatsApp RWA bulletin drafting. |
+| View | Feature & Capability |
+|------|----------------------|
+| ![Winter Smog Navigation](public/images/landing/winter_smog_city.webp) | **Air Intelligence Studio:** Real-time CPCB/EPA telemetry, 6 criteria pollutants, and diurnal trend. |
+| ![Clean Sky Transition](public/images/landing/clean_sky_city.webp) | **Source Ribbon & Provenance:** Explicit ground station distance, age, and modeled fallback notices. |
+| ![Indoor Sanctuary](public/images/landing/indoor_air_sanctuary.webp) | **Indoor Air Sanctuary:** Room CADR purifier sizing, solar ventilation countdown, and indoor reading analysis. |
+| ![Community Alerts](public/images/landing/community_action_alert.webp) | **Community & Alerts:** Qualitative source knowledge, civic incident logging, and WhatsApp RWA bulletin drafting. |
 
 ---
 
@@ -149,13 +146,15 @@ npm start        # Launch production server
 
 ## Testing & Quality Assurance
 
-Run test and lint scripts configured in `package.json`:
+Run test, lint, and validation scripts configured in `package.json`:
 ```bash
-npm test         # Run unit and integration test suite via Vitest
-npm run lint     # Run ESLint validation
-npm run typecheck # Run TypeScript compiler check (tsc --noEmit)
-npm run check    # Run lint, typecheck, and tests in sequence
+npm test              # Run unit and integration test suites via Vitest
+npm run test:coverage # Run Vitest test suite with V8 code coverage report
+npm run typecheck     # Run TypeScript compiler validation (tsc --noEmit)
+npm run lint          # Run ESLint validation
+npm run check         # Run lint, typecheck, and test sequence
 ```
+Continuous integration is automated on all pushes and pull requests via GitHub Actions (`.github/workflows/ci.yml`).
 
 ---
 
@@ -189,7 +188,7 @@ When deploying to Vercel:
 1. **Station Density:** OpenAQ physical ground stations are concentrated in major urban centers; rural locations automatically fall back to the Copernicus CAMS ~45 km grid with explicit labeling.
 2. **CPCB Sub-Index Scope:** The displayed CPCB index is a PM2.5/PM10 particulate sub-index, not the full 8-pollutant regulatory NAQI.
 3. **Indoor Estimation:** When a user lacks an indoor sensor, indoor PM2.5 is labeled as an estimate (~60% ambient building shell infiltration).
-4. **Community Card Simulation:** The Neighborhood Action card in `src/components/community/AirshedSourceAttributionCard.tsx` displays a labeled simulation ("4 Alerts Dispatched, 2 CPCB Escalated, ~18 kg Soot Prevented") with sample local incidents.
+4. **Community Incident Metrics:** The Neighborhood Action summary card in `src/components/community/AirshedSourceAttributionCard.tsx` displays counters derived strictly from the user's locally stored actions on this device (`src/domain/community/storage.ts`), with an empty state when no incidents have been logged. Winter smog source categories display qualitative general knowledge labeled as not measured for the user's area.
 5. **Serverless Rate Limiting:** Rate limiting runs in-memory per serverless instance (best-effort local burst suppression).
 6. **CSP Mode:** Content Security Policy in `next.config.ts` is configured in Report-Only mode (`Content-Security-Policy-Report-Only`).
 

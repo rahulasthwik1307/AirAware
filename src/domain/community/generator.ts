@@ -116,6 +116,22 @@ export function generateAirshedAlerts(
         isRead: false,
         source: 'CPCB Air Quality Bulletin',
       });
+    } else if (aqi >= 200) {
+      alerts.push({
+        id: 'alert-grap-i',
+        title: 'CAQM GRAP Stage I in Effect — Poor Air Quality',
+        severity: 'ADVISORY',
+        category: 'GRAP_REGULATORY',
+        message: `AQI of ${aqi} triggers GRAP Stage I measures in ${locationName}. Mechanized road sweeping, water sprinkling, and dust mitigation enforced.`,
+        locationName,
+        timestamp: nowIso,
+        aqiValue: aqi,
+        pollutant: prominentPollutant,
+        actionableStep: 'Keep vehicle PUC updated; avoid burning dry leaves, biomass, or municipal solid waste.',
+        targetWorkspace: 'indoor-air',
+        isRead: false,
+        source: 'Commission for Air Quality Management',
+      });
     }
   } else {
     // Non-NCR region: CPCB National Category Advisory
@@ -170,39 +186,41 @@ export function generateAirshedAlerts(
     }
   }
 
-  // 2. Diurnal Ventilation Window Alert
-  if (vent.isOpenNow) {
-    alerts.push({
-      id: 'alert-ventilation-open',
-      title: 'Diurnal Clean-Air Ventilation Window Active',
-      severity: 'VENTILATION',
-      category: 'VENTILATION_WINDOW',
-      message: `Solar breakup has temporarily elevated the atmospheric mixing height to ${vent.mixingHeightMeters}m. Window open until ${vent.windowEnd}.`,
-      locationName,
-      timestamp: nowIso,
-      aqiValue: aqi,
-      pollutant: 'Thermal Inversion',
-      actionableStep: 'Perform 15-minute cross-ventilation to flush indoor CO2 and dampness before evening inversion descends.',
-      targetWorkspace: 'indoor-air',
-      isRead: false,
-      source: 'Surface Meteorological Inversion Model',
-    });
-  } else {
-    alerts.push({
-      id: 'alert-inversion-lock',
-      title: 'Ground Thermal Inversion Lock (Seal Windows)',
-      severity: 'ADVISORY',
-      category: 'ATMOSPHERIC_SMOG',
-      message: `Cold boundary air is compressed below ${vent.mixingHeightMeters}m. Surface vehicular emissions and wood smoke cannot disperse vertically.`,
-      locationName,
-      timestamp: nowIso,
-      aqiValue: aqi,
-      pollutant: prominentPollutant,
-      actionableStep: 'Keep doors and windows sealed. Operate HEPA purifiers in occupied living quarters.',
-      targetWorkspace: 'indoor-air',
-      isRead: false,
-      source: 'Copernicus CAMS Dispersion Synthesis',
-    });
+  // 2. Diurnal Ventilation Window Alert (triggered when air quality is compromised)
+  if (aqi >= 200) {
+    if (vent.isOpenNow) {
+      alerts.push({
+        id: 'alert-ventilation-open',
+        title: 'Diurnal Clean-Air Ventilation Window Active',
+        severity: 'VENTILATION',
+        category: 'VENTILATION_WINDOW',
+        message: `Solar breakup has temporarily elevated the atmospheric mixing height to ${vent.mixingHeightMeters}m. Window open until ${vent.windowEnd}.`,
+        locationName,
+        timestamp: nowIso,
+        aqiValue: aqi,
+        pollutant: 'Thermal Inversion',
+        actionableStep: 'Perform 15-minute cross-ventilation to flush indoor CO2 and dampness before evening inversion descends.',
+        targetWorkspace: 'indoor-air',
+        isRead: false,
+        source: 'Surface Meteorological Inversion Model',
+      });
+    } else {
+      alerts.push({
+        id: 'alert-inversion-lock',
+        title: 'Ground Thermal Inversion Lock (Seal Windows)',
+        severity: 'ADVISORY',
+        category: 'ATMOSPHERIC_SMOG',
+        message: `Cold boundary air is compressed below ${vent.mixingHeightMeters}m. Surface vehicular emissions and wood smoke cannot disperse vertically.`,
+        locationName,
+        timestamp: nowIso,
+        aqiValue: aqi,
+        pollutant: prominentPollutant,
+        actionableStep: 'Keep doors and windows sealed. Operate HEPA purifiers in occupied living quarters.',
+        targetWorkspace: 'indoor-air',
+        isRead: false,
+        source: 'Copernicus CAMS Dispersion Synthesis',
+      });
+    }
   }
 
   // 3. Sensitive Family Demographic Alert
@@ -223,23 +241,6 @@ export function generateAirshedAlerts(
       source: 'Indian Academy of Pediatrics & WHO Guidelines',
     });
   }
-
-  // 4. Sustainable Transit Action Alert
-  alerts.push({
-    id: 'alert-transit-mode',
-    title: 'Airshed Emission Mitigation Opportunity',
-    severity: 'INFO',
-    category: 'COMMUNITY_REPORT',
-    message: `Every 10 km shifted from private solo car to electric metro eliminates ~2.3 kg of CO2 and 4.5g of winter smog precursor NOx.`,
-    locationName,
-    timestamp: nowIso,
-    aqiValue: aqi,
-    pollutant: 'NOx Precursor',
-    actionableStep: 'Simulate personal commute savings in the Cleaner Choices & Impact studio.',
-    targetWorkspace: 'cleaner-choices',
-    isRead: false,
-    source: 'DEFRA & CPCB Tailpipe Emission Factors',
-  });
 
   return alerts;
 }

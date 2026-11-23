@@ -62,18 +62,41 @@ export function useCommunityAlerts({
     return calculateVentilationWindow(currentHour);
   }, [currentHour]);
 
-  // Generate dynamic atmospheric alerts
+  // Generate dynamic atmospheric alerts based on real environmental conditions
   const rawAlerts = useMemo(() => {
     return generateAirshedAlerts(locationName, aqi, prominentPollutant, currentHour);
   }, [locationName, aqi, prominentPollutant, currentHour]);
 
-  // Decorate alerts with read status from storage
+  // Map user-reported incidents from local storage to citizen alerts
+  const userIncidentAlerts: readonly AlertItem[] = useMemo(() => {
+    return storageState.incidents.map((inc) => ({
+      id: `alert-incident-${inc.id}`,
+      title: `Citizen Report: ${inc.title}`,
+      severity: inc.severity === 'HIGH' ? 'CRITICAL' : 'ADVISORY',
+      category: 'COMMUNITY_REPORT' as const,
+      message: inc.description,
+      locationName: inc.locationName,
+      timestamp: inc.timestamp,
+      aqiValue: aqi,
+      pollutant: 'Local Source',
+      actionableStep:
+        inc.status === 'EXPORTED_CPCB'
+          ? 'CPCB dossier exported for regulatory enforcement.'
+          : 'Report saved on device. Review in Community workspace to export or resolve.',
+      targetWorkspace: 'community-alerts',
+      isRead: false,
+      source: 'User Incident Report',
+    }));
+  }, [storageState.incidents, aqi]);
+
+  // Combine user reports and atmospheric alerts, then decorate with read status from storage
   const alerts: readonly AlertItem[] = useMemo(() => {
-    return rawAlerts.map((alert) => ({
+    const combined = [...userIncidentAlerts, ...rawAlerts];
+    return combined.map((alert) => ({
       ...alert,
       isRead: storageState.readAlertIds.includes(alert.id),
     }));
-  }, [rawAlerts, storageState.readAlertIds]);
+  }, [userIncidentAlerts, rawAlerts, storageState.readAlertIds]);
 
   // Unread count
   const unreadCount = useMemo(() => {

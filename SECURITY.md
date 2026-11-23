@@ -50,7 +50,7 @@ Configured in `next.config.ts`:
 
 ## Client Storage Safety
 
-- User data (household profiles, indoor parameters, habit selections) resides only in client `localStorage`.
+- User data (household profiles, indoor parameters, habit selections, and local community incident reports) resides only in client `localStorage`.
 - No session cookies or sensitive tokens are stored in the browser.
 - "Clear my data" executes `clearAllAirAwareData()`, which purges all registered `airaware_*` keys and clears `sessionStorage`.
 

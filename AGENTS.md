@@ -6,9 +6,11 @@ AirAware is a local-first environmental intelligence assistant for winter smog n
 - `npm run dev`: Start Next.js development server
 - `npm run build`: Compile production Next.js build
 - `npm run lint`: Run ESLint checks
-- `npm run typecheck`: Run TypeScript compiler validation
+- `npm run typecheck`: Run TypeScript compiler validation (`tsc --noEmit`)
 - `npm test`: Run Vitest unit & integration test suites
+- `npm run test:coverage`: Run Vitest test suite with V8 code coverage report
 - `npm run check`: Run lint, typecheck, and test sequence
+- Automated continuous integration runs via GitHub Actions (`.github/workflows/ci.yml`)
 
 ## Repository Folder Map
 - `src/app/`: Next.js App Router pages, layouts, and API route handlers (`/api/*`)

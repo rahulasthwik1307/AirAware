@@ -120,7 +120,9 @@ export function CommunityKpiStrip({
             </h3>
           </div>
           <p className="text-[11px] text-indigo-900/85 leading-snug">
-            Saved safely in local device journal. Ready for instant WhatsApp dispatch.
+            {incidentCount === 0
+              ? 'No reports yet. Report an incident to see it here.'
+              : 'Saved safely in local device journal. Ready for instant WhatsApp dispatch.'}
           </p>
         </div>
         <div className="pt-2 border-t border-indigo-100/80 flex items-center justify-between text-[10px] font-mono text-indigo-700">
