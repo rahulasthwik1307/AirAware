@@ -18,10 +18,16 @@ const DEFAULT_SERVER_PLAN_STATE: ActivePlanStorageState = Object.freeze({
   actions: [],
 });
 
+/**
+ * Returns immutable default active plan state for server hydration safety.
+ */
 export function getActivePlanServerSnapshot(): ActivePlanStorageState {
   return DEFAULT_SERVER_PLAN_STATE;
 }
 
+/**
+ * Resets the in-memory active plan cache used by useSyncExternalStore.
+ */
 export function resetPlanStorageCache(): void {
   cachedPlanRaw = null;
   cachedPlanState = null;
@@ -37,6 +43,9 @@ function emitPlanEvent(): void {
   }
 }
 
+/**
+ * Loads and validates active routine actions from local device storage.
+ */
 export function loadActivePlanState(): ActivePlanStorageState {
   if (!isBrowser()) {
     return DEFAULT_SERVER_PLAN_STATE;
@@ -63,6 +72,9 @@ export function loadActivePlanState(): ActivePlanStorageState {
   }
 }
 
+/**
+ * Persists updated active routine actions schema-validated to local storage.
+ */
 export function saveActivePlanState(state: ActivePlanStorageState): boolean {
   if (!isBrowser()) return false;
 

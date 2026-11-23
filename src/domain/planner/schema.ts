@@ -47,6 +47,9 @@ export const ActivePlanStorageStateSchema = z.object({
   actions: z.array(ActiveActionItemSchema),
 });
 
+/**
+ * Generates an initial empty active plan storage state.
+ */
 export function createDefaultActivePlanState(): ActivePlanStorageState {
   return {
     version: 1,
@@ -55,6 +58,9 @@ export function createDefaultActivePlanState(): ActivePlanStorageState {
   };
 }
 
+/**
+ * Validates untrusted storage JSON against the ActivePlanStorageState schema.
+ */
 export function parseActivePlanStorageState(raw: unknown): ActivePlanStorageState | null {
   if (!raw || typeof raw !== 'object') return null;
   const result = ActivePlanStorageStateSchema.safeParse(raw);

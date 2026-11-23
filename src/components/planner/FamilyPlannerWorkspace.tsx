@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useSyncExternalStore } from 'react';
-import { useAirQuality, DEFAULT_LOCATION } from '@/domain/aqi/useAirQuality';
+import { useAirQuality, DEFAULT_LOCATION } from '@/hooks/aqi/useAirQuality';
 import {
   loadHouseholdState,
   getHouseholdServerSnapshot,

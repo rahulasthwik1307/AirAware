@@ -2,28 +2,12 @@
 
 import React from 'react';
 import { AirQualityReport } from '@/domain/types';
+import { formatDataAge } from '@/lib/formatters/time';
 
 interface SourceRibbonProps {
   readonly report: AirQualityReport;
   readonly aqiColor: string;
   readonly isLoading?: boolean;
-}
-
-function formatDataAge(timestampStr?: string): string {
-  if (!timestampStr) return 'recent';
-  try {
-    const iso = timestampStr.includes('T') ? timestampStr : timestampStr.replace(' ', 'T');
-    const time = new Date(iso).getTime();
-    if (isNaN(time)) return 'recent';
-    const diffMs = Date.now() - time;
-    const diffMin = Math.round(diffMs / 60000);
-    if (diffMin < 1) return 'just now';
-    if (diffMin < 60) return `${diffMin}m ago`;
-    const diffHours = Math.floor(diffMin / 60);
-    return `${diffHours}h ${diffMin % 60}m ago`;
-  } catch {
-    return 'recent';
-  }
 }
 
 export const SourceRibbon = React.memo(function SourceRibbon({

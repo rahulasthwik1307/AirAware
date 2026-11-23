@@ -2,19 +2,7 @@
 
 import React, { useState, useMemo, useCallback, useSyncExternalStore, useRef, useEffect } from 'react';
 import { z } from 'zod';
-import { GeoLocation } from '@/domain/types';
-
-const GeoLocationSchema = z.object({
-  id: z.number(),
-  name: z.string(),
-  country: z.string(),
-  countryCode: z.string(),
-  admin1: z.string().optional(),
-  latitude: z.number(),
-  longitude: z.number(),
-  timezone: z.string(),
-  isPrimary: z.boolean().optional(),
-});
+import { GeoLocation, GeoLocationSchema } from '@/domain/types';
 
 const SavedLocationsSchema = z.array(GeoLocationSchema);
 

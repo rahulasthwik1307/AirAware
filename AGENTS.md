@@ -12,10 +12,18 @@ AirAware is a local-first environmental intelligence assistant for winter smog n
 - `npm run check`: Run lint, typecheck, and test sequence
 - Automated continuous integration runs via GitHub Actions (`.github/workflows/ci.yml`)
 
+## Code Organization
+- `domain`: Pure TypeScript domain logic, models, calculators, and normalization rules (strictly zero React or UI dependencies).
+- `hooks`: React state, subscriptions, contexts, and lifecycle hooks grouped by feature.
+- `components`: Modular React presentation and interactive user interface components.
+- `lib`: Infrastructure helpers, Cloudflare Workers AI integration, rate limiting, and security guards.
+- `tests`: Test suites mirroring `src/` modules with 100% mocked network boundaries.
+
 ## Repository Folder Map
 - `src/app/`: Next.js App Router pages, layouts, and API route handlers (`/api/*`)
 - `src/components/`: Modular React components (dashboard, planner, indoor, choices, community, shell)
 - `src/domain/`: Pure domain logic (AQI normalization, CPCB benchmarks, household, indoor, choices)
+- `src/hooks/`: Reactive state hooks and contexts grouped by feature (`aqi`, `choices`, `community`)
 - `src/lib/`: Infrastructure helpers (Cloudflare AI client, prompt builder, rate limiting, security)
 - `src/tokens/`: Authoritative design tokens and accessible color palette
 - `public/`: Static WebP graphics, vector textures, and GeoJSON boundaries

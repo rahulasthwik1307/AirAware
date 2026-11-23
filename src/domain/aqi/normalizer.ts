@@ -113,6 +113,9 @@ function buildCpcbComparison(
   };
 }
 
+/**
+ * Transforms raw atmospheric and ground telemetry into an authoritative AirQualityReport.
+ */
 export function normalizeAirQualityReport(
   raw: RawOpenMeteoAirQualityResponse,
   location: GeoLocation,

@@ -7,6 +7,9 @@
 import { AlertItem, DiurnalVentilationWindow, PollutionIncident } from './types';
 import { INCIDENT_CATEGORIES } from './constants';
 
+/**
+ * Calculates optimal diurnal room ventilation timing based on thermal inversion breakup windows.
+ */
 export function calculateVentilationWindow(
   currentHour: number,
   windSpeedKmH: number = 4.5,
@@ -33,6 +36,9 @@ export function calculateVentilationWindow(
   };
 }
 
+/**
+ * Identifies whether a location string belongs to the Delhi National Capital Region (NCR).
+ */
 export function isDelhiNcrRegion(locationName: string): boolean {
   const normalized = locationName.toLowerCase();
   const ncrKeywords = [
@@ -55,6 +61,9 @@ export function isDelhiNcrRegion(locationName: string): boolean {
   return ncrKeywords.some((k) => normalized.includes(k));
 }
 
+/**
+ * Generates verified airshed advisory alerts matching real meteorological and particulate conditions.
+ */
 export function generateAirshedAlerts(
   locationName: string,
   aqi: number = 100,
@@ -245,6 +254,9 @@ export function generateAirshedAlerts(
   return alerts;
 }
 
+/**
+ * Formats a local citizen incident report into an official CPCB SAMEER grievance dossier.
+ */
 export function formatCpcbSameerDossier(incident: PollutionIncident): string {
   const meta = INCIDENT_CATEGORIES[incident.category];
   const dateStr = new Date(incident.timestamp).toLocaleString('en-IN', {
@@ -277,6 +289,9 @@ STATUS: Filed locally by resident for dispatch to municipal control room.
 ========================================`;
 }
 
+/**
+ * Formats a clean-air community bulletin suitable for RWA WhatsApp and noticeboard distribution.
+ */
 export function formatRwaSocietyBulletin(
   locationName: string,
   aqi: number = 100,
@@ -305,6 +320,9 @@ export function formatRwaSocietyBulletin(
 Generated via AirAware Local Environmental Intelligence.`;
 }
 
+/**
+ * Formats an incident notice for residential security and facility teams.
+ */
 export function formatSocietyIncidentNotice(
   incident: PollutionIncident,
   societyName: string = 'Our Society'
@@ -331,6 +349,9 @@ ${incident.description}
 🛡️ Shared via AirAware Local Community Intelligence.`;
 }
 
+/**
+ * Formats a formal municipal air pollution complaint citing Air Act 1981 provisions.
+ */
 export function formatMunicipalComplaint(incident: PollutionIncident): string {
   const meta = INCIDENT_CATEGORIES[incident.category] || INCIDENT_CATEGORIES.OTHER;
   const dateStr = new Date(incident.timestamp).toLocaleString('en-IN', {

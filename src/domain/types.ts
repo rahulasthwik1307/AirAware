@@ -3,6 +3,8 @@
  * Authoritative domain models for locations, pollutants, AQI standards, and scientific telemetry.
  */
 
+import { z } from 'zod';
+
 export interface GeoLocation {
   readonly id: number;
   readonly name: string;
@@ -14,6 +16,18 @@ export interface GeoLocation {
   readonly timezone: string;
   readonly isPrimary?: boolean;
 }
+
+export const GeoLocationSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  country: z.string(),
+  countryCode: z.string(),
+  admin1: z.string().optional(),
+  latitude: z.number(),
+  longitude: z.number(),
+  timezone: z.string(),
+  isPrimary: z.boolean().optional(),
+});
 
 export type AqiStandardKey = 'EUROPEAN_EAQI' | 'US_EPA';
 

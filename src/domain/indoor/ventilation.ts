@@ -93,6 +93,9 @@ function resolveSuitability(pm25: number, factors: readonly VentilationFactor[])
   };
 }
 
+/**
+ * Evaluates indoor natural room ventilation suitability for a single hourly meteorological data point.
+ */
 export function evaluateVentilationPoint(data: RawHourlyDataPoint): VentilationHourlyPoint {
   const timeStr = data.time.includes('T') ? data.time.split('T')[1].slice(0, 5) : data.time.slice(0, 5);
   const pm25 = data.pm25 ?? 0;
@@ -119,6 +122,9 @@ export function evaluateVentilationPoint(data: RawHourlyDataPoint): VentilationH
   };
 }
 
+/**
+ * Evaluates the full 24-hour diurnal ventilation curve from forecast points.
+ */
 export function evaluateVentilationCurve(hourlyList: readonly RawHourlyDataPoint[]): readonly VentilationHourlyPoint[] {
   if (!hourlyList || hourlyList.length === 0) {
     return [];

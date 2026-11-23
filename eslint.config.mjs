@@ -9,6 +9,7 @@ const config = [
       '.taste-skill/**',
       'shots/**',
       'dist/**',
+      'coverage/**',
       'postcss.config.mjs',
     ],
   },
@@ -16,6 +17,32 @@ const config = [
   {
     rules: {
       'react-hooks/set-state-in-effect': 'off',
+    },
+  },
+  {
+    files: ['src/domain/**/*.{js,ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'react',
+              message: 'Domain logic must remain pure TypeScript without React dependencies.',
+            },
+            {
+              name: 'react-dom',
+              message: 'Domain logic must remain pure TypeScript without ReactDOM dependencies.',
+            },
+          ],
+          patterns: [
+            {
+              group: ['next/*', '@/components/*', '**/components/**'],
+              message: 'Domain logic must remain pure TypeScript without Next.js or UI component dependencies.',
+            },
+          ],
+        },
+      ],
     },
   },
 ];

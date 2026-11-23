@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useCleanerChoices } from '@/domain/choices/useCleanerChoices';
+import { useCleanerChoices } from '@/hooks/choices/useCleanerChoices';
 import { CleanerChoicesKpiStrip } from './CleanerChoicesKpiStrip';
 import { CommuteComparatorCard } from './CommuteComparatorCard';
 import { DualImpactDashboardCard } from './DualImpactDashboardCard';

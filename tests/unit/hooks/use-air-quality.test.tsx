@@ -8,7 +8,7 @@ import {
   telemetryCache,
   inFlightRequests,
   USER_FRIENDLY_TELEMETRY_ERROR,
-} from '@/domain/aqi/useAirQuality';
+} from '@/hooks/aqi/useAirQuality';
 import { GeoLocation } from '@/domain/types';
 
 describe('useAirQuality Hook Telemetry Contract', () => {

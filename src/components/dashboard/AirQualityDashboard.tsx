@@ -2,7 +2,7 @@
 
 import React, { useCallback, useSyncExternalStore } from 'react';
 import { AqiStandardKey, GeoLocation, WorkspaceKey } from '@/domain/types';
-import { useAirQuality, DEFAULT_LOCATION } from '@/domain/aqi/useAirQuality';
+import { useAirQuality, DEFAULT_LOCATION } from '@/hooks/aqi/useAirQuality';
 import {
   loadHouseholdState,
   getHouseholdServerSnapshot,

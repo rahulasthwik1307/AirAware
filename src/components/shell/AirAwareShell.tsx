@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useSyncExternalStore } from 'react';
 import dynamic from 'next/dynamic';
 import { WorkspaceKey } from '@/domain/types';
-import { useAirQuality } from '@/domain/aqi/useAirQuality';
+import { useAirQuality } from '@/hooks/aqi/useAirQuality';
 import {
   loadHouseholdState,
   subscribeHouseholdStorage,
@@ -18,7 +18,7 @@ import { IndoorAirWorkspace } from '@/components/indoor/IndoorAirWorkspace';
 import { CleanerChoicesWorkspace } from '@/components/choices/CleanerChoicesWorkspace';
 import { CommunityAlertsWorkspace } from '@/components/community/CommunityAlertsWorkspace';
 import { NotificationDrawer } from '@/components/community/NotificationDrawer';
-import { useCommunityAlerts } from '@/domain/community/useCommunityAlerts';
+import { useCommunityAlerts } from '@/hooks/community/useCommunityAlerts';
 import { WelcomeLandingPage } from '@/components/welcome/WelcomeLandingPage';
 import type { OnboardingResult } from '@/components/welcome/OnboardingModal';
 import { clearAllAirAwareData } from '@/domain/constants/storage-keys';

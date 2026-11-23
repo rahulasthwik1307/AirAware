@@ -57,10 +57,16 @@ export const DEFAULT_INDOOR_STATE: IndoorPreferencesState = Object.freeze({
   hasMonitor: false,
 });
 
+/**
+ * Returns default indoor microclimate state for server hydration safety.
+ */
 export function getIndoorServerSnapshot(): IndoorPreferencesState {
   return DEFAULT_INDOOR_STATE;
 }
 
+/**
+ * Resets the in-memory cached indoor state used by useSyncExternalStore.
+ */
 export function resetIndoorStorageCache(): void {
   cachedIndoorRaw = null;
   cachedIndoorState = null;
@@ -133,11 +139,17 @@ function saveIndoorState(state: IndoorPreferencesState): void {
   }
 }
 
+/**
+ * Updates the actively selected room type in indoor storage.
+ */
 export function setSelectedRoom(roomId: RoomType): void {
   const current = loadIndoorState();
   saveIndoorState({ ...current, selectedRoomId: roomId });
 }
 
+/**
+ * Updates the floor area in square meters for a specific room type.
+ */
 export function updateRoomArea(roomId: RoomType, areaM2: number): void {
   const current = loadIndoorState();
   const safeArea = Math.max(1, Math.min(200, Math.round(areaM2)));
@@ -150,11 +162,17 @@ export function updateRoomArea(roomId: RoomType, areaM2: number): void {
   });
 }
 
+/**
+ * Updates the residential ceiling height in meters.
+ */
 export function updateCeilingHeight(heightM: number): void {
   const current = loadIndoorState();
   saveIndoorState({ ...current, ceilingHeightM: heightM });
 }
 
+/**
+ * Updates purifier CADR rating and target air changes per hour (ACH).
+ */
 export function updatePurifierSettings(cadrM3h: number, targetAch: number): void {
   const current = loadIndoorState();
   saveIndoorState({
@@ -164,6 +182,9 @@ export function updatePurifierSettings(cadrM3h: number, targetAch: number): void
   });
 }
 
+/**
+ * Updates filter maintenance install dates and interval logs.
+ */
 export function updateFilterLog(logUpdate: Partial<FilterLogState>): void {
   const current = loadIndoorState();
   saveIndoorState({
@@ -175,6 +196,9 @@ export function updateFilterLog(logUpdate: Partial<FilterLogState>): void {
   });
 }
 
+/**
+ * Updates user-entered sensor or estimated indoor PM2.5 reading.
+ */
 export function updateIndoorPm25Reading(reading: number | null, hasMonitor: boolean): void {
   const current = loadIndoorState();
   const safeReading =
@@ -188,6 +212,9 @@ export function updateIndoorPm25Reading(reading: number | null, hasMonitor: bool
   });
 }
 
+/**
+ * Subscribes to indoor storage change events across window and storage channels.
+ */
 export function subscribeIndoorStorage(callback: () => void): () => void {
   if (!isBrowser()) return () => {};
 

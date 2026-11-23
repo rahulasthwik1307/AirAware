@@ -5,7 +5,7 @@
  */
 
 import { ForecastPoint } from '../types';
-import { calculateCpcbPm25SubIndex } from './cpcb-benchmark';
+import { calculateCpcbPm25SubIndex, getCpcbCategoryDetailsFromAqi } from './cpcb-benchmark';
 
 export interface BestWindowResult {
   readonly startHour: string;
@@ -15,15 +15,6 @@ export interface BestWindowResult {
   readonly category: string;
   readonly colorToken: string;
   readonly summary: string;
-}
-
-function getCpcbCategory(aqi: number): { category: string; colorToken: string } {
-  if (aqi <= 50) return { category: 'Good', colorToken: '#047857' };
-  if (aqi <= 100) return { category: 'Satisfactory', colorToken: '#4D7C0F' };
-  if (aqi <= 200) return { category: 'Moderate', colorToken: '#92400E' };
-  if (aqi <= 300) return { category: 'Poor', colorToken: '#EA580C' };
-  if (aqi <= 400) return { category: 'Very Poor', colorToken: '#DC2626' };
-  return { category: 'Severe', colorToken: '#7F1D1D' };
 }
 
 function parseHour24(timeStr?: string): number {
@@ -76,7 +67,7 @@ export function findBestDaytimeWindow(
   if (daytimeCandidates.length === 0) {
     // Fallback to whatever points exist
     const firstAqi = points[0]?.activeAqi ?? 100;
-    const { category, colorToken } = getCpcbCategory(firstAqi);
+    const { category, colorToken } = getCpcbCategoryDetailsFromAqi(firstAqi);
     return {
       startHour: '14:00',
       endHour: '16:00',
@@ -109,7 +100,7 @@ export function findBestDaytimeWindow(
   const startHourStr = formatHour12(bestStartCandidate.hour);
   const endHourStr = formatHour12((bestEndCandidate.hour + 1) % 24);
   const displayWindow = `${startHourStr} – ${endHourStr}`;
-  const { category, colorToken } = getCpcbCategory(bestAvg);
+  const { category, colorToken } = getCpcbCategoryDetailsFromAqi(bestAvg);
 
   return {
     startHour: bestStartCandidate.point.displayTime,

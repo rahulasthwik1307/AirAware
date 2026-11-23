@@ -20,10 +20,16 @@ const DEFAULT_SERVER_HOUSEHOLD_STATE: HouseholdStorageState = Object.freeze({
   members: [],
 });
 
+/**
+ * Returns immutable default household state for SSR hydration safety.
+ */
 export function getHouseholdServerSnapshot(): HouseholdStorageState {
   return DEFAULT_SERVER_HOUSEHOLD_STATE;
 }
 
+/**
+ * Resets the in-memory household cache used by useSyncExternalStore.
+ */
 export function resetHouseholdStorageCache(): void {
   cachedHouseholdRaw = null;
   cachedHouseholdState = null;

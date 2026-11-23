@@ -8,7 +8,7 @@ import {
   isSameLocation,
   isAbortError,
   USER_FRIENDLY_TELEMETRY_ERROR,
-} from '@/domain/aqi/useAirQuality';
+} from '@/hooks/aqi/useAirQuality';
 import { GeoLocation } from '@/domain/types';
 import { RawOpenMeteoAirQualityResponse } from '@/domain/aqi/normalizer';
 

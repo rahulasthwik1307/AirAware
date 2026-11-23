@@ -6,6 +6,18 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import { GeoLocation } from '@/domain/types';
 import { GLOBE_REFERENCE_CITIES } from './world-landmass';
 import { resolveGlobePlace } from './globe-place-resolver';
+import {
+  type GlobeMapStyleKey,
+  type LocationInspectData,
+  TILE_STYLES,
+  subscribeReducedMotion,
+  getReducedMotionSnapshot,
+  getReducedMotionServerSnapshot,
+  resolveInspectTelemetry,
+  getReferenceCityEstimate,
+} from './maplibre-styles';
+
+export type { GlobeMapStyleKey, LocationInspectData };
 
 interface MapLibreGlobeProps {
   readonly selectedLocation: GeoLocation | null;
@@ -14,207 +26,6 @@ interface MapLibreGlobeProps {
   readonly aqiTierLabel?: string;
   readonly currentAqi?: number | null;
   readonly theme?: 'light' | 'dark';
-}
-
-export type GlobeMapStyleKey = 'satellite' | 'streets' | 'scientific';
-
-interface LocationInspectData {
-  name: string;
-  country: string;
-  countryCode: string;
-  latitude: number;
-  longitude: number;
-  aqi: number;
-  tier: string;
-  tierColor: string;
-  dominant: string;
-  temperature: number;
-  humidity: number;
-  windSpeed: number;
-  healthAction: string;
-  screenX?: number;
-  screenY?: number;
-  isReferenceSample?: boolean;
-}
-
-const CITY_SAMPLE_ESTIMATES: Record<string, {
-  aqi: number;
-  tier: string;
-  color: string;
-  temp: number;
-  humidity: number;
-  wind: number;
-  smogTip: string;
-}> = {
-  'New Delhi': {
-    aqi: 168,
-    tier: 'Unhealthy',
-    color: '#EF4444',
-    temp: 19,
-    humidity: 62,
-    wind: 5.9,
-    smogTip: 'Severe thermal inversion trapping PM2.5. Seal windows & wear N95.',
-  },
-  'Hyderabad': {
-    aqi: 129,
-    tier: 'Sensitive Groups',
-    color: '#F97316',
-    temp: 25,
-    humidity: 43,
-    wind: 9.9,
-    smogTip: 'Elevated particulate concentration. Sensitive groups limit outdoor cardio.',
-  },
-  'Jakarta': {
-    aqi: 137,
-    tier: 'Sensitive Groups',
-    color: '#F97316',
-    temp: 34,
-    humidity: 50,
-    wind: 13.2,
-    smogTip: 'Urban vehicular exhaust buildup. N95 recommended near busy traffic corridors.',
-  },
-  'Beijing': {
-    aqi: 155,
-    tier: 'Unhealthy',
-    color: '#EF4444',
-    temp: 4,
-    humidity: 35,
-    wind: 8.5,
-    smogTip: 'Seasonal heating emissions active. Run continuous HEPA purifiers indoors.',
-  },
-  'Cairo': {
-    aqi: 145,
-    tier: 'Sensitive Groups',
-    color: '#F97316',
-    temp: 22,
-    humidity: 48,
-    wind: 11.0,
-    smogTip: 'Desert mineral dust combined with urban particulate accumulation.',
-  },
-  'New York': {
-    aqi: 56,
-    tier: 'Moderate',
-    color: '#F59E0B',
-    temp: 6,
-    humidity: 78,
-    wind: 6.8,
-    smogTip: 'Air quality acceptable. Safe to ventilate indoor living spaces midday.',
-  },
-  'London': {
-    aqi: 42,
-    tier: 'Good',
-    color: '#10B981',
-    temp: 9,
-    humidity: 82,
-    wind: 14.5,
-    smogTip: 'Brisk maritime air mass provides excellent atmospheric particulate dispersion.',
-  },
-  'Tokyo': {
-    aqi: 42,
-    tier: 'Good',
-    color: '#10B981',
-    temp: 12,
-    humidity: 55,
-    wind: 10.2,
-    smogTip: 'Pristine coastal air mass. Ideal atmospheric conditions for outdoor recreation.',
-  },
-  'Paris': {
-    aqi: 45,
-    tier: 'Good',
-    color: '#10B981',
-    temp: 8,
-    humidity: 75,
-    wind: 9.0,
-    smogTip: 'Low criteria pollutant concentrations. Safe for all demographic groups.',
-  },
-  'Sydney': {
-    aqi: 38,
-    tier: 'Good',
-    color: '#10B981',
-    temp: 24,
-    humidity: 65,
-    wind: 18.0,
-    smogTip: 'Clean coastal breezes ensure continuous natural particulate ventilation.',
-  },
-  'Rio de Janeiro': {
-    aqi: 42,
-    tier: 'Good',
-    color: '#10B981',
-    temp: 28,
-    humidity: 72,
-    wind: 12.0,
-    smogTip: 'Tropical oceanic dispersion. Atmospheric indices at healthy baselines.',
-  },
-  'Riyadh': {
-    aqi: 142,
-    tier: 'Sensitive Groups',
-    color: '#F97316',
-    temp: 29,
-    humidity: 18,
-    wind: 15.0,
-    smogTip: 'Arid dust particulates elevated. Hydrate and use indoor air filters.',
-  },
-};
-
-const SATELLITE_STYLE_SPEC: maplibregl.StyleSpecification = {
-  version: 8,
-  sources: {
-    satellite: {
-      type: 'raster',
-      tiles: [
-        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-      ],
-      tileSize: 256,
-      maxzoom: 19,
-      attribution: 'Esri, Maxar, Earthstar Geographics',
-    },
-    reference: {
-      type: 'raster',
-      tiles: [
-        'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
-      ],
-      tileSize: 256,
-      maxzoom: 19,
-    },
-  },
-  layers: [
-    {
-      id: 'satellite-layer',
-      type: 'raster',
-      source: 'satellite',
-      minzoom: 0,
-      maxzoom: 22,
-    },
-    {
-      id: 'reference-layer',
-      type: 'raster',
-      source: 'reference',
-      minzoom: 0,
-      maxzoom: 22,
-    },
-  ],
-};
-
-const TILE_STYLES: Record<GlobeMapStyleKey, string | maplibregl.StyleSpecification> = {
-  satellite: SATELLITE_STYLE_SPEC,
-  streets: 'https://tiles.openfreemap.org/styles/bright',
-  scientific: 'https://tiles.openfreemap.org/styles/positron',
-};
-
-function subscribeReducedMotion(callback: () => void) {
-  if (typeof window === 'undefined') return () => {};
-  const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-  mediaQuery.addEventListener('change', callback);
-  return () => mediaQuery.removeEventListener('change', callback);
-}
-
-function getReducedMotionSnapshot() {
-  if (typeof window === 'undefined') return false;
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
-
-function getReducedMotionServerSnapshot() {
-  return false;
 }
 
 export function MapLibreGlobe({
@@ -322,59 +133,7 @@ export function MapLibreGlobe({
       // Resolve human-readable place name (never Global Grid Coordinate)
       const place = resolveGlobePlace(lat, lng, renderedFeatures);
 
-      // Check if near any reference sample city for illustrative demo estimates
-      const nearCity = GLOBE_REFERENCE_CITIES.find(
-        (c) => Math.hypot(c.latitude - lat, c.longitude - lng) < 1.8
-      );
-
-      let aqiVal = 65;
-      let tierStr = 'Moderate';
-      let tierClr = '#F59E0B';
-      let tempVal = 22;
-      let humidVal = 55;
-      let windVal = 10;
-      let tip = `${place.name} atmospheric index. Safe for standard outdoor activities.`;
-
-      if (nearCity) {
-        const matched = Object.entries(CITY_SAMPLE_ESTIMATES).find(([name]) => nearCity.name.includes(name));
-        if (matched) {
-          const t = matched[1];
-          aqiVal = t.aqi;
-          tierStr = t.tier;
-          tierClr = t.color;
-          tempVal = t.temp;
-          humidVal = t.humidity;
-          windVal = t.wind;
-          tip = t.smogTip;
-        }
-      } else if (place.isMarine) {
-        aqiVal = 25;
-        tierStr = 'Good';
-        tierClr = '#10B981';
-        tempVal = 20;
-        humidVal = 80;
-        windVal = 18;
-        tip = `Clean oceanic air mass over the ${place.name}. Baseline marine dispersion.`;
-      }
-
-      setInspectData({
-        name: place.name,
-        country: place.country,
-        countryCode: place.countryCode,
-        latitude: lat,
-        longitude: lng,
-        aqi: aqiVal,
-        tier: tierStr,
-        tierColor: tierClr,
-        dominant: 'PM2.5',
-        temperature: tempVal,
-        humidity: humidVal,
-        windSpeed: windVal,
-        healthAction: tip,
-        screenX: e.point.x,
-        screenY: e.point.y,
-        isReferenceSample: Boolean(nearCity),
-      });
+      setInspectData(resolveInspectTelemetry(lat, lng, place, e.point));
     });
 
     return () => {
@@ -539,25 +298,14 @@ export function MapLibreGlobe({
         return; // Don't duplicate active marker
       }
 
-      let cityAqi = 42;
-      let cityColor = '#10B981';
-      let cityTier = 'Good';
-      let cityTemp = 20;
-      let cityHumidity = 50;
-      let cityWind = 10;
-      let cityTip = 'Acceptable air quality for general demographic.';
-
-      const matched = Object.entries(CITY_SAMPLE_ESTIMATES).find(([name]) => c.name.includes(name));
-      if (matched) {
-        const t = matched[1];
-        cityAqi = t.aqi;
-        cityColor = t.color;
-        cityTier = t.tier;
-        cityTemp = t.temp;
-        cityHumidity = t.humidity;
-        cityWind = t.wind;
-        cityTip = t.smogTip;
-      }
+      const est = getReferenceCityEstimate(c.name);
+      const cityAqi = est.aqi;
+      const cityColor = est.color;
+      const cityTier = est.tier;
+      const cityTemp = est.temp;
+      const cityHumidity = est.humidity;
+      const cityWind = est.wind;
+      const cityTip = est.smogTip;
 
       const el = document.createElement('div');
       el.className = 'group relative flex items-center gap-1 cursor-pointer transition-transform hover:scale-110';

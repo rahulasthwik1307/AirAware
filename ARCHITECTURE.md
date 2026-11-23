@@ -113,7 +113,7 @@ AirAware/
 │   │   ├── planner/                 # Family Daily Planner & profile manager
 │   │   ├── shell/                   # Application shell, navigation & drawers
 │   │   └── welcome/                 # Onboarding walkthrough modal
-│   ├── domain/                      # Pure business logic and mathematical models
+│   ├── domain/                      # Pure business logic and mathematical models (zero React)
 │   │   ├── ai/                      # Copilot natural-language intent parser
 │   │   ├── aqi/                     # AQI normalizer, CPCB engine, OpenAQ adapter
 │   │   ├── choices/                 # DEFRA transport emissions calculator
@@ -123,6 +123,10 @@ AirAware/
 │   │   ├── indoor/                  # Room volume, CADR formulas & ventilation logic
 │   │   ├── planner/                 # Actionable recommendation engine & impact logic
 │   │   └── types.ts                 # Authoritative shared domain models
+│   ├── hooks/                       # Feature-grouped React state & telemetry hooks
+│   │   ├── aqi/                     # useAirQuality telemetry coordinator
+│   │   ├── choices/                 # useCleanerChoices transit impact state
+│   │   └── community/               # useCommunityAlerts civic action state
 │   ├── lib/                         # Infrastructure, network & security utilities
 │   │   ├── ai/                      # Cloudflare client, cache, prompt builder, rate limiter
 │   │   ├── openaq/                  # OpenAQ API configuration helper

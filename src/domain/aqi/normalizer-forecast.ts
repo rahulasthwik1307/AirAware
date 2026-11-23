@@ -3,6 +3,9 @@ import { getEaqiTierFromValue } from './european-aqi';
 import { getEpaTierFromValue } from './epa-aqi';
 import type { RawOpenMeteoAirQualityResponse } from './normalizer';
 
+/**
+ * Builds a chronological 24-hour forecast timeline from hourly Open-Meteo telemetry points.
+ */
 export function buildForecastTimeline(
   hourly: RawOpenMeteoAirQualityResponse['hourly'] | undefined,
   currentTimeStr: string,
@@ -50,6 +53,9 @@ export function buildForecastTimeline(
   return forecast;
 }
 
+/**
+ * Derives daily historical airshed aggregates from hourly atmospheric reanalysis data.
+ */
 export function deriveHistoricalTrend(
   hourly: RawOpenMeteoAirQualityResponse['hourly'] | undefined,
   activeStandard: AqiStandardKey = 'US_EPA'

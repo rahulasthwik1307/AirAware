@@ -145,7 +145,7 @@ export function calculateCompositeCpcbAqi(
       };
     }
 
-    const { category, aqiRange, colorToken, bgToken } = getCategoryDetailsFromAqi(finalAqi);
+    const { category, aqiRange, colorToken, bgToken } = getCpcbCategoryDetailsFromAqi(finalAqi);
     const hasBothStationPollutants = pm25Sub !== null && pm10Sub !== null;
     const stationIndexLabel = hasBothStationPollutants
       ? 'CPCB AQI (PM2.5/PM10 sub-index)'
@@ -181,7 +181,7 @@ export function calculateCompositeCpcbAqi(
     };
   }
 
-  const { category, aqiRange, colorToken, bgToken } = getCategoryDetailsFromAqi(pm25Sub);
+  const { category, aqiRange, colorToken, bgToken } = getCpcbCategoryDetailsFromAqi(pm25Sub);
   return {
     aqi: pm25Sub,
     category,
@@ -195,7 +195,10 @@ export function calculateCompositeCpcbAqi(
   };
 }
 
-function getCategoryDetailsFromAqi(aqi: number) {
+/**
+ * Resolves CPCB NAQI category, display range, and color/background tokens for an AQI value.
+ */
+export function getCpcbCategoryDetailsFromAqi(aqi: number) {
   if (aqi <= 50) {
     return { category: 'Good' as CpcbCategory, aqiRange: '0–50', colorToken: '#047857', bgToken: '#ECFDF5' };
   }
@@ -214,10 +217,16 @@ function getCategoryDetailsFromAqi(aqi: number) {
   return { category: 'Severe' as CpcbCategory, aqiRange: '401–500', colorToken: '#7F1D1D', bgToken: '#450A0A' };
 }
 
+/**
+ * Calculates single-pollutant CPCB AQI from PM2.5 concentration.
+ */
 export function calculateCpcbAqi(pm25: number | null | undefined): CpcbAqiResult {
   return calculateCompositeCpcbAqi(pm25, null, false);
 }
 
+/**
+ * Classifies a PM2.5 concentration against CPCB NAQI threshold bands.
+ */
 export function classifyCpcbPm25(
   concentration: number | null | undefined
 ): CpcbPm25Classification {

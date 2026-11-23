@@ -6,6 +6,7 @@ import {
   POLLUTANT_EDUCATIONAL_DATA,
   PollutantEducationalData,
 } from '@/domain/aqi/pollutant-educational-data';
+import { formatDataAge } from '@/lib/formatters/time';
 
 interface PollutantGridProps {
   readonly pollutants: Record<PollutantKey, PollutantMeasurement>;
@@ -47,23 +48,6 @@ function formatBadgeTier(label: string): string {
   if (lower.includes('moderate') || lower.includes('fair')) return 'Moderate';
   if (lower.includes('good')) return 'Good';
   return label;
-}
-
-function formatDataAge(timestampStr?: string): string {
-  if (!timestampStr) return 'recent';
-  try {
-    const iso = timestampStr.includes('T') ? timestampStr : timestampStr.replace(' ', 'T');
-    const time = new Date(iso).getTime();
-    if (isNaN(time)) return 'recent';
-    const diffMs = Date.now() - time;
-    const diffMin = Math.round(diffMs / 60000);
-    if (diffMin < 1) return 'just now';
-    if (diffMin < 60) return `${diffMin}m ago`;
-    const diffHours = Math.floor(diffMin / 60);
-    return `${diffHours}h ${diffMin % 60}m ago`;
-  } catch {
-    return 'recent';
-  }
 }
 
 // Clean Radial Arc Speedometer with Zero Overlapping Text

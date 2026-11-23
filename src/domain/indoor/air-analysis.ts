@@ -1,5 +1,8 @@
 import { IndoorReadingAnalysis, IndoorActionItem } from './types';
 
+/**
+ * Classifies an indoor PM2.5 reading into official CPCB 24-hour equivalent concentration tiers.
+ */
 export function classifyIndoorPm25(pm25: number): {
   readonly category: string;
   readonly colorToken: string;
@@ -14,6 +17,9 @@ export function classifyIndoorPm25(pm25: number): {
   return { category: 'Severe', colorToken: '#7F1D1D', bgToken: '#450A0A' };
 }
 
+/**
+ * Estimates baseline indoor PM2.5 from outdoor ambient concentration using a standard 60% infiltration factor.
+ */
 export function estimateIndoorPm25(outdoorPm25: number): {
   readonly estimatedPm25: number;
   readonly assumption: string;
@@ -138,6 +144,9 @@ function buildComparisonSummary(effectiveReading: number, outdoorPm25: number, i
   };
 }
 
+/**
+ * Analyzes indoor microclimate readings and generates actionable, personalized room recommendations.
+ */
 export function analyzeIndoorAir(params: AnalyzeIndoorAirParams): IndoorReadingAnalysis {
   const { indoorReading, hasMonitor, outdoorPm25, householdMembers = [], bestVentilationWindow } = params;
 

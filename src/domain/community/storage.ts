@@ -51,6 +51,9 @@ export const INITIAL_COMMUNITY_STATE: CommunityStorageState = {
   lastUpdated: new Date().toISOString(),
 };
 
+/**
+ * Loads and validates local community incident reports and alerts from browser storage.
+ */
 export function loadCommunityState(): CommunityStorageState {
   if (typeof window === 'undefined') {
     return INITIAL_COMMUNITY_STATE;
@@ -78,6 +81,9 @@ export function loadCommunityState(): CommunityStorageState {
   return INITIAL_COMMUNITY_STATE;
 }
 
+/**
+ * Persists community incident and alert read state safely to browser storage.
+ */
 export function saveCommunityState(state: CommunityStorageState): void {
   if (typeof window === 'undefined') return;
 
@@ -92,6 +98,9 @@ export function saveCommunityState(state: CommunityStorageState): void {
   }
 }
 
+/**
+ * Adds a new citizen pollution report to local device storage.
+ */
 export function addLocalIncident(
   currentState: CommunityStorageState,
   incident: Omit<PollutionIncident, 'id' | 'timestamp' | 'status'>
@@ -112,6 +121,9 @@ export function addLocalIncident(
   return updated;
 }
 
+/**
+ * Updates the lifecycle or filing status of an existing local pollution incident.
+ */
 export function updateIncidentStatus(
   currentState: CommunityStorageState,
   incidentId: string,
@@ -128,6 +140,9 @@ export function updateIncidentStatus(
   return updated;
 }
 
+/**
+ * Removes an incident report from local device storage.
+ */
 export function deleteLocalIncident(
   currentState: CommunityStorageState,
   incidentId: string
@@ -141,6 +156,9 @@ export function deleteLocalIncident(
   return updated;
 }
 
+/**
+ * Marks an alert item as read in local storage.
+ */
 export function markAlertAsRead(
   currentState: CommunityStorageState,
   alertId: string
@@ -158,6 +176,9 @@ export function markAlertAsRead(
   return updated;
 }
 
+/**
+ * Marks all supplied alert items as read in local storage.
+ */
 export function markAllAlertsAsRead(
   currentState: CommunityStorageState,
   alertIds: readonly string[]

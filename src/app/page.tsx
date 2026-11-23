@@ -1,5 +1,5 @@
 import { AirAwareShell } from '@/components/shell/AirAwareShell';
-import { AirQualityProvider } from '@/domain/aqi/useAirQuality';
+import { AirQualityProvider } from '@/hooks/aqi/useAirQuality';
 
 export default function Home() {
   return (

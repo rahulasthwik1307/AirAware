@@ -69,6 +69,9 @@ export const HouseholdStorageStateSchema = z.object({
   members: z.array(HouseholdMemberSchema).max(4, 'Households cannot exceed 4 members'),
 });
 
+/**
+ * Generates an initial empty household storage state.
+ */
 export function createDefaultHouseholdState(): HouseholdStorageState {
   return {
     version: 1,
@@ -78,6 +81,9 @@ export function createDefaultHouseholdState(): HouseholdStorageState {
   };
 }
 
+/**
+ * Validates untrusted storage JSON against the HouseholdStorageState schema.
+ */
 export function parseHouseholdStorageState(raw: unknown): HouseholdStorageState | null {
   if (!raw || typeof raw !== 'object') return null;
   const result = HouseholdStorageStateSchema.safeParse(raw);

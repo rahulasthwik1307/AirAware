@@ -6,6 +6,7 @@ import { UnifiedAnalyticsCard } from '@/components/charts/UnifiedAnalyticsCard';
 import { findBestDaytimeWindow } from '@/domain/aqi/best-window';
 import { ComponentErrorBoundary } from '@/components/common/ComponentErrorBoundary';
 import { HERO_RIGHT_PANEL_HEIGHT_CLASS } from './constants';
+import { formatDataAge } from '@/lib/formatters/time';
 
 interface OverviewPanelProps {
   readonly report: AirQualityReport;
@@ -13,23 +14,6 @@ interface OverviewPanelProps {
   readonly dominantPollutant: string | null;
   readonly aqiColor: string;
   readonly isStation: boolean;
-}
-
-function formatDataAge(timestampStr?: string): string {
-  if (!timestampStr) return 'recent';
-  try {
-    const iso = timestampStr.includes('T') ? timestampStr : timestampStr.replace(' ', 'T');
-    const time = new Date(iso).getTime();
-    if (isNaN(time)) return 'recent';
-    const diffMs = Date.now() - time;
-    const diffMin = Math.round(diffMs / 60000);
-    if (diffMin < 1) return 'just now';
-    if (diffMin < 60) return `${diffMin}m ago`;
-    const diffHours = Math.floor(diffMin / 60);
-    return `${diffHours}h ${diffMin % 60}m ago`;
-  } catch {
-    return 'recent';
-  }
 }
 
 export const OverviewPanel = React.memo(function OverviewPanel({

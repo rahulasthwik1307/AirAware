@@ -139,6 +139,9 @@ export const STANDARD_ROOM_PROFILES: readonly RoomProfile[] = [
   },
 ];
 
+/**
+ * Returns the list of standard residential room profiles with typical floor areas and indoor pollution risks.
+ */
 export function getStandardRoomProfiles(): readonly RoomProfile[] {
   return STANDARD_ROOM_PROFILES;
 }

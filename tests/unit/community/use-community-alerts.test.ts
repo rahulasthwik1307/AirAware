@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { useCommunityAlerts } from '@/domain/community/useCommunityAlerts';
+import { useCommunityAlerts } from '@/hooks/community/useCommunityAlerts';
 
 describe('useCommunityAlerts Hook Contract', () => {
   const originalLocalStorage = globalThis.window?.localStorage;

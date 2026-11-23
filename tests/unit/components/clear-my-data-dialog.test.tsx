@@ -4,7 +4,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import { AIRAWARE_STORAGE_KEYS, clearAllAirAwareData } from '@/domain/constants/storage-keys';
 import { AirAwareShell } from '@/components/shell/AirAwareShell';
-import { AirQualityProvider } from '@/domain/aqi/useAirQuality';
+import { AirQualityProvider } from '@/hooks/aqi/useAirQuality';
 
 describe('Clear-My-Data Dialog & Privacy Guarantee', () => {
   beforeEach(() => {

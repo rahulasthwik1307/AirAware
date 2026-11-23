@@ -144,6 +144,9 @@ function buildEpaPollutantMeasurement(
   };
 }
 
+/**
+ * Normalizes raw atmospheric pollutant concentrations into validated measurements with WHO 2021 ratios.
+ */
 export function normalizePollutants(
   current: RawOpenMeteoAirQualityResponse['current'],
   currentUnits: Record<string, string>,

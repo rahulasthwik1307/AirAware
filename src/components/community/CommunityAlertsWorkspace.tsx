@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useCommunityAlerts } from '@/domain/community/useCommunityAlerts';
-import { useAirQuality } from '@/domain/aqi/useAirQuality';
+import { useCommunityAlerts } from '@/hooks/community/useCommunityAlerts';
+import { useAirQuality } from '@/hooks/aqi/useAirQuality';
 import { CommunityKpiStrip } from './CommunityKpiStrip';
 import { AirshedAlertFeedCard } from './AirshedAlertFeedCard';
 import { HistoricalAirshedTrendCard } from './HistoricalAirshedTrendCard';

@@ -20,10 +20,16 @@ const EUROPEAN_COUNTRY_CODES = new Set([
   'SE', 'GB', 'IS', 'NO', 'CH', 'LI'
 ]);
 
+/**
+ * Determines whether an ISO country code falls within the CAMS European ensemble model domain.
+ */
 export function isEuropeanDomainCountry(countryCode: string): boolean {
   return EUROPEAN_COUNTRY_CODES.has(countryCode.toUpperCase());
 }
 
+/**
+ * Returns Copernicus CAMS atmospheric model grid resolution and update cadence metadata.
+ */
 export function getAtmosphericModelMetadata(countryCode: string): AtmosphericModelMetadata {
   const isEurope = isEuropeanDomainCountry(countryCode);
   if (isEurope) {
@@ -45,6 +51,9 @@ export function getAtmosphericModelMetadata(countryCode: string): AtmosphericMod
   };
 }
 
+/**
+ * Resolves the primary default AQI standard based on geographic location.
+ */
 export function getDefaultStandardForCountry(countryCode: string): AqiStandardKey {
   const code = countryCode.toUpperCase();
   if (code === 'US') {
@@ -57,6 +66,9 @@ export function getDefaultStandardForCountry(countryCode: string): AqiStandardKe
   return 'US_EPA';
 }
 
+/**
+ * Resolves regulatory and methodology metadata for an AQI standard in a given country.
+ */
 export function resolveStandardMetadata(
   standard: AqiStandardKey,
   countryCode: string
