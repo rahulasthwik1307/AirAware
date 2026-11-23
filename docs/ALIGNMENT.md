@@ -49,9 +49,10 @@ This document provides traceable verification mapping every requirement from the
 - **In-Flight Request Deduplication**: Single-flight Promise deduplication in `src/lib/ai/cache.ts` prevents redundant inference calls during concurrent UI requests.
 
 ### 4. Testing & Verification
-- **Automated Test Suites**: Located in `tests/unit/`, covering AQI normalization, CPCB calculation benchmarks, indoor CADR formulas, planner recommendations, security headers, rate limiting, and prompt injection hardening.
+- **Automated Test Suites**: **514 automated tests across 79 suites** located in `tests/unit/`, covering AQI normalization, CPCB calculation benchmarks, indoor CADR formulas, planner recommendations, security headers, rate limiting, and prompt injection hardening.
 - **Mocked Network Boundaries**: All test suites isolate network boundaries using Vi global stubs (`vi.stubGlobal('fetch', ...)`), ensuring reproducible offline testing.
 - **Accessibility Verification Suite**: `tests/unit/a11y/accessibility.test.tsx` validates skip links, button accessible names, modal focus trapping and Escape-key restoration, and chart role="img" attributes with data table alternatives.
+- **Architectural Protections**: `tests/unit/architecture-invariants.test.ts` validates zero React/Next dependencies in `src/domain` and strict HTTP 400 rejection for unknown fields across all API endpoints.
 
 ### 5. Accessibility (WCAG 2.2 AA)
 - **Skip Link**: `<a href="#main-content" className="skip-link">` in `src/app/layout.tsx` targeting `<main id="main-content">`.

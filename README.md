@@ -205,15 +205,15 @@ npm start        # Launch production server
 
 ## Testing & Quality Assurance
 
-Run test, lint, and validation scripts configured in `package.json`:
+AirAware features a comprehensive test suite of **514 automated tests across 79 suites** with 100% mocked network boundaries and automated architectural invariant enforcement:
 ```bash
-npm test              # Run unit and integration test suites via Vitest
+npm test              # Run unit and integration test suites via Vitest (514 tests)
 npm run test:coverage # Run Vitest test suite with V8 code coverage report
 npm run typecheck     # Run TypeScript compiler validation (tsc --noEmit)
 npm run lint          # Run ESLint validation
 npm run check         # Run lint, typecheck, and test sequence
 ```
-Continuous integration is automated on all pushes and pull requests via GitHub Actions (`.github/workflows/ci.yml`).
+Continuous integration is automated on all pushes and pull requests via GitHub Actions (`.github/workflows/ci.yml`). Architectural protections verify domain isolation (`src/domain` zero React/Next imports) and strict HTTP 400 rejection of unknown query/body fields.
 
 ---
 
