@@ -1,41 +1,27 @@
 /**
  * Air Quality Data Normalizer
  * Transforms validated Open-Meteo payloads into authoritative AirQualityReport aggregates.
- *
- * Rules:
- * - Provider AQI is preserved as the primary displayed metric.
- * - All 6 criteria pollutants have evaluated sub-indices and WHO 2021 guideline ratios.
- * - Missing pollutant measurements remain null (never coerced to 0).
- * - CO is explicitly excluded from European EAQI evaluation.
- * - Explicit distinction between regulatory 24h rolling averages and instantaneous 1h sub-indices.
- * - Scientific comparison context provided for Indian CPCB and CAMS regional grid models.
  */
 
 import {
   AirQualityReport,
   AqiStandardKey,
   CpcbComparisonContext,
-  ForecastPoint,
   GeoLocation,
   HistoricalAirshedPoint,
-  PollutantKey,
-  PollutantMeasurement,
 } from '../types';
 import {
   getDefaultStandardForCountry,
   resolveStandardMetadata,
   getAtmosphericModelMetadata,
 } from './standards-resolver';
-import {
-  getEaqiPollutantLevel,
-  getEaqiTierFromValue,
-} from './european-aqi';
-import {
-  calculatePollutantEpaSubIndex,
-  getEpaTierFromValue,
-} from './epa-aqi';
+import { getEaqiTierFromValue } from './european-aqi';
+import { getEpaTierFromValue } from './epa-aqi';
 import { calculateCompositeCpcbAqi } from './cpcb-benchmark';
-import { POLLUTANT_METADATA } from './unit-converters';
+import { normalizePollutants } from './normalizer-pollutants';
+import { buildForecastTimeline, deriveHistoricalTrend } from './normalizer-forecast';
+
+export { deriveHistoricalTrend };
 
 export interface RawOpenMeteoAirQualityResponse {
   readonly latitude: number;
@@ -87,13 +73,46 @@ export interface RawOpenMeteoAirQualityResponse {
   };
 }
 
-/**
- * Normalizes multi-provider atmospheric telemetry into unified AirQualityReport schema.
- * @param raw - Raw Open-Meteo or CAAQMS station response payload.
- * @param location - Target geographic location with country metadata.
- * @param requestedStandard - Optional explicit AQI standard override.
- * @returns Fully typed, validated AirQualityReport with sub-indices and health tier. Never mutates input arguments.
- */
+function resolveEffectiveCurrent(raw: RawOpenMeteoAirQualityResponse, isStation: boolean) {
+  if (!isStation) return raw.current;
+  return {
+    ...raw.current,
+    pm2_5: raw.stationPm25!,
+    ...(raw.stationPm10 !== null && raw.stationPm10 !== undefined ? { pm10: raw.stationPm10 } : {}),
+  };
+}
+
+function buildCpcbComparison(
+  location: GeoLocation,
+  current: RawOpenMeteoAirQualityResponse['current'],
+  raw: RawOpenMeteoAirQualityResponse,
+  isStation: boolean,
+  stationName: string | null,
+  distanceKm: number | null,
+  observedAt: string | null
+): CpcbComparisonContext | null {
+  if (location.countryCode.toUpperCase() !== 'IN') return null;
+
+  const cpcbResult = calculateCompositeCpcbAqi(
+    current.pm2_5,
+    isStation ? (raw.stationPm10 ?? null) : current.pm10,
+    isStation
+  );
+
+  const stationContext = isStation
+    ? `Ground station: ${stationName || 'Nearby Monitor'}, ${distanceKm !== null ? `${distanceKm} km away` : ''} · OpenAQ · Observed ${observedAt || current.time}`
+    : 'Modelled ~45km regional grid (CAMS Global IFS). Physical CAAQMS monitors measure localized ground plumes which typically report higher concentrations during thermal inversions. Live physical station observations are not provided via this open model API. Modeled estimate (Copernicus CAMS via Open-Meteo, ~45 km grid) · no recent station within 25 km';
+
+  return {
+    equivalentCategory: cpcbResult.category,
+    estimatedAqiRange: cpcbResult.aqiRange,
+    stationContext,
+    methodologyDifference: cpcbResult.methodologyNote,
+    compositeAqi: cpcbResult.aqi,
+    indexLabel: cpcbResult.indexLabel,
+  };
+}
+
 export function normalizeAirQualityReport(
   raw: RawOpenMeteoAirQualityResponse,
   location: GeoLocation,
@@ -108,235 +127,40 @@ export function normalizeAirQualityReport(
   const distanceKm = isStation ? (raw.distanceKm ?? null) : null;
   const observedAt = isStation ? (raw.observedAt ?? null) : null;
 
-  // If station measurements are present, override PM2.5 (and PM10 if present)
-  const current = isStation
-    ? {
-        ...raw.current,
-        pm2_5: raw.stationPm25!,
-        ...(raw.stationPm10 !== null && raw.stationPm10 !== undefined ? { pm10: raw.stationPm10 } : {}),
-      }
-    : raw.current;
+  const current = resolveEffectiveCurrent(raw, isStation);
   const currentUnits = raw.current_units ?? {};
 
-  // Primary Provider AQI
   const providerAqi =
-    activeStandard === 'EUROPEAN_EAQI'
-      ? (current.european_aqi ?? null)
-      : (current.us_aqi ?? null);
+    activeStandard === 'EUROPEAN_EAQI' ? (current.european_aqi ?? null) : (current.us_aqi ?? null);
 
-  // Overall Tier
   const tier =
-    activeStandard === 'EUROPEAN_EAQI'
-      ? getEaqiTierFromValue(providerAqi)
-      : getEpaTierFromValue(providerAqi);
+    activeStandard === 'EUROPEAN_EAQI' ? getEaqiTierFromValue(providerAqi) : getEpaTierFromValue(providerAqi);
 
-  // Normalize Pollutants (PM2.5, PM10, NO2, O3, SO2, CO)
-  const pollutantKeys: readonly PollutantKey[] = [
-    'pm2_5',
-    'pm10',
-    'nitrogen_dioxide',
-    'ozone',
-    'sulphur_dioxide',
-    'carbon_monoxide',
-  ];
+  const { pollutants, dominantPollutant } = normalizePollutants(
+    current,
+    currentUnits,
+    activeStandard,
+    isStation,
+    raw.stationPm10
+  );
 
-  const pollutants = {} as Record<PollutantKey, PollutantMeasurement>;
-  let dominantPollutant: string | null = null;
-  let highestSubIndex = -1;
-
-  for (const key of pollutantKeys) {
-    const meta = POLLUTANT_METADATA[key];
-    const rawVal = current[key];
-    const concentration =
-      rawVal !== undefined && rawVal !== null && Number.isFinite(rawVal) ? rawVal : null;
-    const unit = currentUnits[key] || meta.standardUnit;
-
-    const whoRatio =
-      concentration !== null
-        ? Math.round((concentration / meta.whoGuideline) * 10) / 10
-        : null;
-
-    if (activeStandard === 'EUROPEAN_EAQI') {
-      if (key === 'carbon_monoxide') {
-        pollutants[key] = {
-          key,
-          label: meta.label,
-          chemicalFormula: meta.chemicalFormula,
-          concentration,
-          unit,
-          subIndex: null,
-          tier: null,
-          isEvaluatedInActiveStandard: false,
-          note: 'Not evaluated under European EAQI standard (EEA convention)',
-          whoGuideline: meta.whoGuideline,
-          whoRatio,
-        };
-      } else {
-        const providerSubKey = `european_aqi_${key}` as keyof typeof current;
-        const providerSub = current[providerSubKey] as number | null | undefined;
-        const subIndex =
-          providerSub !== undefined && providerSub !== null && Number.isFinite(providerSub)
-            ? providerSub
-            : getEaqiPollutantLevel(key, concentration);
-
-        const pollutantTier = subIndex !== null ? getEaqiTierFromValue(subIndex) : null;
-
-        if (subIndex !== null && subIndex > highestSubIndex) {
-          highestSubIndex = subIndex;
-          dominantPollutant = meta.chemicalFormula;
-        }
-
-        const note =
-          providerSub !== undefined && providerSub !== null
-            ? 'Modelled European EAQI sub-index (EEA regulatory window)'
-            : 'Calculated European EAQI breakpoint level';
-
-        pollutants[key] = {
-          key,
-          label: meta.label,
-          chemicalFormula: meta.chemicalFormula,
-          concentration,
-          unit,
-          subIndex,
-          tier: pollutantTier,
-          isEvaluatedInActiveStandard: true,
-          note,
-          whoGuideline: meta.whoGuideline,
-          whoRatio,
-        };
-      }
-    } else {
-      // US EPA AQI: Prioritize provider-supplied sub-index incorporating EPA regulatory rolling averages
-      const providerSubKey = `us_aqi_${key}` as keyof typeof current;
-      const providerSub = current[providerSubKey] as number | null | undefined;
-
-      let subIndex: number | null = null;
-      let averagingNote = '';
-
-      if (providerSub !== undefined && providerSub !== null && Number.isFinite(providerSub)) {
-        subIndex = providerSub;
-        if (key === 'pm2_5' || key === 'pm10') {
-          averagingNote = 'Modelled 24-hour rolling average (EPA standard window)';
-        } else if (key === 'ozone') {
-          averagingNote = 'Modelled max 1h / 8h rolling average (EPA standard window)';
-        } else if (key === 'carbon_monoxide') {
-          averagingNote = 'Modelled 8-hour rolling average (EPA standard window)';
-        } else if (key === 'sulphur_dioxide') {
-          averagingNote = 'Modelled max 1h / 24h rolling average (EPA standard window)';
-        } else {
-          averagingNote = '1-hour primary model concentration';
-        }
-      } else {
-        const calc = calculatePollutantEpaSubIndex(key, concentration);
-        subIndex = calc.subIndex;
-        averagingNote = `${calc.averagingNote} (instantaneous calc)`;
-      }
-
-      let pollutantTier = null;
-      if (subIndex !== null) {
-        pollutantTier = getEpaTierFromValue(subIndex);
-        if (subIndex > highestSubIndex) {
-          highestSubIndex = subIndex;
-          dominantPollutant = meta.chemicalFormula;
-        }
-      }
-
-      const isStationMeasurement =
-        isStation && (key === 'pm2_5' || (key === 'pm10' && raw.stationPm10 !== null && raw.stationPm10 !== undefined));
-
-      pollutants[key] = {
-        key,
-        label: meta.label,
-        chemicalFormula: meta.chemicalFormula,
-        concentration,
-        unit,
-        subIndex,
-        tier: pollutantTier,
-        isEvaluatedInActiveStandard: true,
-        note: averagingNote,
-        whoGuideline: meta.whoGuideline,
-        whoRatio,
-        isStationMeasurement,
-      };
-    }
-  }
-
-  // Format 24-Hour Forecast Timeline
-  const hourly = raw.hourly;
-  const forecast: ForecastPoint[] = [];
-
-  if (hourly && Array.isArray(hourly.time)) {
-    const currentTimeStr = current.time;
-    let startIndex = hourly.time.findIndex((t) => t >= currentTimeStr);
-    if (startIndex === -1) startIndex = 0;
-
-    const pointsToTake = Math.min(24, hourly.time.length - startIndex);
-
-    for (let i = startIndex; i < startIndex + pointsToTake; i++) {
-      const timeStr = hourly.time[i];
-      const usAqi = hourly.us_aqi ? hourly.us_aqi[i] ?? null : null;
-      const europeanAqi = hourly.european_aqi ? hourly.european_aqi[i] ?? null : null;
-
-      const activeAqi = activeStandard === 'EUROPEAN_EAQI' ? europeanAqi : usAqi;
-      const pointTier =
-        activeStandard === 'EUROPEAN_EAQI'
-          ? getEaqiTierFromValue(activeAqi)
-          : getEpaTierFromValue(activeAqi);
-
-      const displayTime = timeStr.includes('T') ? timeStr.split('T')[1].slice(0, 5) : timeStr;
-      const isCurrentHour = i === startIndex || timeStr === currentTimeStr;
-      const pm25 = hourly.pm2_5 ? hourly.pm2_5[i] ?? null : null;
-      const pm10 = hourly.pm10 ? hourly.pm10[i] ?? null : null;
-
-      forecast.push({
-        time: timeStr,
-        displayTime,
-        usAqi,
-        europeanAqi,
-        activeAqi,
-        tier: pointTier,
-        isCurrentHour,
-        pm25,
-        pm10,
-      });
-    }
-  }
-
-  // Format local time display
-  const localTime = current.time.includes('T')
-    ? current.time.replace('T', ' ')
-    : current.time;
+  const forecast = buildForecastTimeline(raw.hourly, current.time, activeStandard);
+  const localTime = current.time.includes('T') ? current.time.replace('T', ' ') : current.time;
 
   const averagingPeriodNote =
     activeStandard === 'US_EPA'
       ? 'The overall US EPA AQI reflects Open-Meteo modelled 24-hour rolling averages for particulate matter and 8-hour rolling averages for ozone/CO from CAMS grid simulations. This is an atmospheric model estimate, not an in-situ station NowCast.'
       : 'The European EAQI reflects 1-hour and 8-hour worst-case pollutant indices according to European Environment Agency (EEA) guidelines. Carbon monoxide is not evaluated under EAQI.';
 
-  // CPCB Comparison Context for Indian Locations
-  let cpcbComparison: CpcbComparisonContext | null = null;
-  if (location.countryCode.toUpperCase() === 'IN') {
-    const cpcbResult = calculateCompositeCpcbAqi(
-      current.pm2_5,
-      isStation ? (raw.stationPm10 ?? null) : current.pm10,
-      isStation
-    );
-
-    const stationContext = isStation
-      ? `Ground station: ${stationName || 'Nearby Monitor'}, ${distanceKm !== null ? `${distanceKm} km away` : ''} · OpenAQ · Observed ${observedAt || current.time}`
-      : 'Modelled ~45km regional grid (CAMS Global IFS). Physical CAAQMS monitors measure localized ground plumes which typically report higher concentrations during thermal inversions. Live physical station observations are not provided via this open model API. Modeled estimate (Copernicus CAMS via Open-Meteo, ~45 km grid) · no recent station within 25 km';
-
-    cpcbComparison = {
-      equivalentCategory: cpcbResult.category,
-      estimatedAqiRange: cpcbResult.aqiRange,
-      stationContext,
-      methodologyDifference: cpcbResult.methodologyNote,
-      compositeAqi: cpcbResult.aqi,
-      indexLabel: cpcbResult.indexLabel,
-    };
-  }
-
-  const modelMetadata = getAtmosphericModelMetadata(location.countryCode);
-  const historicalTrend = deriveHistoricalTrend(raw.hourly, activeStandard);
+  const cpcbComparison = buildCpcbComparison(
+    location,
+    current,
+    raw,
+    isStation,
+    stationName,
+    distanceKm,
+    observedAt
+  );
 
   return {
     location,
@@ -353,7 +177,7 @@ export function normalizeAirQualityReport(
     dominantPollutant,
     pollutants,
     forecast,
-    historicalTrend,
+    historicalTrend: deriveHistoricalTrend(raw.hourly, activeStandard),
     coordinates: {
       latitude: raw.latitude,
       longitude: raw.longitude,
@@ -361,108 +185,13 @@ export function normalizeAirQualityReport(
     },
     averagingPeriodNote,
     cpcbComparison,
-    modelMetadata,
+    modelMetadata: getAtmosphericModelMetadata(location.countryCode),
     stationName,
     distanceKm,
     observedAt,
     sourceType: effectiveSourceType,
     modelFallbackReason: isStation ? null : (raw.modelFallbackReason ?? 'no recent station within 25 km'),
   };
-}
-
-export function deriveHistoricalTrend(
-  hourly: RawOpenMeteoAirQualityResponse['hourly'] | undefined,
-  activeStandard: AqiStandardKey = 'US_EPA'
-): readonly HistoricalAirshedPoint[] {
-  if (!hourly || !hourly.time || hourly.time.length === 0) {
-    return [];
-  }
-
-  // Map each date (YYYY-MM-DD) to its measurements
-  const dayGroups = new Map<
-    string,
-    {
-      aqiList: number[];
-      pm25List: number[];
-      noxList: number[];
-    }
-  >();
-
-  const todayStr = new Date().toISOString().split('T')[0];
-
-  for (let i = 0; i < hourly.time.length; i++) {
-    const timeStr = hourly.time[i];
-    const dateStr = timeStr.includes('T') ? timeStr.split('T')[0] : timeStr.slice(0, 10);
-    // Only process past days up to today
-    if (dateStr > todayStr) continue;
-
-    if (!dayGroups.has(dateStr)) {
-      dayGroups.set(dateStr, { aqiList: [], pm25List: [], noxList: [] });
-    }
-
-    const group = dayGroups.get(dateStr)!;
-    const aqiVal =
-      activeStandard === 'EUROPEAN_EAQI'
-        ? (hourly.european_aqi ? hourly.european_aqi[i] : null)
-        : (hourly.us_aqi ? hourly.us_aqi[i] : null);
-
-    if (aqiVal !== null && aqiVal !== undefined && Number.isFinite(aqiVal)) {
-      group.aqiList.push(aqiVal);
-    }
-    const pm25Val = hourly.pm2_5 ? hourly.pm2_5[i] : null;
-    if (pm25Val !== null && pm25Val !== undefined && Number.isFinite(pm25Val)) {
-      group.pm25List.push(pm25Val);
-    }
-    const noxVal = hourly.nitrogen_dioxide ? hourly.nitrogen_dioxide[i] : null;
-    if (noxVal !== null && noxVal !== undefined && Number.isFinite(noxVal)) {
-      group.noxList.push(noxVal);
-    }
-  }
-
-  const sortedDates = Array.from(dayGroups.keys()).sort();
-  // Take last 7 days of historical records
-  const recentDates = sortedDates.slice(-7);
-
-  const points: HistoricalAirshedPoint[] = [];
-
-  for (const date of recentDates) {
-    const data = dayGroups.get(date)!;
-    if (data.aqiList.length === 0 && data.pm25List.length === 0) continue;
-
-    const meanAqi =
-      data.aqiList.length > 0
-        ? Math.round(data.aqiList.reduce((a, b) => a + b, 0) / data.aqiList.length)
-        : 0;
-    const meanPm25 =
-      data.pm25List.length > 0
-        ? Math.round((data.pm25List.reduce((a, b) => a + b, 0) / data.pm25List.length) * 10) / 10
-        : 0;
-    const meanNox =
-      data.noxList.length > 0
-        ? Math.round((data.noxList.reduce((a, b) => a + b, 0) / data.noxList.length) * 10) / 10
-        : 0;
-
-    const parsedDate = new Date(`${date}T12:00:00Z`);
-    const dayName = parsedDate.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' });
-    const dayNum = parsedDate.getUTCDate();
-    const isToday = date === todayStr;
-    const dayLabel = isToday ? `Today (${dayName})` : `${dayName} ${dayNum}`;
-
-    // Estimated winter boundary layer ceiling based on PM2.5 stagnation
-    const inversionCeilingMeters = Math.max(90, Math.round(350 - Math.min(250, meanPm25 * 0.8)));
-
-    points.push({
-      date,
-      dayLabel,
-      aqi: meanAqi,
-      pm25: meanPm25,
-      nox: meanNox,
-      inversionCeilingMeters,
-      isSevereDay: meanAqi >= 400 || meanPm25 >= 250,
-    });
-  }
-
-  return points;
 }
 
 export { normalizeAirQualityReport as normalizeAirQualityData };

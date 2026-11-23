@@ -5,8 +5,13 @@ import { createPortal } from 'react-dom';
 import { WorkspaceKey, AirQualityReport, GeoLocation } from '@/domain/types';
 import { RoomContext } from '@/lib/ai/types';
 import { HouseholdStorageState, HouseholdMember } from '@/domain/household/types';
-import { useAirCopilot, CopilotChatMessage } from '@/lib/ai/use-copilot';
-import { CopilotRichResponse } from '@/components/copilot/CopilotRichResponse';
+import { useAirCopilot } from '@/lib/ai/use-copilot';
+import { WORKSPACE_PROMPT_CHIPS, WORKSPACE_LABELS } from '@/components/copilot/drawer/constants';
+import { MessageBubble } from '@/components/copilot/drawer/MessageBubble';
+import { SessionHistoryPanel } from '@/components/copilot/drawer/SessionHistoryPanel';
+import { CopilotInputArea } from '@/components/copilot/drawer/CopilotInputArea';
+
+export { WORKSPACE_PROMPT_CHIPS, WORKSPACE_LABELS } from '@/components/copilot/drawer/constants';
 
 interface CopilotDrawerShellProps {
   readonly isOpen: boolean;
@@ -19,45 +24,6 @@ interface CopilotDrawerShellProps {
   readonly householdState?: HouseholdStorageState | null;
   readonly activeMember?: HouseholdMember | null;
 }
-
-const WORKSPACE_PROMPT_CHIPS: Record<WorkspaceKey, readonly string[]> = {
-  'indoor-air': [
-    'Can indoor plants like Snake Plant and Areca Palm reduce indoor smog?',
-    'What CADR purifier capacity is needed for my room size?',
-    'When should I open my windows today during winter inversions?',
-    'How does a Corsi-Rosenthal box fan compare to commercial units?',
-  ],
-  'family-planner': [
-    'Can my child play outside this evening in Delhi?',
-    'Is it safe for senior citizens to take a morning walk today?',
-    'How should working professionals plan their commute during morning smog?',
-    'Why does morning thermal inversion trap toxic particulate near ground?',
-  ],
-  'air-intelligence': [
-    'What does India CPCB NAQI "Very Poor" mean for vulnerable families?',
-    'Why does cold winter weather trap vehicle tailpipe exhaust near the ground?',
-    'What is the difference between PM2.5 soot and Ozone?',
-  ],
-  'cleaner-choices': [
-    'Why does electric metro save 80% emissions over solo car driving?',
-    'How does combining weekend errand trips prevent cold-start smog spikes?',
-    'What is the scientific distinction between personal exposure and carbon footprint?',
-  ],
-  'community-alerts': [
-    'What are the mandatory restrictions under CAQM GRAP Stage IV?',
-    'When does the daily thermal inversion breakup window occur today?',
-    'How do I file an illegal garbage burning complaint on CPCB Sameer?',
-    'What clean air advisory should our RWA share with apartment residents?',
-  ],
-};
-
-const WORKSPACE_LABELS: Record<WorkspaceKey, string> = {
-  'air-intelligence': 'Air Intelligence',
-  'family-planner': 'Family Daily Planner',
-  'indoor-air': 'Indoor Air Intelligence',
-  'cleaner-choices': 'Cleaner Choices & Impact',
-  'community-alerts': 'Community & Alerts',
-};
 
 export function CopilotDrawerShell({
   isOpen,
@@ -187,12 +153,7 @@ export function CopilotDrawerShell({
   }
 
   const chips = WORKSPACE_PROMPT_CHIPS[activeWorkspace] || WORKSPACE_PROMPT_CHIPS['air-intelligence'];
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    sendMessage();
-    inputRef.current?.focus();
-  };
+  const workspaceLabel = WORKSPACE_LABELS[activeWorkspace];
 
   const drawerContent = (
     <div
@@ -208,13 +169,16 @@ export function CopilotDrawerShell({
         aria-hidden="true"
       />
 
-      {/* Slide-Over Drawer Container */}
-      <div ref={drawerRef} className="relative z-10 flex h-full w-full max-w-lg flex-col bg-white shadow-2xl border-l border-[var(--border-subtle)] text-[var(--ink-primary)] drawer-slide-in">
+      {/* Slide-out Panel */}
+      <div
+        ref={drawerRef}
+        className="relative z-10 flex h-full w-full max-w-xl flex-col bg-white shadow-2xl transition-transform duration-300 ease-out border-l border-[var(--border-subtle)]"
+      >
         {/* Drawer Header */}
-        <div className="flex items-center justify-between border-b border-[var(--border-subtle)] px-4 py-3 sm:px-5 sm:py-4 bg-[var(--surface-subtle)]/70">
+        <div className="flex items-center justify-between border-b border-[var(--border-subtle)] px-4 py-3 sm:px-5 bg-[var(--surface-subtle)]">
           <div className="flex items-center gap-2.5 min-w-0">
             <div
-              className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--brand-surface)] text-[var(--brand-primary)] text-base border border-[var(--brand-primary)]/30 font-bold shrink-0"
+              className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--brand-primary)] text-white text-sm font-bold shadow-xs shrink-0"
               aria-hidden="true"
             >
               🤖
@@ -232,13 +196,13 @@ export function CopilotDrawerShell({
                 </span>
               </div>
               <span className="text-[10px] font-mono text-[var(--ink-muted)] block mt-0.5 truncate">
-                Context: {WORKSPACE_LABELS[activeWorkspace]}
+                Context: {workspaceLabel}
               </span>
             </div>
           </div>
 
           <div className="flex items-center gap-1.5 shrink-0">
-            {/* Session History Toggle Button (ChatGPT / Gemini Style) */}
+            {/* Session History Toggle Button */}
             <button
               type="button"
               onClick={() => setIsHistoryOpen((prev) => !prev)}
@@ -296,93 +260,14 @@ export function CopilotDrawerShell({
 
         {/* Conditional View: Session History Panel OR Active Message Stream */}
         {isHistoryOpen ? (
-          <div className="flex-1 flex flex-col justify-between overflow-hidden bg-slate-50/70 p-4 space-y-3 animate-fadeIn">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-200">
-              <div className="flex items-center gap-1.5 font-bold text-xs text-slate-800 font-sans">
-                <span>🕒</span>
-                <span>Saved Conversations ({sessions.length})</span>
-              </div>
-              <span className="text-[10px] font-mono text-slate-500">Stored Safely on Device</span>
-            </div>
-
-            <div className="flex-1 overflow-y-auto space-y-2 pr-1 select-none">
-              {sessions.map((sess) => {
-                const isActive = sess.id === activeSessionId;
-                const msgCount = sess.messages.filter((m) => m.sender === 'user').length;
-                const formattedDate = new Date(sess.updatedAt).toLocaleDateString('en-IN', {
-                  month: 'short',
-                  day: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                });
-
-                return (
-                  <div
-                    key={sess.id}
-                    onClick={() => {
-                      switchSession(sess.id);
-                      setIsHistoryOpen(false);
-                    }}
-                    className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between gap-2.5 ${
-                      isActive
-                        ? 'bg-white border-teal-500 ring-2 ring-teal-500/20 shadow-xs'
-                        : 'bg-white/90 hover:bg-white border-slate-200 hover:border-slate-300'
-                    }`}
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5">
-                        {isActive && <span className="w-2 h-2 rounded-full bg-teal-600 shrink-0 animate-pulse" />}
-                        <h4 className="text-xs font-bold text-slate-900 truncate font-sans">
-                          {sess.title}
-                        </h4>
-                      </div>
-                      <div className="flex items-center gap-2 text-[10px] font-mono text-slate-400 mt-0.5">
-                        <span>{formattedDate}</span>
-                        <span>•</span>
-                        <span>{msgCount} {msgCount === 1 ? 'question' : 'questions'}</span>
-                      </div>
-                    </div>
-
-                    {sessions.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteSession(sess.id);
-                        }}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer shrink-0"
-                        title="Delete chat thread"
-                      >
-                        🗑️
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="pt-2.5 border-t border-slate-200 flex items-center justify-between text-xs">
-              <button
-                type="button"
-                onClick={() => {
-                  if (confirm('Clear all stored conversation history? This cannot be undone.')) {
-                    clearAllSessions();
-                    setIsHistoryOpen(false);
-                  }
-                }}
-                className="text-[11px] font-mono text-rose-600 hover:text-rose-800 font-bold cursor-pointer"
-              >
-                🗑️ Clear All History
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsHistoryOpen(false)}
-                className="px-3 py-1.5 text-xs font-semibold rounded-xl bg-slate-900 hover:bg-black text-white transition-colors cursor-pointer"
-              >
-                Back to Active Chat →
-              </button>
-            </div>
-          </div>
+          <SessionHistoryPanel
+            sessions={sessions}
+            activeSessionId={activeSessionId}
+            onSwitchSession={switchSession}
+            onDeleteSession={deleteSession}
+            onClearAllSessions={clearAllSessions}
+            onCloseHistory={() => setIsHistoryOpen(false)}
+          />
         ) : (
           <>
             {/* Conversation Message Stream */}
@@ -435,65 +320,20 @@ export function CopilotDrawerShell({
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Suggested Context Question Chips */}
-            <div className="border-t border-[var(--border-subtle)] bg-[var(--surface-subtle)]/40 p-3">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] font-semibold text-[var(--ink-muted)] font-sans">
-                  Suggested Inquiries ({WORKSPACE_LABELS[activeWorkspace]})
-                </span>
-              </div>
-              <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-                {chips.map((chip, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => sendMessage(chip)}
-                    disabled={isThinking || (cooldownSeconds !== null && cooldownSeconds > 0)}
-                    className="shrink-0 px-2.5 py-1 text-[11px] font-medium rounded-lg bg-white hover:bg-[var(--brand-surface)] text-[var(--ink-secondary)] hover:text-[var(--brand-primary)] border border-[var(--border-subtle)] hover:border-[var(--brand-primary)]/40 transition-all cursor-pointer tactile-btn disabled:opacity-50 disabled:cursor-not-allowed select-none text-left shadow-2xs"
-                  >
-                    {chip}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Input Bar & Send Form */}
-            <form
-              onSubmit={handleSubmit}
-              className="border-t border-[var(--border-subtle)] bg-white p-3 sm:p-4 space-y-2"
-            >
-              <div className="flex items-center gap-2">
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={inputQuery}
-                  onChange={(e) => setInputQuery(e.target.value.slice(0, 200))}
-                  placeholder={`Ask about ${WORKSPACE_LABELS[activeWorkspace].toLowerCase()}...`}
-                  disabled={isThinking || (cooldownSeconds !== null && cooldownSeconds > 0)}
-                  maxLength={200}
-                  className="flex-1 px-3 py-2 text-xs text-[var(--ink-primary)] bg-[var(--surface-subtle)] rounded-xl border border-[var(--border-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] disabled:opacity-50"
-                  aria-label="Ask Copilot a question"
-                />
-
-                <button
-                  type="submit"
-                  disabled={
-                    !inputQuery.trim() ||
-                    isThinking ||
-                    (cooldownSeconds !== null && cooldownSeconds > 0)
-                  }
-                  className="px-4 py-2 bg-[var(--brand-primary)] hover:bg-[var(--brand-hover)] text-white text-xs font-mono font-bold rounded-xl shadow-xs transition-all cursor-pointer tactile-btn disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
-                  aria-label="Send message to Copilot"
-                >
-                  Send ➤
-                </button>
-              </div>
-
-              <div className="flex items-center justify-between text-[10px] font-mono text-[var(--ink-muted)]">
-                <span>🔒 Chats are saved only on this device</span>
-                <span>{inputQuery.length}/200</span>
-              </div>
-            </form>
+            {/* Input & Suggested Inquiries Area */}
+            <CopilotInputArea
+              chips={chips}
+              activeWorkspaceLabel={workspaceLabel}
+              inputQuery={inputQuery}
+              setInputQuery={setInputQuery}
+              sendMessage={(q) => {
+                sendMessage(q);
+                inputRef.current?.focus();
+              }}
+              isThinking={isThinking}
+              cooldownSeconds={cooldownSeconds}
+              inputRef={inputRef}
+            />
           </>
         )}
       </div>
@@ -501,96 +341,4 @@ export function CopilotDrawerShell({
   );
 
   return createPortal(drawerContent, document.body);
-}
-
-function MessageBubble({
-  message,
-  userQuestion = '',
-  report = null,
-  onSelectPrompt,
-}: {
-  readonly message: CopilotChatMessage;
-  readonly userQuestion?: string;
-  readonly report?: AirQualityReport | null;
-  readonly onSelectPrompt?: (prompt: string) => void;
-}) {
-  if (message.sender === 'user') {
-    return (
-      <div className="flex justify-end">
-        <div className="max-w-[85%] rounded-2xl rounded-tr-xs bg-[var(--brand-primary)] text-white px-3.5 py-2.5 text-xs shadow-xs leading-relaxed font-sans break-words whitespace-pre-wrap">
-          {message.text}
-        </div>
-      </div>
-    );
-  }
-
-  if (message.isError) {
-    return (
-      <div className="flex justify-start">
-        <div className="max-w-[90%] rounded-2xl rounded-tl-xs bg-rose-50 border border-rose-200 text-rose-900 p-3 text-xs shadow-xs leading-relaxed font-mono">
-          <div className="flex items-center gap-1.5 font-bold mb-1">
-            <span>⚠️</span>
-            <span>Guidance System Alert</span>
-          </div>
-          <p>{message.errorMessage}</p>
-        </div>
-      </div>
-    );
-  }
-
-  const res = message.response;
-  if (!res) {
-    return (
-      <div className="flex justify-start">
-        <div className="max-w-[90%] rounded-2xl rounded-tl-xs bg-[var(--surface-subtle)] border border-[var(--border-subtle)] text-[var(--ink-primary)] p-3 text-xs shadow-xs leading-relaxed font-sans">
-          {message.text}
-        </div>
-      </div>
-    );
-  }
-
-  const isLiveAi = message.source === 'cloudflare-ai' || (!res.isDeterministicFallback && Boolean(res.modelName));
-  const modelName = res.modelName || 'Cloudflare Workers AI';
-  const badgeText = isLiveAi ? `AI-generated · ${modelName}` : 'Rule-based answer';
-
-  return (
-    <div className="flex justify-start">
-      <div className="max-w-[94%] rounded-2xl rounded-tl-xs bg-white border border-[var(--border-subtle)] shadow-xs p-3.5 sm:p-4 text-xs space-y-3">
-        {/* Model Provenance Banner */}
-        <div className="flex flex-wrap items-center justify-between gap-1.5 pb-2 border-b border-[var(--border-subtle)]">
-          <span
-            className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${
-              isLiveAi
-                ? 'bg-teal-50 text-teal-800 border-teal-300'
-                : 'bg-slate-100 text-slate-800 border-slate-300'
-            }`}
-          >
-            {isLiveAi
-              ? '⚡ Cloudflare Workers AI'
-              : '🛡️ Deterministic Guidance Engine'}
-          </span>
-
-          <div className="flex items-center gap-1.5 text-right flex-wrap">
-            {!isLiveAi && res.fallbackReason && (
-              <span className="text-[10px] font-mono text-slate-500 italic">
-                {res.fallbackReason} ·
-              </span>
-            )}
-            <span className="text-[10px] font-mono font-medium text-slate-600 bg-slate-50 px-2 py-0.5 rounded-md border border-slate-200">
-              {badgeText}
-            </span>
-          </div>
-        </div>
-
-        {/* Rich Copilot Presentation (A2UI-inspired Zero-Dependency Catalog) */}
-        <CopilotRichResponse
-          question={userQuestion || ''}
-          response={res}
-          report={report}
-          onSelectPrompt={onSelectPrompt}
-          isLiveAi={isLiveAi}
-        />
-      </div>
-    </div>
-  );
 }
