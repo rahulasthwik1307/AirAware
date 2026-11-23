@@ -25,6 +25,65 @@ AirAware addresses **PromptWars Challenge 6**:
 
 ---
 
+## Chosen Vertical & Persona
+
+- **Vertical**: Urban Environmental Intelligence & Winter Smog Navigation (PromptWars Challenge 6: Urban Air Quality Assistant).
+- **Geographic Context**: Northern India and the Indo-Gangetic Plains during the winter smog season (October–February), when shallow thermal boundary layer inversions trap surface smoke and particulate matter close to the ground between 07:00 AM and 10:00 AM.
+- **Primary Personas & Core Needs**:
+  1. **Family with Young Children or Seniors** (`CHILD_STUDENT`, `SENIOR_VULNERABLE` in `src/domain/household/types.ts`):
+     - *Needs*: Pediatric and cardiovascular airway protection, morning routine postponement (shifting school transit and senior morning park walks past 9:30 AM), room-by-room HEPA air purifier sizing to achieve $\ge 4.8$ Air Changes per Hour (ACH), and knowing safe afternoon solar ventilation windows (12:30 PM – 03:30 PM) to flush indoor CO2 without introducing particulate smog.
+  2. **Working Commuter** (`WORKING_COMMUTER` in `src/domain/household/types.ts`):
+     - *Needs*: Timely awareness of high-exposure traffic bottlenecks, vehicle AC cabin recirculation reminders, roadside N95 respirator recommendations, and transparent comparison of solo driving against public transit (electric metro, bus, carpooling) to quantify avoided emissions.
+  3. **Housing Society / RWA Coordinator** (`src/domain/community/types.ts`, `src/domain/community/generator.ts`):
+     - *Needs*: Pre-composed clean-air notice bulletins for society WhatsApp groups (`formatRwaSocietyBulletin`), replacing open leaf/waste fires with electric radiant heaters for night security guards, and documenting local civic violations under Central Pollution Control Board (CPCB) Air Act Section 19(5) guidelines.
+
+---
+
+## Approach & Logic
+
+AirAware processes environmental conditions through a deterministic, transparent 6-step decision pipeline:
+
+1. **Resolve Location**: The user selects a location via geocoding search (`src/app/api/locations/search/route.ts`), browser GPS geolocation (`src/components/dashboard/LocationSearch.tsx`), or quick Indian city presets (`New Delhi`, `Noida`, `Mumbai`, `Kolkata`, `Bengaluru`).
+2. **Fetch Telemetry with Explicit Provenance**: The server-side API route (`src/app/api/air-quality/route.ts`) queries the OpenAQ v3 API (`src/domain/aqi/openaq-adapter.ts`) for the nearest verified ground monitor within 25 km (`OPENAQ_RADIUS_METERS = 25000`) and $\le 3$ hours freshness (`OPENAQ_FRESHNESS_LIMIT_HOURS = 3`). When physical monitors are unavailable, it falls back to the Copernicus Atmosphere Monitoring Service (CAMS) regional grid (~45 km resolution via Open-Meteo) with an explicit provenance label.
+3. **Compute CPCB Sub-Index & Diurnal Windows**: The normalizer (`src/domain/aqi/normalizer.ts`) calculates the Indian CPCB PM2.5/PM10 particulate sub-index using piecewise linear interpolation (`src/domain/aqi/cpcb-benchmark.ts`). Concurrently, `findBestDaytimeWindow` (`src/domain/aqi/best-window.ts`) evaluates daytime forecast points (07:00–19:00) over 2–3 hour sliding windows to identify the lowest particulate exposure interval.
+4. **Apply Household Profile Rules**: The recommendation engine (`src/domain/planner/recommendation-engine.ts`) inspects the user's active household members (`src/domain/household/types.ts`) across archetypes (`CHILD_STUDENT`, `WORKING_COMMUTER`, `SENIOR_VULNERABLE`) and sensitivity tiers (`PEDIATRIC`, `SENIOR`, `RESPIRATORY`, `NONE`), deriving customized routine shifts, indoor purification targets, and travel guidance.
+5. **GenAI Interprets Locked Facts**: Server-side Cloudflare Workers AI (`src/lib/ai/cloudflare-client.ts`) runs Gemma 4 / GLM-4.7 / Granite using strict prompt builders (`src/lib/ai/prompt-builder.ts`). Live telemetry, station distance, and household profiles are locked as immutable facts; the model explains the scientific rationale ("Why") and quantified "Expected Impact" without ever generating AQI numbers.
+6. **Strict Schema Validation & Deterministic Fallback**: Model outputs are validated against Zod schemas (`GuidanceResponseSchema` and `CopilotResponseSchema` in `src/lib/ai/types.ts`). If inference times out (12s), rate limits are exceeded, or schema parsing fails, the system immediately fails closed to the deterministic scientific engine (`src/lib/ai/deterministic-fallback.ts`), labeled with a green `"Rule-based answer"` badge.
+
+---
+
+## How It Works (User Journey)
+
+1. **Onboarding & Overview**: First-time visitors review the interactive 3-step onboarding walkthrough (`src/components/welcome/OnboardingModal.tsx`), introducing diurnal winter smog dynamics and local-first privacy guarantees.
+2. **Explore Airshed Intelligence**: The user inspects real-time AQI, 6 criteria pollutants, ground station distance, and the diurnal best-window recommendation in the Air Intelligence Studio (`src/components/dashboard/AqiHeroCard.tsx`).
+3. **Configure Household & Daily Plan**: In the Family Daily Planner (`src/components/planner/FamilyPlannerWorkspace.tsx`), the user adds up to 4 household members; "Today's Plan for Your Household" (`src/components/planner/HouseholdTodayPlanCard.tsx`) provides chronological Morning, Afternoon, and Evening protocols.
+4. **Consult Grounded AI Copilot**: The user opens the 1-tap Copilot drawer (`src/components/shell/CopilotDrawerShell.tsx`) to ask environmental questions, receiving structured 7-part answers grounded in current locked telemetry (`src/components/copilot/CopilotRichResponse.tsx`).
+5. **Optimize Indoor Sanctuary**: In Indoor Air Sanctuary (`src/components/indoor/CleanAirSizer.tsx`), the user sizes room CADR requirements for $\ge 4.8$ ACH, checks diurnal ventilation timing, or logs home monitor readings (`src/components/indoor/IndoorAirReadingCard.tsx`).
+6. **Compare Cleaner Choices**: In Cleaner Choices & Impact (`src/components/choices/CleanerChoicesWorkspace.tsx`), the user evaluates commute alternatives and views avoided CO2e, NOx, and tailpipe PM2.5 in the dual impact studio (`src/components/choices/DualImpactDashboardCard.tsx`).
+7. **Engage Community & Report Incidents**: In Community & Alerts (`src/components/community/CommunityAlertsWorkspace.tsx`), the user generates WhatsApp RWA society bulletins, reviews qualitative winter source categories, or logs civic pollution incidents for CPCB dossier export (`src/components/community/PollutionIncidentReporterCard.tsx`).
+8. **Clear Device Data**: The user retains full control; clicking "Clear my data" in the footer executes `clearAllAirAwareData()` (`src/domain/constants/storage-keys.ts`), erasing all profiles, custom schedules, and cached history from `localStorage`.
+
+---
+
+## Assumptions
+
+All mathematical thresholds, spatial constraints, and conversion factors are verified directly from repository constants:
+
+- **Ground Station Search Radius**: 25 km (`OPENAQ_RADIUS_METERS = 25_000` in `src/domain/aqi/openaq-adapter.ts`).
+- **Ground Station Freshness Limit**: 3 hours (`OPENAQ_FRESHNESS_LIMIT_HOURS = 3` in `src/domain/aqi/openaq-adapter.ts`); monitors reporting older observations trigger modeled CAMS fallback.
+- **Atmospheric Model Grid**: ~45 km horizontal grid resolution for Copernicus Atmosphere Monitoring Service (CAMS) numerical simulations via Open-Meteo.
+- **Indoor Building Infiltration**: ~60% ambient particulate penetration factor for unmonitored residences (`DEFAULT_INFILTRATION_FACTOR = 0.6` in `src/domain/indoor/calculations.ts`).
+- **Target Room Air Turnover**: 4.8 Air Changes per Hour (`DEFAULT_TARGET_ACH = 4.8` in `src/domain/indoor/calculations.ts`) for particulate clearance, derated by 60% in quiet sleep mode (`DERATED_SLEEP_FACTOR = 0.4`).
+- **Daytime Window Parameters**: Daytime evaluation hours between 07:00 and 19:00 (`DAY_START_HOUR = 7`, `DAY_END_HOUR = 19`) evaluated over consecutive sliding windows of 2 to 3 hours (`MIN_WINDOW_HOURS = 2`, `MAX_WINDOW_HOURS = 3` in `src/domain/aqi/best-window.ts`).
+- **Household Configuration Limits**: Maximum 4 household profiles per browser (`MAX_HOUSEHOLD_MEMBERS = 4`), with routine durations between 5 and 720 minutes (`MIN_SCHEDULE_DURATION_MINUTES = 5`, `MAX_SCHEDULE_DURATION_MINUTES = 720` in `src/domain/household/types.ts`).
+- **Emission Factor Benchmarks**: UK Department for Environment, Food & Rural Affairs (DEFRA 2023), European Environment Agency (EEA 2023), and Central Electricity Authority of India (CEA CO2 baseline database) (`src/domain/choices/constants.ts`).
+- **National Regulatory Standards**: Official Indian CPCB NAQI piecewise linear interpolation breakpoints (Good 0–50, Satisfactory 51–100, Moderate 101–200, Poor 201–300, Very Poor 301–400, Severe 401–500 in `src/domain/aqi/cpcb-benchmark.ts`) and CAQM GRAP Stages I–IV (Poor $\ge 200$, Very Poor $\ge 300$, Severe $\ge 400$, Severe+ $\ge 450$ in `src/domain/community/generator.ts`).
+- **Localization & Time Zone Scope**: English-only interface with scheduling and timestamps localized to Indian Standard Time (`Asia/Kolkata`).
+- **Accountless Storage**: Zero server-side user database or cloud authentication; all household profiles, schedules, and custom preferences persist exclusively in browser `localStorage` (`src/domain/constants/storage-keys.ts`).
+- **Serverless AI & API Limits**: Cloudflare Workers AI timeout of 12 seconds (`AI_TIMEOUT_MS = 12_000`), in-memory sliding window rate limit of 30 requests per 10 minutes (`MAX_REQUESTS = 30`, `WINDOW_MS = 600_000` in `src/lib/ai/rate-limiter.ts`), and strict 32 KB request body limit (`MAX_AI_PAYLOAD_BYTES = 32_768` in `src/lib/ai/types.ts`).
+
+---
+
 ## Landing page artwork
 
 | Artwork | Scene |
@@ -70,7 +129,7 @@ AirAware separates physical sensor measurements from numerical atmospheric model
 | Source | What It Provides | Update Frequency | UI Labeling & Freshness Rule |
 |--------|------------------|------------------|------------------------------|
 | **OpenAQ v3 API** | Nearest CPCB / official ground monitor within 25 km; real-time PM2.5 and PM10 | Real-time (in-situ) | Labeled `"Ground station"` with station name, distance in km, observation time, and 3-hour freshness rule. |
-| **Copernicus CAMS via Open-Meteo** | Atmospheric grid (~45 km); 6 criteria pollutants and hourly forecast | Updated 4x daily | Labeled `"Modeled estimate"` with explicit fallback reason (e.g. `"no recent station within 25 km"`). |
+| **Copernicus CAMS via Open-Meteo** | Atmospheric grid (~45 km); 6 criteria pollutants and hourly forecast | Updated several times a day | Labeled `"Modeled estimate"` with explicit fallback reason (e.g. `"no recent station within 25 km"`). |
 | **Open-Meteo Geocoding** | Indian city, district, and coordinate search | 24-hour cache | Location dropdown with state/region and geographic coordinates. |
 
 ---
@@ -84,7 +143,7 @@ AirAware uses Cloudflare Workers AI with a 3-tier fallback chain:
 
 - **The AI Never Generates AQI Numbers:** Telemetry is injected as immutable context into `buildGuidancePayload()` and `buildCopilotPayload()`. The model only interprets, schedules, and explains.
 - **Strict Output Validation:** Model responses are parsed via Zod schemas (`GuidanceResponseSchema`, `CopilotResponseSchema`). Responses that fail schema validation fail closed immediately.
-- **Deterministic Rule-Based Fallback:** If inference fails, times out (12s), or credentials are unset, `getDeterministicGuidance()` or `getDeterministicCopilotAnswer()` serves verified guidance labeled with a green `"Rule-based fallback"` badge.
+- **Deterministic Rule-Based Fallback:** If inference fails, times out (12s), or credentials are unset, `getDeterministicGuidance()` or `getDeterministicCopilotAnswer()` serves verified guidance labeled with a green `"Rule-based answer"` badge.
 - **Prompt Injection Hardening:** `sanitizeUserQuery()` strips control characters, removes angle brackets, and truncates queries to 200 characters.
 - **Cache Integrity:** In-memory `aiCache` (30-min TTL) never stores rule-based fallback responses.
 

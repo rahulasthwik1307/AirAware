@@ -233,7 +233,10 @@ Managed centrally in `src/domain/constants/storage-keys.ts`:
 
 ## 7. Performance & Optimization Architecture
 
-- **Bundle Separation**: Three.js and MapLibre GL are isolated via `dynamic(() => import(...), { ssr: false })` in `src/components/dashboard/AqiHeroCard.tsx`.
+- **Bundle Separation & Lazy Loading**:
+  - `LazyGlobePanel` is dynamically imported in `src/components/dashboard/AqiHeroCard.tsx` pointing to `src/components/dashboard/hero/GlobePanel.tsx` (`ssr: false`), which dynamically imports `src/components/globe/MapLibreGlobe.tsx` (`ssr: false`) to isolate heavy WebGL/Three.js assets from the initial client bundle.
+  - `LazyRegionalComparePanel` is dynamically imported in `src/components/dashboard/AqiHeroCard.tsx` pointing to `src/components/dashboard/hero/RegionalComparePanel.tsx` (`ssr: false`).
+  - `CopilotDrawerShell` (`src/components/shell/CopilotDrawerShell.tsx`) and `OnboardingModal` (`src/components/welcome/OnboardingModal.tsx`) are dynamically imported with `ssr: false` in `src/components/shell/AirAwareShell.tsx`.
 - **Deduplication**: `aiCache` maintains an in-flight Promise map (`inFlightGuidance`, `inFlightCopilot`). Concurrent identical requests join the active single-flight Promise rather than issuing duplicate calls to Cloudflare Workers AI.
 - **Caching Cadences**:
   - Open-Meteo CAMS telemetry: 10-minute Next.js CDN cache (`OPEN_METEO_REVALIDATE_SECONDS = 600`).

@@ -24,7 +24,7 @@ This document provides traceable verification mapping every requirement from the
 | 12 | **Every recommendation explains "Why" + "Expected Impact"** | **MET** | `src/domain/planner/recommendation-engine.ts` (`scientificReason`, `practicalAction`, `deltaC`, `transportImpact`)<br>`src/domain/indoor/calculations.ts` (`IndoorActionItem`: `action`, `why`, `expectedImpact`)<br>`src/lib/ai/prompt-builder.ts` | Every card in Family Planner, Indoor Air, and Today's Plan displays three distinct fields: what to do (Action), the scientific rationale (Why), and the quantified result (Expected Impact). |
 | 13 | **Morning, afternoon, and evening daily planner** | **MET** | `src/components/planner/HouseholdTodayPlanCard.tsx`<br>`src/lib/ai/types.ts` (`TodayHouseholdPlanSchema`: morning, afternoon, evening)<br>`src/lib/ai/prompt-builder.ts`<br>`src/lib/ai/deterministic-fallback.ts` | At the top of Family Planner, "Today's Plan for Your Household" renders three chronological cards covering morning low-emission routine, afternoon indoor hack, and evening sustainable transit. |
 | 14 | **Simple, accessible user experience** | **MET** | `src/components/shell/AirAwareShell.tsx` (5 workspace tabs, responsive layout)<br>`src/components/shell/AppHeader.tsx`<br>`src/components/shell/MobileBottomNav.tsx`<br>`src/tokens/tokens.css` (WCAG 2.2 AA palette) | Top navigation bar switches between 5 modular workspaces, provides 1-tap Copilot drawer access, and adapts to mobile screen sizes with bottom navigation. |
-| 15 | **Graceful error handling & deterministic fallback** | **MET** | `src/lib/ai/cloudflare-client.ts` (3-tier model fallback)<br>`src/lib/ai/deterministic-fallback.ts` (offline scientific engine)<br>`src/components/common/ComponentErrorBoundary.tsx` | If Cloudflare Workers AI credentials are unset or rate limits are reached, the app automatically serves instant verified guidance labeled with a green "Rule-based fallback" badge. |
+| 15 | **Graceful error handling & deterministic fallback** | **MET** | `src/lib/ai/cloudflare-client.ts` (3-tier model fallback)<br>`src/lib/ai/deterministic-fallback.ts` (offline scientific engine)<br>`src/components/common/ComponentErrorBoundary.tsx` | If Cloudflare Workers AI credentials are unset or rate limits are reached, the app automatically serves instant verified guidance labeled with a green "Rule-based answer" badge. |
 | 16 | **No unrelated or out-of-scope features** | **MET** | `src/` directory inspection | No e-commerce stores, paid affiliate banners, crypto widgets, or irrelevant social feeds. The entire project is dedicated to smog defense and air quality navigation. |
 
 ---
@@ -66,10 +66,12 @@ This document provides traceable verification mapping every requirement from the
 
 ## 3. "Two Users, Same City": Personalization in Action
 
-To demonstrate how AirAware personalizes advice for different lifestyles in the exact same atmospheric conditions, consider two households in New Delhi experiencing an ambient CPCB AQI of 340 (Very Poor):
+> **Illustrative example (wording condensed from the real rule branches)**
+
+To demonstrate how AirAware personalizes advice for different lifestyles in the exact same atmospheric conditions, consider two households in New Delhi experiencing an ambient CPCB AQI in the Very Poor range:
 
 ```
-                                 [ New Delhi Telemetry: AQI 340 (Very Poor) ]
+                                 [ New Delhi Telemetry: AQI Very Poor ]
                                                       │
                        ┌──────────────────────────────┴──────────────────────────────┐
                        ▼                                                             ▼
@@ -82,19 +84,19 @@ To demonstrate how AirAware personalizes advice for different lifestyles in the 
                        │                                                             │
                        ▼                                                             ▼
          • Morning: Shift commute departure past                       • Morning: Postpone school transit past
-           09:30 AM; switch car AC to internal                           09:30 AM; cancel outdoor morning recess;
+           9:30 AM; switch car AC to internal                            9:30 AM; cancel outdoor morning recess;
            recirculation mode. Avoid roadside walking                    fitted pediatric N95 mask required.
            during heavy diesel traffic hours.                            Avoids peak ground-level smoke inversion.
                        │                                                             │
          • Afternoon: Cross-ventilate home office                      • Afternoon: Seal nursery/bedroom; run
-           for 15 minutes between 1:00 PM – 2:30 PM                      HEPA filtration on medium/turbo to achieve
+           for 15 minutes between 1:00 PM and 2:30 PM                    HEPA filtration on medium/turbo to achieve
            to clear CO2 buildup and maintain focus;                      ≥4.8 ACH. Keep child breathing zone PM2.5
            reseal and run desktop purifier.                              strictly below 25 µg/m³.
                        │                                                             │
          • Evening: Switch from solo petrol car to                     • Evening: Coordinate shared neighborhood
-           Delhi Metro (electric rail) for a 14 km                       school carpools or electric bus transit;
-           return trip. Avoids 2.38 kg CO2e and 6.1g                     strictly eliminate cold engine idling at
-           of smog-forming NOx tailpipe emissions.                       school pickup gates.
+           Delhi Metro (electric rail) or carpool for                    school carpools or electric bus transit;
+           return trip. Cuts personal exposure and avoids                strictly eliminate cold engine idling at
+           peak evening ground smog pooling.                             school pickup gates.
 ```
 
 ### Traceable Code Paths
