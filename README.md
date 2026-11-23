@@ -1,214 +1,213 @@
-# 🌍 AirAware — Global Environmental Intelligence Platform
+# 🌍 AirAware — Smog Navigation & Environmental Intelligence
 
-> **Reliable environmental telemetry first • Practical personalized actions second • Grounded AI assistance third • Premium visual experience throughout.**
+> A local-first environmental intelligence assistant helping families and communities navigate severe winter smog with personalized routines, indoor air hacks, and sustainable alternatives.
 
-[![Next.js](https://img.shields.io/badge/Next.js-16.4.6-black?style=flat&logo=next.js)](https://nextjs.org/)
-[![React](https://img.shields.io/badge/React-19.3.1-blue?style=flat&logo=react)](https://react.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.7.3-3178C6?style=flat&logo=typescript)](https://www.typescriptlang.org/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.0-38BDF8?style=flat&logo=tailwindcss)](https://tailwindcss.com/)
-[![Tests](https://img.shields.io/badge/Vitest-251%20Passing%20(41%20Suites)-brightgreen?style=flat&logo=vitest)](tests/)
-[![Lint](https://img.shields.io/badge/ESLint-0%20Errors%20%7C%200%20Warnings-brightgreen?style=flat&logo=eslint)](eslint.config.mjs)
-[![TypeScript Check](https://img.shields.io/badge/tsc---noEmit-0%20Errors-brightgreen?style=flat)](tsconfig.json)
-[![Security Audit](https://img.shields.io/badge/npm%20audit-0%20Vulnerabilities-brightgreen?style=flat)](package.json)
-[![License](https://img.shields.io/badge/License-MIT-purple?style=flat)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-teal.svg)](LICENSE)
+[![Next.js](https://img.shields.io/badge/Next.js-16.4.6-black.svg?logo=next.js)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.7.3-blue.svg?logo=typescript)](https://www.typescriptlang.org/)
+
+**Live Demo:** {{LIVE_URL}} • **Video Walkthrough:** {{DEMO_VIDEO_URL}} • **Source Code:** {{REPO_URL}}
 
 ---
 
-## 📌 Executive Summary & Root Problem Statement
+## The Problem & Target Audience
 
-Standard commercial weather applications fail during hazardous winter smog seasons because they rely on **24-hour citywide averages** that obscure severe micro-climatic dynamics. In dense urban regions (such as the Indo-Gangetic Plains and global industrial centers), atmospheric pollutants peak violently between **07:00 AM – 10:00 AM** due to the **nocturnal boundary-layer thermal inversion trap**—compressing toxic smoke near ground level before midday solar heating disperses the smog layer.
+During severe winter smog across northern India and urban centers, ground-level thermal inversions trap industrial emissions, crop residue smoke, and vehicle exhaust between 07:00 AM and 10:00 AM. Standard air quality apps show 24-hour citywide averages that conceal these diurnal exposure windows.
 
-AirAware eliminates blind exposure by translating satellite IFS atmospheric models into **timed hourly ventilation windows**, **ASHRAE 62.2 room-by-room air purifier sizing**, **vulnerability-specific family schedules**, and **1-tap civic action alerts** that stop smoke at the source.
+AirAware addresses **PromptWars Challenge 6**:
+> *"Create a GenAI-powered assistant that helps families and communities navigate severe winter smog and urban air pollution. It should suggest low-emission daily routines, indoor air quality hacks, and sustainable alternatives tailored to their location and lifestyle, while clearly explaining the direct impact of their choices."*
 
-```mermaid
-flowchart LR
-    A["🛰️ Copernicus CAMS<br>IFS ~45km Atmospheric Grid"] --> B["⚡ AirAware Core Engine<br>Mathematical & Standards Resolver"]
-    B --> C["🇮🇳 India CPCB NAQI<br>(0–500 Indian Standard)"]
-    B --> D["🇺🇸 US EPA AQI<br>(0–500 Continuous)"]
-    B --> E["🇪🇺 European EAQI<br>(0–100+ EEA Standard)"]
-    
-    C & D & E --> F["5 Interoperable Workspaces"]
-    F --> G["01 Air Intelligence Studio"]
-    F --> H["02 Family Daily Planner"]
-    F --> I["03 Indoor Air Sanctuary"]
-    F --> J["04 Cleaner Choices & Impact"]
-    F --> K["05 Community & Alerts"]
+**Who It Is For:**
+- **Families with Children:** Protect developing pediatric airways from ground-level morning smoke.
+- **Seniors & Sensitive Individuals:** Minimize cold-air cardiovascular strain during peak smog.
+- **Urban Commuters & Students:** Identify cleaner transit windows and avoid high-exposure traffic bottlenecks.
+- **Housing Societies & Communities:** Coordinate neighborhood mitigation, draft RWA alerts, and report civic violations.
+
+---
+
+## Visual Showcase
+
+| View | Caption |
+|------|---------|
+| ![Dashboard](docs/screenshots/dashboard.png) | **Air Intelligence Studio:** Real-time CPCB/EPA telemetry, 6 criteria pollutants, and diurnal trend. |
+| ![Overview](docs/screenshots/overview.png) | **Source Ribbon & Provenance:** Explicit ground station distance, age, and modeled fallback notices. |
+| ![3D Globe](docs/screenshots/globe.png) | **MapLibre 3D Earth:** Global atmospheric visualization with lazy loading and regional compare. |
+| ![Air Copilot](docs/screenshots/copilot.png) | **AI Air Copilot:** Grounded conversational assistant with 7-part structured scientific answers. |
+| ![Family Planner](docs/screenshots/planner.png) | **Family Daily Planner:** Multi-member schedule shifts and chronological morning/afternoon/evening plan. |
+| ![Indoor Sanctuary](docs/screenshots/indoor.png) | **Indoor Air Sanctuary:** Room CADR purifier sizing, solar ventilation countdown, and indoor reading analysis. |
+| ![Community Alerts](docs/screenshots/community.png) | **Community & Alerts:** Source attribution, civic incident logging, and WhatsApp RWA bulletin drafting. |
+
+---
+
+## Core Features Mapped to Challenge Brief
+
+### 1. Low-Emission Daily Routines
+- **Morning / Afternoon / Evening Household Plan** (`src/components/planner/HouseholdTodayPlanCard.tsx`): Chronological daily plan covering routine shifts, indoor purification, and transit alternatives.
+- **Cleanest Daytime Window Finder** (`src/domain/aqi/best-window.ts`, `src/components/charts/BestTimeStrip.tsx`): Identifies the lowest-exposure 2–3 hour daytime window (12:30 PM – 03:30 PM) when solar heating lifts stagnant surface smog.
+- **Vulnerability-Specific Health Guidance** (`src/domain/planner/recommendation-engine.ts`, `src/components/dashboard/ActionableHealthGuidance.tsx`): Pediatric playground shifts and senior cardiovascular precautions.
+- **Commuter Exposure Advice** (`src/domain/planner/recommendation-engine.ts`, `src/components/choices/CommuteComparatorCard.tsx`): Roadside N95 respirator recommendations and vehicle AC recirculation guidance.
+
+### 2. Indoor Air Quality Hacks
+- **Room-by-Room CADR Sizer** (`src/domain/indoor/calculations.ts`, `src/components/indoor/CleanAirSizer.tsx`): Computes Clean Air Delivery Rate (CADR) for target Air Changes per Hour (ACH) across custom room dimensions.
+- **Solar Ventilation Timing** (`src/domain/indoor/calculations.ts`, `src/components/indoor/VentilationAdvisor.tsx`): Evaluates ambient particulates and ozone to recommend optimal natural airing intervals.
+- **Indoor PM2.5 Analysis** (`src/domain/indoor/calculations.ts`, `src/components/indoor/IndoorAirReadingCard.tsx`): Analyzes user-entered sensor measurements, or provides labeled ~60% building infiltration estimates with stated assumptions.
+- **Houseplants Reality Check** (`src/components/indoor/CleanAirSizer.tsx`): Explains why decorative houseplants cannot replace mechanical HEPA filtration for particulate smoke.
+
+### 3. Sustainable Alternatives & Impact Accounting
+- **Cleaner Choices Transit Comparator** (`src/domain/choices/calculator.ts`, `src/components/choices/CommuteComparatorCard.tsx`): Compares solo driving against electric metro, carpooling, or cycling.
+- **Emissions Avoidance Accounting** (`src/domain/choices/constants.ts`, `src/components/choices/DualImpactDashboardCard.tsx`): Quantifies weekly/monthly avoided CO2e (kg), NOx (g), and tailpipe PM2.5 (g) using DEFRA and CEA benchmarks.
+- **Structured Rationale on Every Recommendation** (`src/components/planner/RecommendationCard.tsx`): Every recommendation presents what to do, the scientific reason ("Why"), and the expected impact.
+
+### 4. Local-First Personalization & Civic Tools
+- **Household Profiles** (`src/components/planner/HouseholdProfilesManager.tsx`): Local profiles for up to 4 members with sensitivity tiers (`PEDIATRIC`, `SENIOR`, `RESPIRATORY`, `NONE`).
+- **All-India Coverage** (`src/components/dashboard/LocationSearch.tsx`): Geocoding search across India, GPS coordinate detection, and quick presets (New Delhi, Noida, Mumbai, Kolkata, Bengaluru).
+- **Community Incident Logging** (`src/components/community/CommunityAlertsWorkspace.tsx`): Local incident reporting, CPCB grievance formatting, and WhatsApp RWA bulletins.
+- **Complete Data Erasure** (`src/components/shell/AirAwareShell.tsx`): "Clear my data" button purges all browser storage via `clearAllAirAwareData()`.
+
+---
+
+## How Data Works: Sources & Provenance
+
+AirAware separates physical sensor measurements from numerical atmospheric models:
+
+| Source | What It Provides | Update Frequency | UI Labeling & Freshness Rule |
+|--------|------------------|------------------|------------------------------|
+| **OpenAQ v3 API** | Nearest CPCB / official ground monitor within 25 km; real-time PM2.5 and PM10 | Real-time (in-situ) | Labeled `"Ground station"` with station name, distance in km, observation time, and 3-hour freshness rule. |
+| **Copernicus CAMS via Open-Meteo** | Atmospheric grid (~45 km); 6 criteria pollutants and hourly forecast | Updated 4x daily | Labeled `"Modeled estimate"` with explicit fallback reason (e.g. `"no recent station within 25 km"`). |
+| **Open-Meteo Geocoding** | Indian city, district, and coordinate search | 24-hour cache | Location dropdown with state/region and geographic coordinates. |
+
+---
+
+## Grounded GenAI Architecture
+
+AirAware uses Cloudflare Workers AI with a 3-tier fallback chain:
+1. **Primary:** `@cf/google/gemma-4-26b-a4b-it`
+2. **Secondary:** `@cf/zai-org/glm-4.7-flash`
+3. **Tertiary:** `@cf/ibm-granite/granite-4.0-h-micro`
+
+- **The AI Never Generates AQI Numbers:** Telemetry is injected as immutable context into `buildGuidancePayload()` and `buildCopilotPayload()`. The model only interprets, schedules, and explains.
+- **Strict Output Validation:** Model responses are parsed via Zod schemas (`GuidanceResponseSchema`, `CopilotResponseSchema`). Responses that fail schema validation fail closed immediately.
+- **Deterministic Rule-Based Fallback:** If inference fails, times out (12s), or credentials are unset, `getDeterministicGuidance()` or `getDeterministicCopilotAnswer()` serves verified guidance labeled with a green `"Rule-based fallback"` badge.
+- **Prompt Injection Hardening:** `sanitizeUserQuery()` strips control characters, removes angle brackets, and truncates queries to 200 characters.
+- **Cache Integrity:** In-memory `aiCache` (30-min TTL) never stores rule-based fallback responses.
+
+---
+
+## Architecture Overview
+
 ```
-
----
-
-## 🔬 Scientific Citations & Mathematical Formulations
-
-Every metric, index, and recommendation in AirAware is grounded in authoritative scientific standards:
-
-### 1. Dual-Standard Atmospheric Index Breakpoints
-AirAware calculates simultaneous sub-indices across 6 criteria pollutants ($\text{PM}_{2.5}$, $\text{PM}_{10}$, $\text{NO}_2$, $\text{SO}_2$, $\text{CO}$, $\text{O}_3$) based on:
-* **India CPCB National Air Quality Index (NAQI 2014):** 6 defined severity categories (Good, Satisfactory, Moderate, Poor, Very Poor, Severe) mapped to Graded Response Action Plan (CAQM GRAP Stages I–IV).
-* **US EPA AQI Formula (EPA-454/B-18-007):**
-  $$I_p = \frac{I_{\text{high}} - I_{\text{low}}}{C_{\text{high}} - C_{\text{low}}} \times (C_p - C_{\text{low}}) + I_{\text{low}}$$
-  *Where $C_p$ is truncated pollutant concentration, and $[C_{\text{low}}, C_{\text{high}}]$ and $[I_{\text{low}}, I_{\text{high}}]$ are standard category breakpoints.*
-* **European EAQI (EEA 2024):** Instantaneous continuous atmospheric concentrations.
-
-### 2. ASHRAE 62.2 Room-by-Room Purifier CADR Sizing
-Generic purifier advice fails because clean air delivery depends directly on room geometry. AirAware calculates the exact Clean Air Delivery Rate (CADR) required to achieve **4.8 Air Changes per Hour (ACH)** for particulate containment:
-$$\text{Room Volume } V = \text{Length } (m) \times \text{Width } (m) \times \text{Ceiling Height } (m)$$
-$$\text{Required CADR } (m^3/h) = V \times \text{Target ACH}$$
-$$\text{Fan Speed Guidance} = \frac{\text{Required CADR}}{\text{Rated Purifier CADR}} \times 100\%$$
-
-### 3. Transit Emission Avoidance (UK DEFRA 2024 Greenhouse Gas Factors)
-Personal transit comparisons measure real avoided $\text{CO}_2\text{e}$ and $\text{PM}_{2.5}$ emissions against baseline private combustion transit:
-* **Petrol Car:** $0.170 \text{ kg CO}_2\text{e / km}$
-* **Diesel Car:** $0.171 \text{ kg CO}_2\text{e / km}$
-* **Electric Vehicle (Grid Average):** $0.043 \text{ kg CO}_2\text{e / km}$
-* **Electric Metro / Urban Rail:** $0.028 \text{ kg CO}_2\text{e / passenger-km}$
-* **Bicycle / Walking:** $0.000 \text{ kg CO}_2\text{e / km}$
-
----
-
-## 🗂️ The 5 Interoperable Workspaces
-
-AirAware organizes environmental intelligence into five distinct, deeply modular workspaces:
-
+Browser Client (React 19 / Next.js 16) ──> Next.js API Routes (/api/*)
+    ├── /api/air-quality ──> OpenAQ v3 (In-Situ) + Copernicus CAMS (Model)
+    ├── /api/weather     ──> Open-Meteo Forecast
+    └── /api/ai/*        ──> Cloudflare Workers AI (Gemma 4 / GLM-4.7 / Granite)
+                              └── Fail-closed to Deterministic Rule Engine
 ```
-┌────────────────────────────────────────────────────────────────────────────────────────┐
-│                              AIRAWARE APPLICATION SHELL                               │
-├─────────────────┬──────────────────┬─────────────────┬────────────────┬────────────────┤
-│  01 Air Intel   │  02 Family Plan  │ 03 Indoor Air   │  04 Choices    │  05 Community  │
-├─────────────────┼──────────────────┼─────────────────┼────────────────┼────────────────┤
-│ • 3D Earth Globe│ • Multi-member   │ • ASHRAE 62.2   │ • Commute Mode │ • WhatsApp RWA │
-│ • Dual CPCB/EPA │   vulnerabilities│   CADR Calculator│   Comparator   │   Alert 1-Tap  │
-│ • Diurnal Spline│ • Routine Loop   │ • Filter Life   │ • DEFRA CO2e   │ • CPCB Sameer  │
-│ • GRAP Stages   │   (Adopt/Edit)   │   Tracking Log  │   Tally Engine │   Formal Filing│
-│ • Weather Traps │ • Inversion Alert│ • Natural Vent  │ • Avoided PM2.5│ • Incident Log │
-│                 │   Time Shift     │   Windows       │   Accumulator  │   & Evidence   │
-└─────────────────┴──────────────────┴─────────────────┴────────────────┴────────────────┘
-```
-
-### [01] Air Intelligence Studio
-* **Interactive 3D Atmospheric Earth:** Rendered with MapLibre GL with WebGL context reuse, seamless coordinate centering, and graceful 2D vector fallback for low-power devices.
-* **Diurnal 24-Hour Forecast Timeline:** Interactive SVG spline displaying hourly $\text{PM}_{2.5}$, $\text{PM}_{10}$, boundary-layer height, and surface wind vectors.
-* **Dual-Standard Switcher:** Instantaneous toggle between US EPA, European EAQI, and Indian CPCB NAQI with GRAP advisory badges.
-
-### [02] Family Daily Planner
-* **Multi-Vulnerability Profiles:** Tailored schedules for high-risk family members—infants/children (underdeveloped respiratory systems), seniors (cardiovascular stress), and asthmatic adults.
-* **Actionable Routine Loop:** Interactive cards allowing users to **Adopt**, **Edit**, or **Complete** daily routines (e.g., shifting morning walks from 07:00 AM smog inversion to 01:00 PM solar dispersion).
-* **Diurnal Health Briefing:** Real-time synthesis of temperature, humidity, wind direction, and criteria pollutants into practical actions.
-
-### [03] Indoor Air Intelligence
-* **CADR & ACH Calculator:** Inputs for room length, width, and ceiling height to compute cubic volume ($m^3$) and exact purifier fan speeds needed for safe air turnover.
-* **Filter Lifecycle Tracker:** Tracks HEPA pre-filter vacuuming cycles (every 21 days) and calculates remaining filter lifespan with automated replacement reminders.
-* **Natural Ventilation Windows:** Highlights exact 90-minute afternoon intervals where outdoor air quality is safe for flushing indoor $\text{CO}_2$.
-
-### [04] Cleaner Choices & Impact
-* **Commute Mode Comparator:** Evaluates travel routes comparing private combustion vehicles against electric transit, cycling, and metro.
-* **Dual-Ledger Impact Tracker:** Separates **Exposure Avoided** (micrograms of inhaled toxic particulates prevented) from **Emissions Avoided** (kilograms of greenhouse gas prevented).
-
-### [05] Community & Alerts
-* **1-Tap WhatsApp RWA Emergency Alerts:** Pre-drafted WhatsApp alerts with specific room numbers, time, location, and legal citations ready to dispatch to neighborhood groups and security guards.
-* **Official CPCB Sameer Dossiers:** Formatted complaint text citing the *Solid Waste Management Byelaws (2016/2017)* to officially report illegal dry-leaf and garbage burning.
-* **Community Incident Journal:** On-device photo evidence logging with timestamps, location stamps, and action status badges.
+*See [ARCHITECTURE.md](ARCHITECTURE.md) for complete data flow diagrams, API schemas, and storage specifications.*
 
 ---
 
-## 🏆 Verified Evidence: The 6 AI Evaluation Parameters
+## Tech Stack
 
-AirAware was engineered to achieve maximum scores across all six evaluation categories:
-
-| Evaluation Parameter | Impact | Measurable Engineering Target | Verified Result in Codebase |
-| :--- | :---: | :--- | :--- |
-| **Problem Statement Alignment** | **HIGH** | Strict fidelity to winter smog mitigation, real-world utility, and transparent calculations. | **100% Interactive:** All 5 workspaces fully interactive with real Copernicus CAMS IFS telemetry and CPCB benchmarks. |
-| **Code Quality & Architecture** | **HIGH** | Deep domain modules, strict TypeScript, zero circular dependencies, clean linter run. | **PASSED:** `npx tsc --noEmit` exited `0`; `npm run lint` exited `0` (zero errors, zero warnings). |
-| **Security & Privacy** | **MEDIUM** | Zero leaked credentials, 100% on-device private storage, zero cloud accounts, safe DOM. | **PASSED:** `npm audit` returned `found 0 vulnerabilities`. All state stored in `localStorage`; 1-tap data wipe. |
-| **Efficiency & Performance** | **MEDIUM** | Sub-300ms GPU transitions, cached API telemetry, fast bundle compile times. | **PASSED:** Next.js Turbopack production build compiled in **5.5s**; 9/9 routes statically & dynamically optimized. |
-| **Accessibility (a11y)** | **HIGH** | WCAG 2.2 AA target, non-color-reliant status, full keyboard navigability (Tab/Esc). | **PASSED:** Chrome DevTools MCP verified: 0 accessibility issues, explicit `<label>` bindings, focus rings, high contrast. |
-| **Testing & Maintainability** | **LOW/MED** | Unit, integration, and regression test coverage for 100% of conversion and mathematical formulas. | **PASSED:** `npm test` verified **251/251 tests passing** across **41 test suites** in 3.31s. |
+| Layer | Technologies | Version |
+|-------|--------------|---------|
+| **Framework** | Next.js (App Router), React, React DOM | `16.4.6`, `19.3.1`, `19.3.1` |
+| **Language & Validation** | TypeScript, Zod | `5.7.3`, `4.6.7` |
+| **Styling & Design Tokens** | Tailwind CSS, Astryx Core Tokens | `4.0.0`, `^0.7.16` |
+| **Mapping & Visuals** | MapLibre GL, Three.js | `6.19.0`, `0.187.0` |
+| **Testing & Quality** | Vitest, Testing Library (React, Jest-DOM, User-Event), ESLint | `5.1.0`, `^16.3.3`, `9.39.5` |
+| **AI Inference** | Cloudflare Workers AI (Server-Side REST) | Serverless |
 
 ---
 
-## 🛡️ Security, Privacy & ₹0 Budget Architecture
+## Getting Started
 
-AirAware is built on a **100% client-side privacy model** with an absolute **₹0 operational budget**:
+### Prerequisites
+- Node.js 20+ and npm
 
-* **Zero Cloud Accounts or Telemetry:** No mandatory logins, passwords, or emails. All profiles and room configurations remain strictly on the user's hardware.
-* **1-Tap Instant Data Purge:** Settings feature a single-click button that executes `localStorage.clear()` and wipes all on-device state instantly.
-* **Air Copilot Offline Fallback:** The AI Air Copilot features client-side rate limiting, query length sanitization, and an offline **deterministic rule-based fallback engine** ([src/lib/ai/deterministic-fallback.ts](src/lib/ai/deterministic-fallback.ts)) ensuring full functionality without paid API keys.
-* **Zero Client-Side Secrets:** All third-party endpoints are proxied through server-side Next.js Route Handlers; zero API tokens exist in client JavaScript bundles.
-
----
-
-## 🏗️ Architecture & Codebase Structure
-
-AirAware follows clean Domain-Driven Design (DDD) with deep modular boundaries:
-
-```text
-src/
-├── app/                              # Next.js 16 App Router & Route Handlers
-│   ├── api/                          # Server-side API proxies (Open-Meteo, CAMS, AI Copilot)
-│   ├── layout.tsx                    # Root layout with Astryx typography & theme tokens
-│   └── page.tsx                      # Universal App Shell entry point
-├── components/                       # UI Components by Workspace Domain
-│   ├── dashboard/                    # 01 Air Intelligence Studio (HeroCard, Timeline, Map)
-│   ├── planner/                      # 02 Family Daily Planner (Profiles, Routine Loop)
-│   ├── indoor/                       # 03 Indoor Sanctuary (CADR Sizer, Filter Log)
-│   ├── choices/                      # 04 Cleaner Choices (Transit Comparator, Impact)
-│   ├── community/                    # 05 Community Action (RWA Bulletin, Sameer Dossier)
-│   ├── shell/                        # Top Header, Navigation Tabs, and Copilot Drawer
-│   └── welcome/                      # Onboarding Modal & Educational Showcase Studio
-├── domain/                           # Pure Domain Business Logic & Mathematical Models
-│   ├── aqi/                          # CPCB NAQI, US EPA, & EAQI conversion algorithms
-│   ├── planner/                      # Household vulnerability schemas & diurnal rule engine
-│   ├── indoor/                       # ASHRAE 62.2 volumetric CADR & ACH calculators
-│   ├── choices/                      # DEFRA 2024 emission factors & transport formulas
-│   └── community/                    # Legal citations & CPCB Sameer complaint formatters
-├── lib/                              # Infrastructure & Utilities
-│   ├── ai/                           # AI Copilot facade, rate limiter, deterministic fallback
-│   ├── api/                          # Atmospheric data normalization & caching
-│   └── utils/                        # Formatting, date utilities, and units
-tests/                                # Vitest Automated Test Suites (41 files, 251 tests)
-```
-
----
-
-## ⚡ Reproduction & Verification Commands
-
-All evaluations, builds, and tests can be reproduced with standard terminal commands:
-
+### Installation & Setup
 ```bash
-# 1. Install dependencies
+git clone {{REPO_URL}}
+cd AirAware
 npm install
+cp .env.example .env.local
+```
 
-# 2. Run unit & integration test suite (251 tests across 41 files)
-npm test
+Configure the following variables in `.env.local` (names only):
+- `OPENAQ_API_KEY`: Server-side OpenAQ v3 API key for physical monitor telemetry.
+- `CLOUDFLARE_ACCOUNT_ID`: Cloudflare dashboard account identifier.
+- `CLOUDFLARE_API_TOKEN`: Cloudflare API token with `Workers AI: Run` permissions.
+- `CLOUDFLARE_AI_MODEL_PRIMARY`, `CLOUDFLARE_AI_MODEL_SECONDARY`, `CLOUDFLARE_AI_MODEL_TERTIARY` (optional model overrides).
 
-# 3. Verify strict TypeScript type checking (0 errors)
-npx tsc --noEmit
-
-# 4. Verify ESLint compliance & React 19 rules (0 errors, 0 warnings)
-npm run lint
-
-# 5. Verify dependency security & supply chain (0 vulnerabilities)
-npm audit
-
-# 6. Execute full production build (Next.js 16 Turbopack)
-npm run build
-
-# 7. Launch local development server
-npm run dev
+### Development & Build
+```bash
+npm run dev      # Start development server on http://localhost:3000
+npm run build    # Compile production Next.js build
+npm start        # Launch production server
 ```
 
 ---
 
-## 📜 Open Source & Scientific Credits
+## Testing & Quality Assurance
 
-* **Atmospheric Data:** European Union Copernicus Atmosphere Monitoring Service (CAMS) Global IFS model via Open-Meteo.
-* **National Standards:** Central Pollution Control Board (CPCB), Ministry of Environment, Forest and Climate Change, Government of India (NAQI 2014 Report).
-* **Indoor Air Quality:** ASHRAE Standard 62.2-2022 (Ventilation and Acceptable Indoor Air Quality in Low-Rise Residential Buildings).
-* **Emissions Data:** UK Department for Energy Security and Net Zero (DESNZ) / DEFRA 2024 Conversion Factors.
-* **Design & Tokens:** Astryx Design System (`@astryxdesign/core`) and Tailwind CSS 4.
+Run test and lint scripts configured in `package.json`:
+```bash
+npm test         # Run unit and integration test suite via Vitest
+npm run lint     # Run ESLint validation
+npm run typecheck # Run TypeScript compiler check (tsc --noEmit)
+npm run check    # Run lint, typecheck, and tests in sequence
+```
 
 ---
 
-<p align="center">
-  <b>AirAware</b> — Engineered for the PromptWars Virtual Challenge 06.<br>
-  <i>Clean air intelligence for every family, household, and community.</i>
-</p>
+## Security & Accessibility
+
+### Security
+- **Server-Only Credentials:** Zero client-side API keys; `.env.local` excluded via `.gitignore`.
+- **SSRF Allowlist & Timeouts:** Outbound requests restricted to 5 origins with 8,000ms timeouts (`src/lib/security/upstream.ts`).
+- **Input Bounds & Schema Validation:** Strict Zod parsing on all route handlers and storage inputs.
+- **Client Storage:** Zero authentication cookies or cloud databases; data cleared via `clearAllAirAwareData()`.
+- *See [SECURITY.md](SECURITY.md) for full security disclosures.*
+
+### Accessibility (WCAG 2.2 AA)
+- **Skip Link:** Accessible skip navigation link targeting `#main-content` in root layout.
+- **Focus Trapping & Escape Handlers:** Drawers and dialogs manage keyboard focus and restore focus on close.
+- **Accessible Charts:** Data visualizations expose `role="img"` with descriptive labels and toggleable data tables.
+- **Reduced Motion & Contrast:** Smooth motion respects `prefers-reduced-motion`; color tokens meet AA contrast.
+
+---
+
+## Deployment Note (Vercel)
+
+When deploying to Vercel:
+- Set environment variables in the project settings (`OPENAQ_API_KEY`, `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`).
+- AI route handlers (`/api/ai/guidance` and `/api/ai/copilot`) configure `export const maxDuration = 30;` to prevent serverless function timeouts.
+
+---
+
+## Known Limitations
+
+1. **Station Density:** OpenAQ physical ground stations are concentrated in major urban centers; rural locations automatically fall back to the Copernicus CAMS ~45 km grid with explicit labeling.
+2. **CPCB Sub-Index Scope:** The displayed CPCB index is a PM2.5/PM10 particulate sub-index, not the full 8-pollutant regulatory NAQI.
+3. **Indoor Estimation:** When a user lacks an indoor sensor, indoor PM2.5 is labeled as an estimate (~60% ambient building shell infiltration).
+4. **Community Card Simulation:** The Neighborhood Action card in `src/components/community/AirshedSourceAttributionCard.tsx` displays a labeled simulation ("4 Alerts Dispatched, 2 CPCB Escalated, ~18 kg Soot Prevented") with sample local incidents.
+5. **Serverless Rate Limiting:** Rate limiting runs in-memory per serverless instance (best-effort local burst suppression).
+6. **CSP Mode:** Content Security Policy in `next.config.ts` is configured in Report-Only mode (`Content-Security-Policy-Report-Only`).
+
+---
+
+## Future Roadmap
+
+- Integration with localized low-cost sensor meshes (e.g. PurpleAir / sensor.community) with calibration flags.
+- Native multi-lingual support for major Indian regional languages (Hindi, Bengali, Marathi, Telugu).
+- Automated CAQM GRAP stage push notifications via Web Push API.
+
+---
+
+## License & Data Attribution
+
+- **License:** Open-source software released under the [MIT License](LICENSE).
+- **Data Attribution:**
+  - Ground station telemetry: [OpenAQ](https://openaq.org/) (CPCB / State Pollution Control Boards).
+  - Atmospheric modeling: Copernicus Atmosphere Monitoring Service (CAMS) via [Open-Meteo](https://open-meteo.com/).
+  - Environmental standards: Central Pollution Control Board (CPCB) NAQI (2014) and WHO Global Air Quality Guidelines (2021).
+  - AI inference: [Cloudflare Workers AI](https://developers.cloudflare.com/workers-ai/).
