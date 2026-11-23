@@ -101,7 +101,7 @@ describe('API Route Security & Input Validation', () => {
       expect(data.error).toBe('VALIDATION_ERROR');
     });
 
-    it('returns 413 when payload exceeds maximum size limit', async () => {
+    it('returns 413 when payload exceeds maximum size limit (32KB)', async () => {
       const oversizedPayload = {
         aqi: 100,
         category: 'Moderate',
@@ -109,7 +109,7 @@ describe('API Route Security & Input Validation', () => {
         pollutantConcentration: 35,
         weather: { temperatureC: 25, humidityPercent: 50, windSpeedKmh: 10 },
         userContext: { isSensitiveGroup: false, primaryActivity: 'general', locale: 'en' },
-        scheduleSummary: 'X'.repeat(5000), // exceeds 4KB
+        scheduleSummary: 'X'.repeat(35000), // exceeds 32KB
       };
 
       const req = new Request('http://localhost:3000/api/ai/guidance', {
@@ -126,6 +126,89 @@ describe('API Route Security & Input Validation', () => {
       expect(res.status).toBe(413);
       const data = await res.json();
       expect(data.error).toBe('PAYLOAD_TOO_LARGE');
+    });
+
+    it('accepts rich client payload over 2KB with household members, indoorPm25, and station metadata', async () => {
+      const richPayload = {
+        aqi: 145,
+        category: 'Moderate',
+        dominantPollutant: 'pm25',
+        pollutantConcentration: 52.4,
+        pollutantUnit: 'µg/m³',
+        weather: { temperatureC: 24, humidityPercent: 55, windSpeedKmh: 12 },
+        userContext: {
+          isSensitiveGroup: true,
+          primaryActivity: 'daily_commute',
+          locale: 'en',
+          vulnerabilityTiers: ['RESPIRATORY', 'PEDIATRIC'],
+        },
+        cityName: 'Mumbai',
+        householdMembers: [
+          {
+            id: 'mem-1',
+            nickname: 'Aarav',
+            archetype: 'CHILD_STUDENT',
+            sensitivityTier: 'PEDIATRIC',
+            schedules: [
+              {
+                id: 'sch-1',
+                activityName: 'Morning School Bus',
+                activityType: 'SCHOOL_TRAVEL',
+                startTime: '07:30',
+                durationMinutes: 45,
+                commuteMode: 'PUBLIC_TRANSIT',
+                commuteDistanceKm: 12,
+              },
+              {
+                id: 'sch-2',
+                activityName: 'Evening Soccer Practice',
+                activityType: 'OUTDOOR_EXERCISE',
+                startTime: '17:00',
+                durationMinutes: 60,
+              },
+            ],
+          },
+          {
+            id: 'mem-2',
+            nickname: 'Priya',
+            archetype: 'WORKING_COMMUTER',
+            sensitivityTier: 'RESPIRATORY',
+            schedules: [
+              {
+                id: 'sch-3',
+                activityName: 'Train Commute to Office',
+                activityType: 'COMMUTE',
+                startTime: '08:45',
+                durationMinutes: 50,
+                commuteMode: 'PUBLIC_TRANSIT',
+              },
+            ],
+          },
+        ],
+        scheduleSummary: 'Aarav: School at 07:30, Soccer at 17:00; Priya: Office commute at 08:45',
+        sourceType: 'station',
+        stationName: 'Bandra Kurla Complex, Mumbai - MPCB',
+        distanceKm: 4.2,
+        observationTime: '2026-11-23T08:00:00Z',
+        dataSource: 'OpenAQ Ground Station Telemetry',
+        indoorPm25: 28.5,
+        scaleName: 'CPCB NAQI (India)',
+        modelFallbackReason: null,
+      };
+
+      const req = new Request('http://localhost:3000/api/ai/guidance', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Sec-Fetch-Site': 'same-origin',
+        },
+        body: JSON.stringify(richPayload),
+      });
+
+      const res = await guidancePost(req);
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.headline).toBeDefined();
     });
 
     it('returns 429 when client exceeds rate limit', async () => {
@@ -195,7 +278,7 @@ describe('API Route Security & Input Validation', () => {
       expect(data.error).toBe('VALIDATION_ERROR');
     });
 
-    it('returns 413 when payload exceeds maximum size limit', async () => {
+    it('returns 413 when payload exceeds maximum size limit (32KB)', async () => {
       const oversized = {
         question: 'Can I go outside?',
         aqi: 100,
@@ -203,7 +286,7 @@ describe('API Route Security & Input Validation', () => {
         dominantPollutant: 'pm25',
         pollutantConcentration: 35,
         weather: { temperatureC: 25, humidityPercent: 50, windSpeedKmh: 10 },
-        cityName: 'C'.repeat(5000),
+        cityName: 'C'.repeat(35000), // exceeds 32KB
       };
 
       const req = new Request('http://localhost:3000/api/ai/copilot', {
@@ -220,6 +303,61 @@ describe('API Route Security & Input Validation', () => {
       expect(res.status).toBe(413);
       const data = await res.json();
       expect(data.error).toBe('PAYLOAD_TOO_LARGE');
+    });
+
+    it('accepts rich Copilot payload with station metadata, indoor reading, and chat history', async () => {
+      const richCopilot = {
+        question: 'Should we run air purifiers right now?',
+        workspace: 'family-planner',
+        roomContext: {
+          roomName: 'Living Room',
+          floorAreaM2: 32,
+          cadrM3h: 350,
+        },
+        aqi: 168,
+        category: 'Moderate',
+        dominantPollutant: 'pm25',
+        pollutantConcentration: 88,
+        pollutantUnit: 'µg/m³',
+        weather: {
+          temperatureC: 26,
+          humidityPercent: 60,
+          windSpeedKmh: 6,
+        },
+        userContext: {
+          isSensitiveGroup: true,
+          primaryActivity: 'indoor_resting',
+          locale: 'en',
+          vulnerabilityTiers: ['RESPIRATORY'],
+        },
+        cityName: 'Delhi',
+        observationTime: '2026-11-23T08:15:00Z',
+        dataSource: 'OpenAQ Ground Station Telemetry (Anand Vihar)',
+        sourceType: 'station',
+        stationName: 'Anand Vihar, Delhi - DPCC',
+        distanceKm: 3.5,
+        indoorPm25: 45,
+        scaleName: 'CPCB NAQI (India)',
+        modelFallbackReason: null,
+        history: [
+          { sender: 'user', text: 'What is the air quality outside?', timestamp: '2026-11-23T08:10:00Z' },
+          { sender: 'assistant', text: 'Outside AQI is 168 (Moderate).', timestamp: '2026-11-23T08:10:05Z' },
+        ],
+      };
+
+      const req = new Request('http://localhost:3000/api/ai/copilot', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Sec-Fetch-Site': 'same-origin',
+        },
+        body: JSON.stringify(richCopilot),
+      });
+
+      const res = await copilotPost(req);
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.directAnswer).toBeDefined();
     });
   });
 

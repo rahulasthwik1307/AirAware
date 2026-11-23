@@ -24,7 +24,8 @@ export interface RateLimitResult {
 // 30 requests allowed per 10-minute sliding window per client for AI endpoints
 const WINDOW_MS = 10 * 60 * 1000;
 const MAX_REQUESTS_PER_WINDOW = 30;
-export const MAX_PAYLOAD_BYTES = 2048; // 2KB payload ceiling
+export const MAX_PAYLOAD_BYTES = 2048; // 2KB payload ceiling for standard / GET endpoints
+export const MAX_AI_PAYLOAD_BYTES = 32768; // 32KB payload ceiling for POST AI routes (guidance & copilot)
 
 export class PayloadTooLargeError extends Error {
   constructor(message: string = `Payload too large: maximum allowed size is ${MAX_PAYLOAD_BYTES} bytes.`) {

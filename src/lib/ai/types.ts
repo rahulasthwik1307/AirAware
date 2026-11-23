@@ -40,24 +40,39 @@ export const VentilationEnum = z.enum([
 ]);
 export type VentilationAdvice = z.infer<typeof VentilationEnum>;
 
+export const MemberScheduleSummarySchema = z.object({
+  id: z.string().optional().nullable(),
+  activityName: z.string().max(100),
+  activityType: z.string().max(50).optional().nullable(),
+  startTime: z.string().max(20),
+  durationMinutes: z.number().int().min(1).max(1440),
+  commuteMode: z.string().max(50).optional().nullable(),
+  commuteDistanceKm: z.number().optional().nullable(),
+}).strict();
+export type MemberScheduleSummary = z.infer<typeof MemberScheduleSummarySchema>;
+
 export const HouseholdMemberSummarySchema = z.object({
   id: z.string(),
   nickname: z.string().max(50),
   archetype: z.string().max(50),
   sensitivityTier: z.string().max(50),
-  schedules: z
-    .array(
-      z.object({
-        activityName: z.string().max(100),
-        startTime: z.string().max(10),
-        durationMinutes: z.number().int().min(5).max(720),
-        commuteMode: z.string().max(50).optional(),
-      }).strict()
-    )
-    .max(10)
-    .optional(),
+  schedules: z.array(MemberScheduleSummarySchema).max(20).optional().nullable(),
+  createdAt: z.string().optional().nullable(),
 }).strict();
 export type HouseholdMemberSummary = z.infer<typeof HouseholdMemberSummarySchema>;
+
+export const ChatHistoryMessageSchema = z.object({
+  id: z.string().optional().nullable(),
+  sender: z.enum(['user', 'assistant']).optional().nullable(),
+  role: z.enum(['user', 'assistant', 'system']).optional().nullable(),
+  text: z.string().max(2000).optional().nullable(),
+  content: z.string().max(2000).optional().nullable(),
+  timestamp: z.string().max(100).optional().nullable(),
+  isError: z.boolean().optional().nullable(),
+  errorMessage: z.string().max(500).optional().nullable(),
+  source: z.enum(['cloudflare-ai', 'deterministic']).optional().nullable(),
+}).strict();
+export type ChatHistoryMessage = z.infer<typeof ChatHistoryMessageSchema>;
 
 export const DailyPlanActionSchema = z.object({
   period: z.enum(['morning', 'afternoon', 'evening']),
@@ -75,36 +90,43 @@ export const TodayHouseholdPlanSchema = z.object({
 }).strict();
 export type TodayHouseholdPlan = z.infer<typeof TodayHouseholdPlanSchema>;
 
+export const UserContextSchema = z.object({
+  isSensitiveGroup: z.boolean().default(false),
+  primaryActivity: ActivityEnum.default('general'),
+  locale: z.string().max(10).default('en'),
+  vulnerabilityTiers: z.array(z.string().max(50)).max(20).optional().nullable(),
+}).strict();
+export type UserContext = z.infer<typeof UserContextSchema>;
+
 // ==============================================================================
 // 1. Proactive Guidance Schemas (Dashboard Health & Action Cards)
 // ==============================================================================
 
 export const GuidanceRequestSchema = z.object({
-  aqi: z.number().int().min(0).max(500),
+  aqi: z.number().min(0).max(500),
   category: AqiCategoryEnum,
   dominantPollutant: PollutantEnum,
   pollutantConcentration: z.number().nonnegative().max(10000),
-  pollutantUnit: z.string().max(20).default('µg/m³'),
+  pollutantUnit: z.string().max(50).default('µg/m³'),
   weather: z.object({
     temperatureC: z.number().min(-60).max(60),
     humidityPercent: z.number().min(0).max(100),
     windSpeedKmh: z.number().nonnegative().max(300),
   }).strict(),
-  userContext: z.object({
-    isSensitiveGroup: z.boolean().default(false),
-    primaryActivity: ActivityEnum.default('general'),
-    locale: z.string().max(10).default('en'),
-  }).strict(),
-  cityName: z.string().max(100).optional(),
-  householdMembers: z.array(HouseholdMemberSummarySchema).max(10).optional(),
-  scheduleSummary: z.string().max(500).optional(),
-  sourceType: z.enum(['station', 'model']).optional(),
-  stationName: z.string().max(100).optional().nullable(),
-  distanceKm: z.number().nonnegative().max(500).optional().nullable(),
-  observationTime: z.string().max(50).optional().nullable(),
-  indoorPm25: z.number().nonnegative().max(1000).optional().nullable(),
-  scaleName: z.string().max(50).optional(),
-  modelFallbackReason: z.string().max(200).optional().nullable(),
+  userContext: UserContextSchema,
+  cityName: z.string().max(200).optional().nullable(),
+  householdMembers: z.array(HouseholdMemberSummarySchema).max(20).optional().nullable(),
+  scheduleSummary: z.string().max(1000).optional().nullable(),
+  sourceType: z.enum(['station', 'model']).optional().nullable(),
+  stationName: z.string().max(200).optional().nullable(),
+  distanceKm: z.number().nonnegative().max(1000).optional().nullable(),
+  observationTime: z.string().max(100).optional().nullable(),
+  dataSource: z.string().max(500).optional().nullable(),
+  indoorPm25: z.number().nonnegative().max(2000).optional().nullable(),
+  scaleName: z.string().max(100).optional().nullable(),
+  modelFallbackReason: z.string().max(500).optional().nullable(),
+  history: z.array(ChatHistoryMessageSchema).max(50).optional().nullable(),
+  chatHistory: z.array(ChatHistoryMessageSchema).max(50).optional().nullable(),
 }).strict();
 export type GuidanceRequest = z.infer<typeof GuidanceRequestSchema>;
 
@@ -134,9 +156,9 @@ export const WorkspaceEnum = z.enum([
 export type WorkspaceContext = z.infer<typeof WorkspaceEnum>;
 
 export const RoomContextSchema = z.object({
-  roomName: z.string().max(50),
-  floorAreaM2: z.number().positive().max(200).optional(),
-  cadrM3h: z.number().positive().max(2000).optional(),
+  roomName: z.string().max(100),
+  floorAreaM2: z.number().positive().max(500).optional().nullable(),
+  cadrM3h: z.number().positive().max(5000).optional().nullable(),
 }).strict();
 export type RoomContext = z.infer<typeof RoomContextSchema>;
 
@@ -148,35 +170,31 @@ export const CopilotRequestSchema = z.object({
     .max(200, 'Question must not exceed 200 characters')
     .transform((str) => str.replace(/[\x00-\x1F\x7F]/g, '').trim()), // Strip non-printable ASCII
   workspace: WorkspaceEnum.optional().default('air-intelligence'),
-  roomContext: RoomContextSchema.optional(),
-  aqi: z.number().int().min(0).max(500),
+  roomContext: RoomContextSchema.optional().nullable(),
+  aqi: z.number().min(0).max(500),
   category: AqiCategoryEnum,
   dominantPollutant: PollutantEnum,
   pollutantConcentration: z.number().nonnegative().max(10000),
-  pollutantUnit: z.string().max(20).default('µg/m³'),
+  pollutantUnit: z.string().max(50).default('µg/m³'),
   weather: z.object({
     temperatureC: z.number().min(-60).max(60),
     humidityPercent: z.number().min(0).max(100),
     windSpeedKmh: z.number().nonnegative().max(300),
   }).strict(),
-  userContext: z
-    .object({
-      isSensitiveGroup: z.boolean().default(false),
-      primaryActivity: ActivityEnum.default('general'),
-      locale: z.string().max(10).default('en'),
-      vulnerabilityTiers: z.array(z.string().max(50)).max(10).optional(),
-    })
-    .strict()
-    .default({ isSensitiveGroup: false, primaryActivity: 'general', locale: 'en' }),
-  cityName: z.string().max(100).optional(),
-  observationTime: z.string().max(50).optional(),
-  dataSource: z.string().max(200).optional(),
-  sourceType: z.enum(['station', 'model']).optional(),
-  stationName: z.string().max(100).optional().nullable(),
-  distanceKm: z.number().nonnegative().max(500).optional().nullable(),
-  indoorPm25: z.number().nonnegative().max(1000).optional().nullable(),
-  scaleName: z.string().max(50).optional(),
-  modelFallbackReason: z.string().max(200).optional().nullable(),
+  userContext: UserContextSchema.default({ isSensitiveGroup: false, primaryActivity: 'general', locale: 'en' }),
+  cityName: z.string().max(200).optional().nullable(),
+  observationTime: z.string().max(100).optional().nullable(),
+  dataSource: z.string().max(500).optional().nullable(),
+  sourceType: z.enum(['station', 'model']).optional().nullable(),
+  stationName: z.string().max(200).optional().nullable(),
+  distanceKm: z.number().nonnegative().max(1000).optional().nullable(),
+  indoorPm25: z.number().nonnegative().max(2000).optional().nullable(),
+  scaleName: z.string().max(100).optional().nullable(),
+  modelFallbackReason: z.string().max(500).optional().nullable(),
+  householdMembers: z.array(HouseholdMemberSummarySchema).max(20).optional().nullable(),
+  scheduleSummary: z.string().max(1000).optional().nullable(),
+  history: z.array(ChatHistoryMessageSchema).max(50).optional().nullable(),
+  chatHistory: z.array(ChatHistoryMessageSchema).max(50).optional().nullable(),
 }).strict();
 export type CopilotRequest = Omit<z.infer<typeof CopilotRequestSchema>, 'workspace'> & {
   workspace?: WorkspaceContext;

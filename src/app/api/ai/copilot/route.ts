@@ -15,6 +15,7 @@ import {
   localRateLimiter,
   PayloadTooLargeError,
   readJsonBodyWithLimit,
+  MAX_AI_PAYLOAD_BYTES,
 } from '@/lib/ai/rate-limiter';
 
 export const runtime = 'nodejs';
@@ -32,7 +33,7 @@ export async function POST(req: Request) {
     }
 
     // 1. Request security check (Origin, Content-Type, Content-Length)
-    validateRequestSecurity(req);
+    validateRequestSecurity(req, MAX_AI_PAYLOAD_BYTES);
 
     // 2. Client rate-limit check
     const clientHash = getClientHash(req);
@@ -53,7 +54,7 @@ export async function POST(req: Request) {
     }
 
     // 3. Body parsing & Zod schema validation
-    const body = await readJsonBodyWithLimit<unknown>(req);
+    const body = await readJsonBodyWithLimit<unknown>(req, MAX_AI_PAYLOAD_BYTES);
     const validatedInput = CopilotRequestSchema.parse(body);
 
     // 4. Retrieve Copilot answer (Cloudflare AI or Deterministic Fallback)
