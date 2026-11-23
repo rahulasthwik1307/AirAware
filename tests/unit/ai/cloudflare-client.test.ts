@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { executeWorkersAiInference } from '@/lib/ai/cloudflare-client';
-import { GuidanceResponseSchema, GuidanceResponse } from '@/lib/ai/types';
+import { GuidanceResponseSchema, GuidanceResponse, CopilotResponseSchema, CopilotResponse } from '@/lib/ai/types';
 import { aiCache } from '@/lib/ai/cache';
 import { CLOUDFLARE_DEFAULTS } from '@/lib/ai/config';
 
@@ -260,5 +260,82 @@ describe('Cloudflare Workers AI Client & Failover', () => {
     });
 
     expect(result).toEqual(validResponseData);
+  });
+
+  it('supports Cloudflare result envelope with choices array (message and text)', async () => {
+    // 1. result.choices[0].message.content
+    const mockFetchMessage = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          result: {
+            choices: [{ message: { content: JSON.stringify(validResponseData) } }],
+          },
+        }),
+        { status: 200 }
+      )
+    );
+
+    const resultMessage = await executeWorkersAiInference({
+      payloadBuilder: () => ({ test: true }),
+      schema: GuidanceResponseSchema,
+      customFetch: mockFetchMessage,
+    });
+    expect(resultMessage).toEqual(validResponseData);
+
+    // 2. result.choices[0].text
+    const mockFetchText = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          result: {
+            choices: [{ text: JSON.stringify(validResponseData) }],
+          },
+        }),
+        { status: 200 }
+      )
+    );
+
+    const resultText = await executeWorkersAiInference({
+      payloadBuilder: () => ({ test: true }),
+      schema: GuidanceResponseSchema,
+      customFetch: mockFetchText,
+    });
+    expect(resultText).toEqual(validResponseData);
+  });
+
+  it('normalizes common aliases and string field lengths in copilot response schema', async () => {
+    const copilotRawWithAliases = {
+      answer: 'A'.repeat(300), // Exceeds 250 -> clamped with ellipsis
+      environmentalConditions: 'B'.repeat(250), // Exceeds 200 -> clamped
+      action: 'C'.repeat(250), // Alias for recommendedAction, clamped
+      scientificReasoning: 'D'.repeat(400), // Alias for explanation, clamped
+      practicalAlternatives: 'Single alternative string', // String normalized to array
+      dataSource: 'E'.repeat(200), // Alias for dataSourceAndFreshness, clamped
+      limitations: 'F'.repeat(250), // Alias for limitationsOrUncertainty, clamped
+      isRuleBased: false,
+    };
+
+    const mockFetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          result: {
+            response: JSON.stringify(copilotRawWithAliases),
+          },
+        }),
+        { status: 200 }
+      )
+    );
+
+    const result = await executeWorkersAiInference<CopilotResponse>({
+      payloadBuilder: () => ({ test: true }),
+      schema: CopilotResponseSchema,
+      customFetch: mockFetch,
+    });
+
+    expect(result.directAnswer.endsWith('...')).toBe(true);
+    expect(result.directAnswer.length).toBeLessThanOrEqual(250);
+    expect(result.recommendedAction.endsWith('...')).toBe(true);
+    expect(result.explanation.endsWith('...')).toBe(true);
+    expect(Array.isArray(result.practicalAlternatives)).toBe(true);
+    expect(result.practicalAlternatives[0]).toBe('Single alternative string');
   });
 });

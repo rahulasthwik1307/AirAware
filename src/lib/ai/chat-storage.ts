@@ -35,14 +35,15 @@ export function sanitizeChatString(input: string): string {
  */
 export function createDefaultSession(title = 'New Conversation'): CopilotChatSession {
   const now = new Date().toISOString();
+  const rand = Math.random().toString(36).substring(2, 7);
   return {
-    id: `session-${Date.now()}`,
+    id: `session-${Date.now()}-${rand}`,
     title,
     createdAt: now,
     updatedAt: now,
     messages: [
       {
-        id: `welcome-${Date.now()}`,
+        id: `welcome-${Date.now()}-${rand}`,
         sender: 'assistant',
         text: 'Hello! I am your AirAware Copilot, an environmental intelligence assistant. Ask me anything about current air quality, outdoor ventilation timing, air purifier sizing, or practical family routines.',
         timestamp: now,

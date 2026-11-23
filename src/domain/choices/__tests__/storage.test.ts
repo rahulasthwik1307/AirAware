@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeEach, beforeAll, afterAll, vi } from 'vitest';
 import {
   loadCleanerChoicesPreferences,
   saveCleanerChoicesPreferences,
@@ -39,6 +39,7 @@ describe('Cleaner Choices Local Storage Tests', () => {
 
   beforeEach(() => {
     mockStorage.clear();
+    vi.restoreAllMocks();
   });
 
   it('returns default preferences when localStorage is empty', () => {
@@ -70,5 +71,24 @@ describe('Cleaner Choices Local Storage Tests', () => {
     mockStorage.setItem('airaware_cleaner_choices_v1', '{corrupt json...');
     const loaded = loadCleanerChoicesPreferences();
     expect(loaded.commuteDistanceKm).toBe(DEFAULT_PREFERENCES.commuteDistanceKm);
+  });
+
+  it('returns default preferences when stored schema fails validation', () => {
+    mockStorage.setItem(
+      'airaware_cleaner_choices_v1',
+      JSON.stringify({ commuteDistanceKm: 'invalid-string-instead-of-number' })
+    );
+    const loaded = loadCleanerChoicesPreferences();
+    expect(loaded.commuteDistanceKm).toBe(DEFAULT_PREFERENCES.commuteDistanceKm);
+  });
+
+  it('returns false when saveCleanerChoicesPreferences encounters a setItem error', () => {
+    const spy = vi.spyOn(mockStorage, 'setItem').mockImplementation(() => {
+      throw new Error('Storage write failed');
+    });
+
+    const result = saveCleanerChoicesPreferences(DEFAULT_PREFERENCES);
+    expect(result).toBe(false);
+    spy.mockRestore();
   });
 });

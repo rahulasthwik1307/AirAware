@@ -202,4 +202,84 @@ describe('useAirQuality Hook Telemetry Contract', () => {
       expect(result.current.isLoading).toBe(false);
     });
   });
+
+  it('immediately restores cached telemetry without network fetch when revisiting cached location', async () => {
+    let fetchCount = 0;
+    globalThis.fetch = vi.fn().mockImplementation(() => {
+      fetchCount++;
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: async () => createMockAqiResponse(19.076, 72.8777, 42),
+      } as Response);
+    });
+
+    const { result } = renderHook(() => useAirQuality(), { wrapper });
+
+    act(() => {
+      result.current.setLocation(locMumbai);
+    });
+
+    await waitFor(() => {
+      expect(result.current.report?.location.name).toBe('Mumbai');
+    });
+    const currentFetches = fetchCount;
+
+    // Switch back to Mumbai (already in cache)
+    act(() => {
+      result.current.setLocation(locMumbai);
+    });
+
+    expect(result.current.report?.location.name).toBe('Mumbai');
+    expect(result.current.isLoading).toBe(false);
+    expect(fetchCount).toBe(currentFetches); // zero additional network fetches
+  });
+
+  it('refetch clears cached entry and triggers new network request', async () => {
+    let fetchCalls = 0;
+    globalThis.fetch = vi.fn().mockImplementation(() => {
+      fetchCalls++;
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: async () => createMockAqiResponse(19.076, 72.8777, 50),
+      } as Response);
+    });
+
+    const { result } = renderHook(() => useAirQuality(), { wrapper });
+
+    act(() => {
+      result.current.setLocation(locMumbai);
+    });
+
+    await waitFor(() => {
+      expect(result.current.report?.location.name).toBe('Mumbai');
+    });
+
+    const initialCalls = fetchCalls;
+
+    act(() => {
+      result.current.refetch();
+    });
+
+    await waitFor(() => {
+      expect(fetchCalls).toBeGreaterThan(initialCalls);
+    });
+  });
+
+  it('updates activeStandard via setActiveStandard', async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => createMockAqiResponse(19.076, 72.8777, 45),
+    } as Response);
+
+    const { result } = renderHook(() => useAirQuality(), { wrapper });
+
+    act(() => {
+      result.current.setActiveStandard('EUROPEAN_EAQI');
+    });
+
+    expect(result.current.activeStandard).toBe('EUROPEAN_EAQI');
+  });
 });

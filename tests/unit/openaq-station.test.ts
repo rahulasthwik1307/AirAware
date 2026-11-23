@@ -3,6 +3,7 @@ import {
   selectNearestStation,
   parseLatestReadings,
   getNearestOpenAqStation,
+  getNearestOpenAqStationDetailed,
   openAqMemoryCache,
   OpenAqLocationItem,
   OpenAqLatestReadingItem,
@@ -416,6 +417,96 @@ describe('OpenAQ Ground-Station Integration & Fallback', () => {
       // Measured PM2.5 overrides modeled concentration
       expect(report.pollutants.pm2_5.concentration).toBe(145.0);
       expect(report.cpcbComparison?.indexLabel).toBe('CPCB AQI (PM2.5/PM10 sub-index)');
+    });
+  });
+
+  describe('8. getNearestOpenAqStationDetailed fallback paths and error boundaries', () => {
+    it('returns no recent station fallback when API key is missing', async () => {
+      const result = await getNearestOpenAqStationDetailed(28.6, 77.2, {
+        apiKeyOverride: null,
+      });
+      expect(result.station).toBeNull();
+      expect(result.fallbackReason).toBe('no recent station within 25 km');
+    });
+
+    it('returns service busy when location search returns 429', async () => {
+      const mockFetch = vi.fn().mockResolvedValue(new Response('', { status: 429 }));
+      const result = await getNearestOpenAqStationDetailed(28.6, 77.2, {
+        apiKeyOverride: 'test-key',
+        fetchFn: mockFetch,
+        forceRefresh: true,
+      });
+      expect(result.station).toBeNull();
+      expect(result.fallbackReason).toBe('service busy');
+    });
+
+    it('returns service busy when rate limit remaining is zero', async () => {
+      const mockFetch = vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ results: [] }), {
+          status: 200,
+          headers: { 'x-ratelimit-remaining': '0' },
+        })
+      );
+      const result = await getNearestOpenAqStationDetailed(28.6, 77.2, {
+        apiKeyOverride: 'test-key',
+        fetchFn: mockFetch,
+        forceRefresh: true,
+      });
+      expect(result.station).toBeNull();
+      expect(result.fallbackReason).toBe('service busy');
+    });
+
+    it('returns no recent station when search returns empty results array', async () => {
+      const mockFetch = vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ results: [] }), {
+          status: 200,
+          headers: { 'x-ratelimit-remaining': '50' },
+        })
+      );
+      const result = await getNearestOpenAqStationDetailed(28.6, 77.2, {
+        apiKeyOverride: 'test-key',
+        fetchFn: mockFetch,
+        forceRefresh: true,
+      });
+      expect(result.station).toBeNull();
+      expect(result.fallbackReason).toBe('no recent station within 25 km');
+    });
+
+    it('returns station data too old when stations exist but are expired', async () => {
+      const expiredStation: OpenAqLocationItem = {
+        id: 999,
+        name: 'Stale Station',
+        distance: 2000,
+        isMonitor: true,
+        datetimeLast: { utc: '2020-01-01T00:00:00Z' },
+        sensors: [{ id: 1, parameter: { id: 2, name: 'pm25', units: 'µg/m³' } }],
+      };
+
+      const mockFetch = vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ results: [expiredStation] }), {
+          status: 200,
+          headers: { 'x-ratelimit-remaining': '50' },
+        })
+      );
+
+      const result = await getNearestOpenAqStationDetailed(28.6, 77.2, {
+        apiKeyOverride: 'test-key',
+        fetchFn: mockFetch,
+        forceRefresh: true,
+      });
+      expect(result.station).toBeNull();
+      expect(result.fallbackReason).toBe('station data too old');
+    });
+
+    it('handles network abort or fetch exceptions by returning service busy', async () => {
+      const mockFetch = vi.fn().mockRejectedValue(new Error('Network connection timeout'));
+      const result = await getNearestOpenAqStationDetailed(28.6, 77.2, {
+        apiKeyOverride: 'test-key',
+        fetchFn: mockFetch,
+        forceRefresh: true,
+      });
+      expect(result.station).toBeNull();
+      expect(result.fallbackReason).toBe('service busy');
     });
   });
 });
