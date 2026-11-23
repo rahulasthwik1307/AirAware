@@ -6,7 +6,7 @@
 [![Next.js](https://img.shields.io/badge/Next.js-16.4.6-black.svg?logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7.3-blue.svg?logo=typescript)](https://www.typescriptlang.org/)
 
-**Live Demo:** {{LIVE_URL}} • **Video Walkthrough:** {{DEMO_VIDEO_URL}} • **Source Code:** {{REPO_URL}}
+**Live Demo:** [air-aware-flax.vercel.app](https://air-aware-flax.vercel.app/) • **Source Code:** [github.com/rahulasthwik1307/AirAware](https://github.com/rahulasthwik1307/AirAware)
 
 ---
 
@@ -123,7 +123,7 @@ Browser Client (React 19 / Next.js 16) ──> Next.js API Routes (/api/*)
 
 ### Installation & Setup
 ```bash
-git clone {{REPO_URL}}
+git clone https://github.com/rahulasthwik1307/AirAware.git
 cd AirAware
 npm install
 cp .env.example .env.local

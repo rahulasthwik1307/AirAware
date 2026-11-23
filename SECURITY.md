@@ -60,4 +60,4 @@ Dependencies are audited regularly. Run `npm audit` to inspect dependency adviso
 
 ## Reporting a Vulnerability
 
-Please report security issues responsibly. Open a private security advisory on GitHub or create a confidential issue at {{REPO_URL}}. Do not disclose vulnerabilities in public forums until an assessment has been completed.
+Please report security issues responsibly. Open a private security advisory on GitHub or create a confidential issue at [github.com/rahulasthwik1307/AirAware](https://github.com/rahulasthwik1307/AirAware). Do not disclose vulnerabilities in public forums until an assessment has been completed.
