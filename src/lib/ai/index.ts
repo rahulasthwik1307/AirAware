@@ -130,7 +130,10 @@ export async function askAirCopilot(
       aiCache.setCopilot(cacheKey, result);
       return result;
     } catch (err: unknown) {
-      console.warn('[Copilot Workers AI Fallback]:', err instanceof Error ? err.message : String(err));
+      const errCode = (err instanceof Error && 'code' in err && typeof (err as { code: unknown }).code === 'string')
+        ? (err as { code: string }).code
+        : 'INFERENCE_FAILED';
+      console.warn('[Copilot Workers AI Fallback]: category =', errCode);
       let fallbackReason = 'AI service busy, showing a standard answer';
       if (err instanceof Error) {
         const errorWithCode = err as { code?: string; isDailyQuota?: boolean };

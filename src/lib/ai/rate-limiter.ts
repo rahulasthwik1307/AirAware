@@ -2,10 +2,14 @@
  * AirAware — Server-Side Route Rate Limiting & Origin Security
  *
  * Implements layered request protection:
- * 1. Payload size enforcement (max 2KB).
+ * 1. Payload size enforcement (max 4KB).
  * 2. Origin & Same-Site header verification.
  * 3. Hashed client identifier tracking (zero raw IP persistence).
  * 4. Local burst protection without paid dependencies.
+ *
+ * NOTE: This rate limiter tracks in-memory state per serverless container
+ * instance (best-effort). On distributed serverless platforms like Vercel,
+ * it provides robust local burst suppression per instance.
  */
 
 import { createHash } from 'crypto';
@@ -17,18 +21,30 @@ export interface RateLimitResult {
   reason?: string;
 }
 
-// 30 requests allowed per 10-minute sliding window per client (fluid human conversation)
+// 30 requests allowed per 10-minute sliding window per client for AI endpoints
 const WINDOW_MS = 10 * 60 * 1000;
 const MAX_REQUESTS_PER_WINDOW = 30;
-const MAX_PAYLOAD_BYTES = 2048; // 2KB payload ceiling
+export const MAX_PAYLOAD_BYTES = 2048; // 2KB payload ceiling
+
+export class PayloadTooLargeError extends Error {
+  constructor(message: string = `Payload too large: maximum allowed size is ${MAX_PAYLOAD_BYTES} bytes.`) {
+    super(message);
+    this.name = 'PayloadTooLargeError';
+  }
+}
 
 interface RateLimitBucket {
   count: number;
   windowStart: number;
 }
 
-class LocalRateLimiter {
+export class LocalRateLimiter {
   private buckets = new Map<string, RateLimitBucket>();
+
+  constructor(
+    private readonly maxRequests: number = MAX_REQUESTS_PER_WINDOW,
+    private readonly windowMs: number = WINDOW_MS
+  ) {}
 
   /**
    * Hashes client identity (IP or session) to prevent logging or storing raw PII.
@@ -47,30 +63,30 @@ class LocalRateLimiter {
     const now = Date.now();
     let bucket = this.buckets.get(clientHash);
 
-    if (!bucket || now - bucket.windowStart > WINDOW_MS) {
+    if (!bucket || now - bucket.windowStart > this.windowMs) {
       bucket = { count: 1, windowStart: now };
       this.buckets.set(clientHash, bucket);
       return {
         allowed: true,
-        remaining: MAX_REQUESTS_PER_WINDOW - 1,
-        resetAt: now + WINDOW_MS,
+        remaining: this.maxRequests - 1,
+        resetAt: now + this.windowMs,
       };
     }
 
-    if (bucket.count >= MAX_REQUESTS_PER_WINDOW) {
+    if (bucket.count >= this.maxRequests) {
       return {
         allowed: false,
         remaining: 0,
-        resetAt: bucket.windowStart + WINDOW_MS,
-        reason: 'Rate limit exceeded: maximum 30 guidance requests per 10-minute window.',
+        resetAt: bucket.windowStart + this.windowMs,
+        reason: `Rate limit exceeded: maximum ${this.maxRequests} requests per ${Math.round(this.windowMs / 60000)}-minute window.`,
       };
     }
 
     bucket.count += 1;
     return {
       allowed: true,
-      remaining: MAX_REQUESTS_PER_WINDOW - bucket.count,
-      resetAt: bucket.windowStart + WINDOW_MS,
+      remaining: this.maxRequests - bucket.count,
+      resetAt: bucket.windowStart + this.windowMs,
     };
   }
 
@@ -80,7 +96,7 @@ class LocalRateLimiter {
   public prune(): void {
     const now = Date.now();
     for (const [key, bucket] of this.buckets.entries()) {
-      if (now - bucket.windowStart > WINDOW_MS) {
+      if (now - bucket.windowStart > this.windowMs) {
         this.buckets.delete(key);
       }
     }
@@ -91,13 +107,14 @@ class LocalRateLimiter {
   }
 }
 
-export const localRateLimiter = new LocalRateLimiter();
+export const localRateLimiter = new LocalRateLimiter(30, WINDOW_MS);
+export const regionalHotspotsLimiter = new LocalRateLimiter(60, WINDOW_MS);
 
 /**
  * Validates request size and origin headers.
- * Throws a sanitized Error if the request fails security verification.
+ * Throws a sanitized Error or PayloadTooLargeError if verification fails.
  */
-export function validateRequestSecurity(req: Request): void {
+export function validateRequestSecurity(req: Request, maxBytes: number = MAX_PAYLOAD_BYTES): void {
   // 1. Content-Type verification
   const contentType = req.headers.get('content-type') || '';
   if (!contentType.toLowerCase().includes('application/json')) {
@@ -106,8 +123,8 @@ export function validateRequestSecurity(req: Request): void {
 
   // 2. Content-Length ceiling
   const contentLength = req.headers.get('content-length');
-  if (contentLength && parseInt(contentLength, 10) > MAX_PAYLOAD_BYTES) {
-    throw new Error(`Payload too large: maximum allowed size is ${MAX_PAYLOAD_BYTES} bytes.`);
+  if (contentLength && parseInt(contentLength, 10) > maxBytes) {
+    throw new PayloadTooLargeError(`Payload too large: maximum allowed size is ${maxBytes} bytes.`);
   }
 
   // 3. Same-origin protection (Sec-Fetch-Site)
@@ -118,14 +135,49 @@ export function validateRequestSecurity(req: Request): void {
 }
 
 /**
+ * Reads and verifies the JSON request body with an enforced byte size cap.
+ */
+export async function readJsonBodyWithLimit<T>(req: Request, maxBytes: number = MAX_PAYLOAD_BYTES): Promise<T> {
+  const text = await req.text();
+  if (text.length > maxBytes) {
+    throw new PayloadTooLargeError(`Payload too large: maximum allowed size is ${maxBytes} bytes.`);
+  }
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    throw new Error('Malformed JSON body provided.');
+  }
+}
+
+/**
  * Extracts a privacy-safe hashed client identifier from standard request headers.
+ * Uses the first entry of x-forwarded-for safely; does not trust spoofable client headers.
  */
 export function getClientHash(req: Request): string {
-  const forwardedFor = req.headers.get('x-forwarded-for') || '';
-  const realIp = req.headers.get('x-real-ip') || '';
-  const cfConnectingIp = req.headers.get('cf-connecting-ip') || '';
-  const userAgent = req.headers.get('user-agent') || '';
+  const forwardedFor = req.headers.get('x-forwarded-for');
+  let ipCandidate = '';
 
-  const raw = `${cfConnectingIp || realIp || forwardedFor.split(',')[0].trim() || 'unknown'}-${userAgent}`;
+  if (forwardedFor) {
+    const first = forwardedFor.split(',')[0].trim();
+    if (/^[0-9a-fA-F:.]+$/.test(first)) {
+      ipCandidate = first;
+    }
+  }
+
+  if (!ipCandidate) {
+    const realIp = req.headers.get('x-real-ip');
+    if (realIp && /^[0-9a-fA-F:.]+$/.test(realIp.trim())) {
+      ipCandidate = realIp.trim();
+    }
+  }
+
+  if (!ipCandidate) {
+    const cfIp = req.headers.get('cf-connecting-ip');
+    if (cfIp && /^[0-9a-fA-F:.]+$/.test(cfIp.trim())) {
+      ipCandidate = cfIp.trim();
+    }
+  }
+
+  const raw = ipCandidate || 'unknown';
   return localRateLimiter.hashClientId(raw);
 }

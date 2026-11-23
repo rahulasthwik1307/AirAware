@@ -41,6 +41,7 @@ export function CopilotRichResponse({
   onSelectPrompt,
 }: CopilotRichResponseProps) {
   const [copied, setCopied] = useState(false);
+  const [copyFailed, setCopyFailed] = useState(false);
   const intent: CopilotQueryIntent = detectCopilotIntent(question, response.directAnswer);
 
   const primaryFacts = report ? getPrimaryAqiFacts(report) : null;
@@ -59,11 +60,18 @@ export function CopilotRichResponse({
         .filter(Boolean)
         .join('\n\n');
 
+      if (!navigator.clipboard?.writeText) {
+        setCopyFailed(true);
+        setTimeout(() => setCopyFailed(false), 2000);
+        return;
+      }
+
       await navigator.clipboard.writeText(formatted);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Fallback if clipboard API is restricted
+      setCopyFailed(true);
+      setTimeout(() => setCopyFailed(false), 2000);
     }
   };
 
@@ -95,11 +103,11 @@ export function CopilotRichResponse({
             type="button"
             onClick={handleCopy}
             className="shrink-0 p-1.5 rounded-lg bg-white/90 hover:bg-white text-slate-600 hover:text-slate-900 border border-teal-200 text-[11px] font-mono font-semibold transition-all cursor-pointer shadow-2xs flex items-center gap-1"
-            title="Copy entire answer to clipboard"
-            aria-label="Copy entire answer to clipboard"
+            title={copyFailed ? 'Clipboard write restricted' : 'Copy entire answer to clipboard'}
+            aria-label={copyFailed ? 'Clipboard write restricted' : 'Copy entire answer to clipboard'}
           >
-            <span>{copied ? '✓' : '📋'}</span>
-            <span>{copied ? 'Copied' : 'Copy'}</span>
+            <span>{copied ? '✓' : copyFailed ? '⚠️' : '📋'}</span>
+            <span>{copied ? 'Copied' : copyFailed ? 'Failed' : 'Copy'}</span>
           </button>
         </div>
       </div>

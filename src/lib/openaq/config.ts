@@ -1,5 +1,9 @@
 import { z } from 'zod';
 
+if (typeof window !== 'undefined') {
+  throw new Error('OpenAQ configuration is server-only and cannot be imported in the browser.');
+}
+
 const OpenAqEnvSchema = z.object({
   OPENAQ_API_KEY: z.string().min(1).optional(),
 });

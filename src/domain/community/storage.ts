@@ -4,9 +4,43 @@
  * zero network transmission, and zero cloud tracking.
  */
 
+import { z } from 'zod';
 import { CommunityStorageState, PollutionIncident } from './types';
 
 export const COMMUNITY_STORAGE_KEY = 'airaware_community_v1';
+
+const PollutionIncidentSchema = z.object({
+  id: z.string(),
+  category: z.enum([
+    'WASTE_BURNING',
+    'CONSTRUCTION_DUST',
+    'ROAD_DUST',
+    'DIESEL_GENERATOR',
+    'BIOMASS_COOKING',
+    'OTHER',
+  ]),
+  title: z.string().max(200),
+  description: z.string().max(1000),
+  locationName: z.string().max(200),
+  coordinates: z
+    .object({
+      latitude: z.number().min(-90).max(90),
+      longitude: z.number().min(-180).max(180),
+    })
+    .optional(),
+  timestamp: z.string(),
+  status: z.enum(['LOGGED_LOCALLY', 'EXPORTED_CPCB', 'COMMUNITY_RESOLVED']),
+  severity: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']),
+});
+
+const CommunityStorageStateSchema = z.object({
+  version: z.literal(1),
+  incidents: z.array(PollutionIncidentSchema),
+  readAlertIds: z.array(z.string()),
+  customAlertThreshold: z.number().min(0).max(500),
+  rwaSocietyName: z.string().max(100),
+  lastUpdated: z.string(),
+});
 
 export const INITIAL_COMMUNITY_STATE: CommunityStorageState = {
   version: 1,
@@ -51,15 +85,9 @@ export function loadCommunityState(): CommunityStorageState {
     }
 
     const parsed = JSON.parse(raw);
-    if (parsed && typeof parsed === 'object' && parsed.version === 1) {
-      return {
-        version: 1,
-        incidents: Array.isArray(parsed.incidents) ? parsed.incidents : INITIAL_COMMUNITY_STATE.incidents,
-        readAlertIds: Array.isArray(parsed.readAlertIds) ? parsed.readAlertIds : [],
-        customAlertThreshold: typeof parsed.customAlertThreshold === 'number' ? parsed.customAlertThreshold : 300,
-        rwaSocietyName: typeof parsed.rwaSocietyName === 'string' ? parsed.rwaSocietyName : 'Residential Society RWA',
-        lastUpdated: parsed.lastUpdated || new Date().toISOString(),
-      };
+    const validated = CommunityStorageStateSchema.safeParse(parsed);
+    if (validated.success) {
+      return validated.data as CommunityStorageState;
     }
   } catch (err) {
     console.warn('[AirAware] Failed to parse community storage state, falling back to initial state:', err);

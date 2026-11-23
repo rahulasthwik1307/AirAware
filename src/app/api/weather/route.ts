@@ -1,11 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { secureUpstreamFetch } from '@/lib/security/upstream';
 
 const WeatherQuerySchema = z.object({
   latitude: z.coerce.number().min(-90).max(90),
   longitude: z.coerce.number().min(-180).max(180),
-  timezone: z.string().default('auto'),
-});
+  timezone: z
+    .string()
+    .max(50)
+    .regex(/^[A-Za-z0-9_\/+\-]+$/, 'Invalid timezone format')
+    .default('auto'),
+}).strict();
+
+const ALLOWED_WEATHER_PARAMS = new Set(['latitude', 'longitude', 'timezone']);
 
 export interface WeatherData {
   readonly temperature: number | null;
@@ -31,11 +38,22 @@ function getWindCardinal(degrees: number | null): string {
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
 
-  const parseResult = WeatherQuerySchema.safeParse({
-    latitude: searchParams.get('latitude'),
-    longitude: searchParams.get('longitude'),
-    timezone: searchParams.get('timezone') ?? 'auto',
-  });
+  // Reject unknown query parameters
+  for (const key of searchParams.keys()) {
+    if (!ALLOWED_WEATHER_PARAMS.has(key)) {
+      return NextResponse.json(
+        { error: 'Unknown query parameter rejected' },
+        { status: 400 }
+      );
+    }
+  }
+
+  const queryObj: Record<string, string | null> = {};
+  if (searchParams.has('latitude')) queryObj.latitude = searchParams.get('latitude');
+  if (searchParams.has('longitude')) queryObj.longitude = searchParams.get('longitude');
+  if (searchParams.has('timezone')) queryObj.timezone = searchParams.get('timezone');
+
+  const parseResult = WeatherQuerySchema.safeParse(queryObj);
 
   if (!parseResult.success) {
     return NextResponse.json(
@@ -51,7 +69,7 @@ export async function GET(request: NextRequest) {
       timezone
     )}`;
 
-    const res = await fetch(targetUrl, {
+    const res = await secureUpstreamFetch(targetUrl, {
       next: { revalidate: 900 }, // 15-minute caching
       headers: { Accept: 'application/json' },
     });
@@ -85,10 +103,10 @@ export async function GET(request: NextRequest) {
         'Cache-Control': 'public, s-maxage=900, stale-while-revalidate=300',
       },
     });
-  } catch (err) {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to retrieve atmospheric weather data' },
-      { status: 500 }
+      { status: 502 }
     );
   }
 }

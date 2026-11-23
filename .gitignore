@@ -24,8 +24,7 @@ yarn-error.log*
 pnpm-debug.log*
 
 # Environment Variables & Local Config
-.env*.local
-.env
+.env*
 !.env.example
 
 # Operating System Files

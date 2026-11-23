@@ -6,6 +6,10 @@
  * Credentials must NEVER be exposed to client bundles or logged.
  */
 
+if (typeof window !== 'undefined') {
+  throw new Error('Cloudflare AI configuration is server-only and cannot be imported in the browser.');
+}
+
 export interface CloudflareAiConfig {
   accountId: string;
   apiToken: string;

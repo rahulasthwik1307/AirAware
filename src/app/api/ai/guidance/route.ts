@@ -13,6 +13,8 @@ import {
   validateRequestSecurity,
   getClientHash,
   localRateLimiter,
+  PayloadTooLargeError,
+  readJsonBodyWithLimit,
 } from '@/lib/ai/rate-limiter';
 
 export const runtime = 'nodejs';
@@ -47,7 +49,7 @@ export async function POST(req: Request) {
     }
 
     // 3. Body parsing & Zod schema validation
-    const body = await req.json();
+    const body = await readJsonBodyWithLimit<unknown>(req);
     const validatedInput = GuidanceRequestSchema.parse(body);
 
     // 4. Retrieve guidance (Cloudflare AI or Deterministic Fallback)
@@ -65,6 +67,16 @@ export async function POST(req: Request) {
 
     return NextResponse.json(result, { status: 200, headers });
   } catch (error: unknown) {
+    if (error instanceof PayloadTooLargeError) {
+      return NextResponse.json(
+        {
+          error: 'PAYLOAD_TOO_LARGE',
+          message: 'Request payload exceeds maximum allowed size.',
+        },
+        { status: 413 }
+      );
+    }
+
     if (error instanceof ZodError) {
       return NextResponse.json(
         {
@@ -76,7 +88,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const message = error instanceof Error ? error.message : 'Internal server error';
+    const message = error instanceof Error ? error.message : 'Invalid guidance request.';
     return NextResponse.json(
       {
         error: 'BAD_REQUEST',

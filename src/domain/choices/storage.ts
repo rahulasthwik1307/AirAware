@@ -4,10 +4,40 @@
  * Zero external telemetry or remote cloud dependencies.
  */
 
+import { z } from 'zod';
 import { DEFAULT_CLEANER_HABITS } from './constants';
 import { CleanerChoicesPreferences, CleanerTransitMode } from './types';
 
 const STORAGE_KEY = 'airaware_cleaner_choices_v1';
+
+const CleanerTransitModeSchema = z.enum([
+  'PRIVATE_CAR',
+  'CARPOOL',
+  'PUBLIC_TRANSIT',
+  'CYCLING',
+  'WALKING',
+]);
+
+const HabitCategorySchema = z.enum([
+  'COMMUTE',
+  'SMOG_TIMING',
+  'INDOOR_DEFENSE',
+  'ENERGY_COOKING',
+]);
+
+const CleanerHabitSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  category: HabitCategorySchema,
+  icon: z.string(),
+  description: z.string(),
+  exposureDefenseBenefit: z.string(),
+  estimatedWeeklyCo2eSavingsKg: z.number().nonnegative(),
+  weeklyExposureHoursProtected: z.number().nonnegative(),
+  isAdopted: z.boolean(),
+  weeklyCompletions: z.array(z.boolean()),
+  currentStreakDays: z.number().int().nonnegative(),
+});
 
 export const DEFAULT_PREFERENCES: CleanerChoicesPreferences = {
   commuteDistanceKm: 15,
@@ -17,6 +47,15 @@ export const DEFAULT_PREFERENCES: CleanerChoicesPreferences = {
   habits: DEFAULT_CLEANER_HABITS,
   lastActiveTimestamp: new Date().toISOString(),
 };
+
+const CleanerChoicesPreferencesSchema = z.object({
+  commuteDistanceKm: z.number().min(0.5).max(150).default(15),
+  tripsPerWeek: z.number().int().min(1).max(28).default(10),
+  baselineMode: CleanerTransitModeSchema.default('PRIVATE_CAR'),
+  selectedAlternative: CleanerTransitModeSchema.default('PUBLIC_TRANSIT'),
+  habits: z.array(CleanerHabitSchema).default(() => DEFAULT_PREFERENCES.habits as unknown as z.infer<typeof CleanerHabitSchema>[]),
+  lastActiveTimestamp: z.string().default(() => new Date().toISOString()),
+});
 
 /**
  * Loads saved cleaner choices preferences from localStorage.
@@ -33,65 +72,12 @@ export function loadCleanerChoicesPreferences(): CleanerChoicesPreferences {
       return DEFAULT_PREFERENCES;
     }
 
-    const parsed = JSON.parse(raw) as Partial<CleanerChoicesPreferences>;
-
-    // Validate and sanitize parsed values
-    const commuteDistanceKm =
-      typeof parsed.commuteDistanceKm === 'number' && Number.isFinite(parsed.commuteDistanceKm)
-        ? Math.min(Math.max(0.5, parsed.commuteDistanceKm), 150)
-        : DEFAULT_PREFERENCES.commuteDistanceKm;
-
-    const tripsPerWeek =
-      typeof parsed.tripsPerWeek === 'number' && Number.isFinite(parsed.tripsPerWeek)
-        ? Math.min(Math.max(1, parsed.tripsPerWeek), 28)
-        : DEFAULT_PREFERENCES.tripsPerWeek;
-
-    const baselineMode: CleanerTransitMode =
-      parsed.baselineMode === 'PRIVATE_CAR' ? 'PRIVATE_CAR' : DEFAULT_PREFERENCES.baselineMode;
-
-    const validAlts: CleanerTransitMode[] = [
-      'CARPOOL',
-      'PUBLIC_TRANSIT',
-      'CYCLING',
-      'WALKING',
-      'PRIVATE_CAR',
-    ];
-    const selectedAlternative: CleanerTransitMode =
-      parsed.selectedAlternative && validAlts.includes(parsed.selectedAlternative)
-        ? parsed.selectedAlternative
-        : DEFAULT_PREFERENCES.selectedAlternative;
-
-    // Validate habits array
-    let habits = DEFAULT_PREFERENCES.habits;
-    if (Array.isArray(parsed.habits) && parsed.habits.length > 0) {
-      // Merge with default habits in case new habits were introduced
-      habits = DEFAULT_CLEANER_HABITS.map((defHabit) => {
-        const found = parsed.habits?.find((h) => h.id === defHabit.id);
-        if (!found) return defHabit;
-
-        return {
-          ...defHabit,
-          isAdopted: Boolean(found.isAdopted),
-          weeklyCompletions:
-            Array.isArray(found.weeklyCompletions) && found.weeklyCompletions.length === 7
-              ? found.weeklyCompletions.map(Boolean)
-              : defHabit.weeklyCompletions,
-          currentStreakDays:
-            typeof found.currentStreakDays === 'number'
-              ? Math.max(0, found.currentStreakDays)
-              : defHabit.currentStreakDays,
-        };
-      });
+    const parsed = JSON.parse(raw);
+    const validated = CleanerChoicesPreferencesSchema.safeParse(parsed);
+    if (validated.success) {
+      return validated.data as CleanerChoicesPreferences;
     }
-
-    return {
-      commuteDistanceKm,
-      tripsPerWeek,
-      baselineMode,
-      selectedAlternative,
-      habits,
-      lastActiveTimestamp: parsed.lastActiveTimestamp || new Date().toISOString(),
-    };
+    return DEFAULT_PREFERENCES;
   } catch {
     return DEFAULT_PREFERENCES;
   }

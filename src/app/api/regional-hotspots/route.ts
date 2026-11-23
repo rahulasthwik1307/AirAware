@@ -1,6 +1,8 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { GLOBE_REFERENCE_CITIES } from '@/components/globe/world-landmass';
 import { getEpaTierFromValue } from '@/domain/aqi/epa-aqi';
+import { getClientHash, regionalHotspotsLimiter } from '@/lib/ai/rate-limiter';
+import { secureUpstreamFetch } from '@/lib/security/upstream';
 
 export interface RegionalCityEstimate {
   readonly id: number;
@@ -26,10 +28,42 @@ interface CacheEntry {
 let memoryCache: CacheEntry | null = null;
 const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  // 1. Client rate-limit check (best-effort per instance)
+  const clientHash = getClientHash(request);
+  const rateCheck = regionalHotspotsLimiter.check(clientHash);
+  if (!rateCheck.allowed) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Too many requests. Please try again shortly.',
+        cities: [],
+      },
+      {
+        status: 429,
+        headers: {
+          'Retry-After': String(Math.ceil((rateCheck.resetAt - Date.now()) / 1000)),
+        },
+      }
+    );
+  }
+
+  // 2. Reject unknown query parameters
+  const { searchParams } = new URL(request.url);
+  if (Array.from(searchParams.keys()).length > 0) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Unknown parameters rejected',
+        cities: [],
+      },
+      { status: 400 }
+    );
+  }
+
   const now = Date.now();
 
-  // 1. Check in-memory 15-minute cache
+  // 3. Check in-memory 15-minute cache
   if (memoryCache && now - memoryCache.timestamp < CACHE_TTL_MS) {
     return NextResponse.json(
       {
@@ -47,24 +81,20 @@ export async function GET() {
   }
 
   try {
-    // 2. Build batched comma-separated query coordinates
+    // 4. Build batched comma-separated query coordinates
     const lats = GLOBE_REFERENCE_CITIES.map((c) => c.latitude.toFixed(4)).join(',');
     const lons = GLOBE_REFERENCE_CITIES.map((c) => c.longitude.toFixed(4)).join(',');
 
     const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lats}&longitude=${lons}&current=us_aqi,pm2_5,pm10`;
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 6000);
-
-    const res = await fetch(url, {
-      signal: controller.signal,
-      next: { revalidate: 900 },
-      headers: {
-        Accept: 'application/json',
+    const res = await secureUpstreamFetch(
+      url,
+      {
+        next: { revalidate: 900 },
+        headers: { Accept: 'application/json' },
       },
-    });
-
-    clearTimeout(timeoutId);
+      8000
+    );
 
     if (!res.ok) {
       return NextResponse.json(
@@ -137,7 +167,7 @@ export async function GET() {
         error: 'Could not load regional air quality comparisons right now. Please try again later.',
         cities: [],
       },
-      { status: 500 }
+      { status: 502 }
     );
   }
 }

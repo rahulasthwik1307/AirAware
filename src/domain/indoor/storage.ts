@@ -4,10 +4,35 @@
  * Zero cloud transmission, resilient against corrupt storage, 100% in-browser.
  */
 
+import { z } from 'zod';
 import { IndoorPreferencesState, RoomType, FilterLogState } from './types';
 
 export const INDOOR_STORAGE_KEY = 'airaware_indoor_v1';
 const INDOOR_EVENT_NAME = 'airaware_indoor_updated';
+
+const IndoorPreferencesStateSchema = z.object({
+  selectedRoomId: z.string().default('living_room'),
+  roomAreas: z.record(z.string(), z.number().nonnegative()).default({
+    living_room: 22,
+    kitchen: 12,
+    bedroom: 16,
+    study: 14,
+  }),
+  ceilingHeightM: z.number().min(1.5).max(10).default(2.7),
+  selectedCadrM3h: z.number().min(0).max(5000).default(250),
+  targetAch: z.number().min(0.5).max(20).default(4.0),
+  filterLog: z.object({
+    installDate: z.string(),
+    customIntervalMonths: z.number().int().min(1).max(24),
+    notes: z.string().optional(),
+  }).default({
+    installDate: new Date().toISOString().split('T')[0],
+    customIntervalMonths: 6,
+    notes: 'Standard HEPA + activated carbon filter set',
+  }),
+  indoorPm25Reading: z.number().nonnegative().nullable().default(null),
+  hasMonitor: z.boolean().default(false),
+});
 
 let cachedIndoorRaw: string | null = null;
 let cachedIndoorState: IndoorPreferencesState | null = null;
@@ -72,24 +97,21 @@ export function loadIndoorState(): IndoorPreferencesState {
     }
 
     const parsed = JSON.parse(raw);
+    const validated = IndoorPreferencesStateSchema.safeParse(parsed);
+    if (!validated.success) {
+      cachedIndoorState = DEFAULT_INDOOR_STATE;
+      return cachedIndoorState;
+    }
+    const d = validated.data;
     cachedIndoorState = {
-      selectedRoomId: parsed.selectedRoomId || DEFAULT_INDOOR_STATE.selectedRoomId,
-      roomAreas: {
-        ...DEFAULT_INDOOR_STATE.roomAreas,
-        ...(parsed.roomAreas || {}),
-      },
-      ceilingHeightM: typeof parsed.ceilingHeightM === 'number' ? parsed.ceilingHeightM : DEFAULT_INDOOR_STATE.ceilingHeightM,
-      selectedCadrM3h: typeof parsed.selectedCadrM3h === 'number' ? parsed.selectedCadrM3h : DEFAULT_INDOOR_STATE.selectedCadrM3h,
-      targetAch: typeof parsed.targetAch === 'number' ? parsed.targetAch : DEFAULT_INDOOR_STATE.targetAch,
-      filterLog: {
-        ...DEFAULT_INDOOR_STATE.filterLog,
-        ...(parsed.filterLog || {}),
-      },
-      indoorPm25Reading:
-        typeof parsed.indoorPm25Reading === 'number' && Number.isFinite(parsed.indoorPm25Reading) && parsed.indoorPm25Reading >= 0
-          ? parsed.indoorPm25Reading
-          : null,
-      hasMonitor: Boolean(parsed.hasMonitor),
+      selectedRoomId: d.selectedRoomId as RoomType,
+      roomAreas: d.roomAreas as Record<RoomType, number>,
+      ceilingHeightM: d.ceilingHeightM,
+      selectedCadrM3h: d.selectedCadrM3h,
+      targetAch: d.targetAch,
+      filterLog: d.filterLog as FilterLogState,
+      indoorPm25Reading: d.indoorPm25Reading,
+      hasMonitor: d.hasMonitor,
     };
     return cachedIndoorState;
   } catch {
