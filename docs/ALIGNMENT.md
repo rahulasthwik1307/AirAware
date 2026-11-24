@@ -44,12 +44,12 @@ This document provides traceable verification mapping every requirement from the
 - **Security Headers**: Configured in `next.config.ts` (`nosniff`, `strict-origin-when-cross-origin`, `DENY`, `same-origin`, and `Content-Security-Policy-Report-Only`).
 
 ### 3. Efficiency & Performance
-- **Bundle Separation & Lazy Loading**: Heavy 3D MapLibre/Three.js globe (`LazyGlobePanel`), Regional Compare (`LazyRegionalComparePanel`), Copilot (`CopilotDrawerShell`), and Onboarding (`OnboardingModal`) are dynamically imported with `next/dynamic({ ssr: false })`.
+- **Bundle Separation & Lazy Loading**: Heavy 3D MapLibre globe (`LazyGlobePanel`), Regional Compare (`LazyRegionalComparePanel`), Copilot (`CopilotDrawerShell`), and Onboarding (`OnboardingModal`) are dynamically imported with `next/dynamic({ ssr: false })`.
 - **In-Memory Caching & SWR**: 10-minute Next.js CDN caching (`s-maxage=600, stale-while-revalidate=300`) on `/api/air-quality`; 15-minute memory cache on `/api/regional-hotspots`; 24-hour cache on `/api/locations/search`.
 - **In-Flight Request Deduplication**: Single-flight Promise deduplication in `src/lib/ai/cache.ts` prevents redundant inference calls during concurrent UI requests.
 
 ### 4. Testing & Verification
-- **Automated Test Suites**: **514 automated tests across 79 suites** located in `tests/unit/`, covering AQI normalization, CPCB calculation benchmarks, indoor CADR formulas, planner recommendations, security headers, rate limiting, and prompt injection hardening.
+- **Automated Test Suites**: **577 automated tests across 86 suites** located in `tests/unit/`, covering AQI normalization, CPCB calculation benchmarks, indoor CADR formulas, planner recommendations, security headers, rate limiting, and prompt injection hardening.
 - **Mocked Network Boundaries**: All test suites isolate network boundaries using Vi global stubs (`vi.stubGlobal('fetch', ...)`), ensuring reproducible offline testing.
 - **Accessibility Verification Suite**: `tests/unit/a11y/accessibility.test.tsx` validates skip links, button accessible names, modal focus trapping and Escape-key restoration, and chart role="img" attributes with data table alternatives.
 - **Architectural Protections**: `tests/unit/architecture-invariants.test.ts` validates zero React/Next dependencies in `src/domain` and strict HTTP 400 rejection for unknown fields across all API endpoints.

@@ -108,7 +108,7 @@ AirAware/
 │   │   ├── copilot/                 # Copilot rich structured response renderer
 │   │   ├── dashboard/               # Air Intelligence Studio & hero views
 │   │   │   └── hero/                # Overview, Regional Compare, and Globe panels
-│   │   ├── globe/                   # MapLibre & Three.js 3D Earth visualizations
+│   │   ├── globe/                   # MapLibre 3D Earth globe visualization
 │   │   ├── indoor/                  # Indoor Air Sanctuary & CADR calculator
 │   │   ├── planner/                 # Family Daily Planner & profile manager
 │   │   ├── shell/                   # Application shell, navigation & drawers
@@ -238,10 +238,13 @@ Managed centrally in `src/domain/constants/storage-keys.ts`:
 ## 7. Performance & Optimization Architecture
 
 - **Bundle Separation & Lazy Loading**:
-  - `LazyGlobePanel` is dynamically imported in `src/components/dashboard/AqiHeroCard.tsx` pointing to `src/components/dashboard/hero/GlobePanel.tsx` (`ssr: false`), which dynamically imports `src/components/globe/MapLibreGlobe.tsx` (`ssr: false`) to isolate heavy WebGL/Three.js assets from the initial client bundle.
+  - `LazyGlobePanel` is dynamically imported in `src/components/dashboard/AqiHeroCard.tsx` pointing to `src/components/dashboard/hero/GlobePanel.tsx` (`ssr: false`), which dynamically imports `src/components/globe/MapLibreGlobe.tsx` (`ssr: false`) to isolate heavy WebGL MapLibre assets from the initial client bundle.
   - `LazyRegionalComparePanel` is dynamically imported in `src/components/dashboard/AqiHeroCard.tsx` pointing to `src/components/dashboard/hero/RegionalComparePanel.tsx` (`ssr: false`).
   - `CopilotDrawerShell` (`src/components/shell/CopilotDrawerShell.tsx`) and `OnboardingModal` (`src/components/welcome/OnboardingModal.tsx`) are dynamically imported with `ssr: false` in `src/components/shell/AirAwareShell.tsx`.
-- **Deduplication**: `aiCache` maintains an in-flight Promise map (`inFlightGuidance`, `inFlightCopilot`). Concurrent identical requests join the active single-flight Promise rather than issuing duplicate calls to Cloudflare Workers AI.
+- **Deduplication & Bounded In-Memory Limits**:
+  - `aiCache` maintains an in-flight Promise map (`inFlightGuidance`, `inFlightCopilot`). Concurrent identical requests join the active single-flight Promise rather than issuing duplicate calls to Cloudflare Workers AI. In-flight requests are capped at `MAX_IN_FLIGHT_REQUESTS = 100` and cleaned up with guaranteed `.finally()` handlers.
+  - `aiCache` bounds cache size at `MAX_CACHE_ENTRIES = 500` for both guidance and copilot caches, evicting the oldest entries once capacity is reached.
+  - `LocalRateLimiter` enforces `MAX_BUCKETS = 1000` with automatic sliding-window pruning and FIFO eviction of oldest buckets, ensuring an O(1) memory bound under high client IP cardinality.
 - **Caching Cadences**:
   - Open-Meteo CAMS telemetry: 10-minute Next.js CDN cache (`OPEN_METEO_REVALIDATE_SECONDS = 600`).
   - Regional hotspots: 15-minute in-memory cache (`CACHE_TTL_MS = 15 * 60 * 1000`).

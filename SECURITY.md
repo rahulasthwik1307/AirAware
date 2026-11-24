@@ -23,6 +23,8 @@ All Next.js API route handlers validate inputs using strict Zod schemas (`.stric
 ## Rate Limiting & Denial-of-Service Defense
 
 - Endpoint protection: `localRateLimiter` enforces a sliding window limit of 30 requests per 10-minute window on AI routes, returning HTTP 429 with a `Retry-After` header when exceeded.
+- Memory safety: `localRateLimiter` enforces a strict ceiling of `MAX_BUCKETS = 1000` with automatic sliding-window pruning and FIFO eviction of oldest entries, preventing memory exhaustion under high IP or session cardinality.
+- Cache & Concurrency Bounding: `aiCache` is strictly bounded (`MAX_CACHE_ENTRIES = 500`, `MAX_IN_FLIGHT_REQUESTS = 100`) with guaranteed `.finally()` promise cleanup.
 - Architectural limitation: In serverless deployments (such as Vercel), in-memory rate limiting operates on a best-effort basis per isolated container instance rather than via a distributed global Redis cluster.
 
 ## Upstream Network Allowlist & Timeouts

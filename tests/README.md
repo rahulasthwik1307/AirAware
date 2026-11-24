@@ -7,14 +7,16 @@ Comprehensive automated test specifications for the AirAware environmental intel
 Tests mirror the application structure under `src/` and are organized by functional area:
 
 - `tests/unit/aqi/`: AQI mathematics, CPCB NAQI breakpoints, EPA sub-indices, European AQI, and daytime exposure window calculations.
-- `tests/unit/choices/`: DEFRA emission factor calculators, commute comparisons, and `useCleanerChoices` reactivity.
+- `tests/unit/choices/`: DEFRA emission factor calculators, commute comparisons, commute distance tiers, and `useCleanerChoices` reactivity.
 - `tests/unit/community/`: Civic alerts generator, Sameer dossier formatting, and `useCommunityAlerts`.
 - `tests/unit/indoor/`: CADR sizing, room volume formulas, ventilation advisor, and microclimate storage.
-- `tests/unit/planner/`: Actionable recommendation engine, household member limits, and daily routine schedules.
-- `tests/unit/ai/`: Cloudflare Workers AI client, failover cascade, deterministic fallbacks, prompt builders, and `useAirCopilot`.
-- `tests/unit/components/`: User-facing component flows (onboarding walkthrough, location search, Copilot drawer, household profile management, hero view switcher).
+- `tests/unit/planner/`: Actionable recommendation engine, briefing derivations, health advisory rules, household member limits, and daily routine schedules.
+- `tests/unit/ai/`: Cloudflare Workers AI client, failover cascade, deterministic fallbacks, copilot session derivations, rate limiter memory safety, prompt builders, and `useAirCopilot`.
+- `tests/unit/components/`: User-facing component flows (onboarding walkthrough, location search, Copilot drawer, household profile management, chart geometry, hero view switcher).
 - `tests/unit/security/`: Route input validation, strict parameter checking, payload limits, SSRF prevention, and rate limiting.
 - `tests/unit/architecture-invariants.test.ts`: Architectural protections guaranteeing `src/domain` purity (zero React/Next imports) and strict 400 rejection of unknown query/body fields across all API endpoints.
+
+Total verified test count: **577 automated tests across 86 test suites** (100% passing).
 
 ## How to Run Tests
 

@@ -80,7 +80,7 @@ All mathematical thresholds, spatial constraints, and conversion factors are ver
 - **National Regulatory Standards**: Official Indian CPCB NAQI piecewise linear interpolation breakpoints (Good 0–50, Satisfactory 51–100, Moderate 101–200, Poor 201–300, Very Poor 301–400, Severe 401–500 in `src/domain/aqi/cpcb-benchmark.ts`) and CAQM GRAP Stages I–IV (Poor $\ge 200$, Very Poor $\ge 300$, Severe $\ge 400$, Severe+ $\ge 450$ in `src/domain/community/generator.ts`).
 - **Localization & Time Zone Scope**: English-only interface with scheduling and timestamps localized to Indian Standard Time (`Asia/Kolkata`).
 - **Accountless Storage**: Zero server-side user database or cloud authentication; all household profiles, schedules, and custom preferences persist exclusively in browser `localStorage` (`src/domain/constants/storage-keys.ts`).
-- **Serverless AI & API Limits**: Cloudflare Workers AI timeout of 12 seconds (`AI_TIMEOUT_MS = 12_000`), in-memory sliding window rate limit of 30 requests per 10 minutes (`MAX_REQUESTS = 30`, `WINDOW_MS = 600_000` in `src/lib/ai/rate-limiter.ts`), and strict 32 KB request body limit (`MAX_AI_PAYLOAD_BYTES = 32_768` in `src/lib/ai/types.ts`).
+- **Serverless AI & API Limits**: Cloudflare Workers AI timeout of 12 seconds (`AI_TIMEOUT_MS = 12_000`), in-memory sliding window rate limit of 30 requests per 10 minutes (`MAX_REQUESTS = 30`, `WINDOW_MS = 600_000` in `src/lib/ai/rate-limiter.ts`), strict memory bounding (`MAX_BUCKETS = 1000` with automatic sliding-window pruning and FIFO eviction), cache caps (`MAX_CACHE_ENTRIES = 500`), in-flight request bounding (`MAX_IN_FLIGHT_REQUESTS = 100`), and strict 32 KB request body limit (`MAX_AI_PAYLOAD_BYTES = 32_768` in `src/lib/ai/types.ts`).
 
 ---
 
@@ -169,7 +169,7 @@ Browser Client (React 19 / Next.js 16) ──> Next.js API Routes (/api/*)
 | **Framework** | Next.js (App Router), React, React DOM | `16.4.6`, `19.3.1`, `19.3.1` |
 | **Language & Validation** | TypeScript, Zod | `5.7.3`, `4.6.7` |
 | **Styling & Design Tokens** | Tailwind CSS, Astryx Core Tokens | `4.0.0`, `^0.7.16` |
-| **Mapping & Visuals** | MapLibre GL, Three.js | `6.19.0`, `0.187.0` |
+| **Mapping & Visuals** | MapLibre GL | `6.19.0` |
 | **Testing & Quality** | Vitest, Testing Library (React, Jest-DOM, User-Event), ESLint | `5.1.0`, `^16.3.3`, `9.39.5` |
 | **AI Inference** | Cloudflare Workers AI (Server-Side REST) | Serverless |
 
@@ -205,9 +205,9 @@ npm start        # Launch production server
 
 ## Testing & Quality Assurance
 
-AirAware features a comprehensive test suite of **514 automated tests across 79 suites** with 100% mocked network boundaries and automated architectural invariant enforcement:
+AirAware features a comprehensive test suite of **577 automated tests across 86 suites** with 100% mocked network boundaries and automated architectural invariant enforcement:
 ```bash
-npm test              # Run unit and integration test suites via Vitest (514 tests)
+npm test              # Run unit and integration test suites via Vitest (577 tests)
 npm run test:coverage # Run Vitest test suite with V8 code coverage report
 npm run typecheck     # Run TypeScript compiler validation (tsc --noEmit)
 npm run lint          # Run ESLint validation
