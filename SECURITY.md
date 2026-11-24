@@ -48,7 +48,7 @@ Configured in `next.config.ts`:
 - `Permissions-Policy: geolocation=(self), camera=(), microphone=(), payment=()`
 - `Cross-Origin-Opener-Policy: same-origin`
 - `poweredByHeader: false` (removes `X-Powered-By: Next.js`)
-- `Content-Security-Policy-Report-Only`: CSP policy directives deployed in report-only mode.
+- `Content-Security-Policy-Report-Only`: CSP policy directives deployed in report-only mode intentionally to accommodate MapLibre `blob:` WebGL workers and multi-CDN tile fallbacks while all other security headers remain strictly enforced.
 
 ## Client Storage Safety
 
