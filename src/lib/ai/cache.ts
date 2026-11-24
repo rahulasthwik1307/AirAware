@@ -1,9 +1,9 @@
 /**
  * AirAware — AI Response Cache & In-Flight Request Deduplication
  *
- * Implements token & Neuron frugality:
- * 1. Normalized category-based response caching (30-minute TTL).
- * 2. In-flight Promise deduplication (single-flight pattern).
+ * Implements token & Neuron frugality with bounded memory guarantees:
+ * 1. Normalized category-based response caching (30-minute TTL) with MAX_CACHE_ENTRIES LRU eviction.
+ * 2. In-flight Promise deduplication (single-flight pattern) with settle-time cleanup and bounded capacity.
  * 3. Daily quota exhaustion suppression tracking.
  */
 
@@ -18,6 +18,8 @@ interface CacheEntry<T> {
 
 // 30 minutes cache TTL (aligned with sensor refresh frequency)
 const DEFAULT_TTL_MS = AI_CACHE_DEFAULT_TTL_MS;
+export const MAX_CACHE_ENTRIES = 500;
+export const MAX_IN_FLIGHT_REQUESTS = 100;
 
 class AiCacheManager {
   private guidanceCache = new Map<string, CacheEntry<GuidanceResponse>>();
@@ -80,6 +82,15 @@ class AiCacheManager {
     if (data.isDeterministicFallback) {
       return;
     }
+
+    // Strict Memory Cap: Evict oldest entry when capacity is reached
+    if (this.guidanceCache.size >= MAX_CACHE_ENTRIES) {
+      const oldestKey = this.guidanceCache.keys().next().value;
+      if (oldestKey !== undefined) {
+        this.guidanceCache.delete(oldestKey);
+      }
+    }
+
     this.guidanceCache.set(key, {
       data,
       expiresAt: Date.now() + ttlMs,
@@ -101,6 +112,15 @@ class AiCacheManager {
     if (data.isDeterministicFallback || data.fallbackReason) {
       return;
     }
+
+    // Strict Memory Cap: Evict oldest entry when capacity is reached
+    if (this.copilotCache.size >= MAX_CACHE_ENTRIES) {
+      const oldestKey = this.copilotCache.keys().next().value;
+      if (oldestKey !== undefined) {
+        this.copilotCache.delete(oldestKey);
+      }
+    }
+
     this.copilotCache.set(key, {
       data,
       expiresAt: Date.now() + ttlMs,
@@ -109,6 +129,7 @@ class AiCacheManager {
 
   /**
    * Executes or shares an in-flight Promise for identical concurrent guidance requests.
+   * Guarantees safe cleanup in finally and bounds maximum concurrent tracking.
    */
   public async deduplicateGuidance(
     key: string,
@@ -116,6 +137,10 @@ class AiCacheManager {
   ): Promise<GuidanceResponse> {
     const existing = this.inFlightGuidance.get(key);
     if (existing) return existing;
+
+    if (this.inFlightGuidance.size >= MAX_IN_FLIGHT_REQUESTS) {
+      return factory();
+    }
 
     const promise = factory().finally(() => {
       this.inFlightGuidance.delete(key);
@@ -127,6 +152,7 @@ class AiCacheManager {
 
   /**
    * Executes or shares an in-flight Promise for identical concurrent Copilot requests.
+   * Guarantees safe cleanup in finally and bounds maximum concurrent tracking.
    */
   public async deduplicateCopilot(
     key: string,
@@ -134,6 +160,10 @@ class AiCacheManager {
   ): Promise<CopilotResponse> {
     const existing = this.inFlightCopilot.get(key);
     if (existing) return existing;
+
+    if (this.inFlightCopilot.size >= MAX_IN_FLIGHT_REQUESTS) {
+      return factory();
+    }
 
     const promise = factory().finally(() => {
       this.inFlightCopilot.delete(key);
@@ -169,6 +199,22 @@ class AiCacheManager {
 
   public getDailyQuotaResetTimestamp(): number {
     return this.dailyQuotaExhaustedUntil;
+  }
+
+  public getGuidanceCacheSize(): number {
+    return this.guidanceCache.size;
+  }
+
+  public getCopilotCacheSize(): number {
+    return this.copilotCache.size;
+  }
+
+  public getInFlightGuidanceSize(): number {
+    return this.inFlightGuidance.size;
+  }
+
+  public getInFlightCopilotSize(): number {
+    return this.inFlightCopilot.size;
   }
 
   public clear(): void {

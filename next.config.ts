@@ -43,6 +43,8 @@ const nextConfig: NextConfig = {
             key: 'Cross-Origin-Opener-Policy',
             value: 'same-origin',
           },
+          // Report-Only is intentionally used for CSP to permit MapLibre blob: WebGL workers
+          // and multi-CDN tile fallbacks without breaking rendering, while other headers are enforced.
           {
             key: 'Content-Security-Policy-Report-Only',
             value: cspDirectives,

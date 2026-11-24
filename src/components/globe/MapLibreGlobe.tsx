@@ -302,8 +302,14 @@ export function MapLibreGlobe({
       {/* MapLibre WebGL Canvas Container */}
       <div
         ref={mapContainerRef}
+        role="region"
+        aria-label="3D Earth Air Quality Globe"
         className="w-full h-full -translate-y-0.5 sm:-translate-y-1 cursor-grab"
-      />
+      >
+        <p className="sr-only">
+          Interactive 3D WebGL Earth globe displaying atmospheric satellite imagery, reference benchmark cities, and air quality telemetry. Full tabular regional air quality data and search are available in the Regional Compare and Location Search views.
+        </p>
+      </div>
 
       {/* Floating Glassmorphism Controls */}
       <GlobeControlsOverlay

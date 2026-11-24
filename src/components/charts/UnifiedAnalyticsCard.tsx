@@ -104,6 +104,7 @@ export function UnifiedAnalyticsCard({ report }: UnifiedAnalyticsCardProps) {
           onClick={() => setShowTable((prev) => !prev)}
           className="text-[11px] font-mono text-slate-600 hover:text-slate-900 underline cursor-pointer self-start sm:self-auto shrink-0 transition-colors"
           aria-expanded={showTable}
+          aria-controls="unified-analytics-data-table"
         >
           {showTable ? 'Hide data table' : 'View data table'}
         </button>

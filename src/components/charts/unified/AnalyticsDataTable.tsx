@@ -12,7 +12,7 @@ export interface AnalyticsDataTableProps {
 
 /**
  * Accessible tabular representation of air quality telemetry and historical trend data.
- * Toggled on demand for screen readers and tabular data review.
+ * Provides screen readers and keyboard users a structured, accessible alternative to SVG charts.
  *
  * @param props - activeTab ('limits' | 'trend'), items, and historical points
  */
@@ -22,22 +22,31 @@ export function AnalyticsDataTable({
   points,
 }: AnalyticsDataTableProps) {
   return (
-    <div className="max-h-40 overflow-y-auto border border-slate-200 rounded-xl p-2 bg-slate-50 text-xs font-mono animate-fadeIn">
+    <div
+      id="unified-analytics-data-table"
+      role="region"
+      aria-label="Environmental Intelligence Data Table"
+      tabIndex={0}
+      className="max-h-40 overflow-y-auto border border-slate-200 rounded-xl p-2 bg-slate-50 text-xs font-mono animate-fadeIn focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+    >
       {activeTab === 'limits' ? (
         <table className="w-full text-left">
+          <caption className="sr-only">
+            Criteria Pollutant Concentrations and CPCB NAAQS 24-Hour Limits Comparison
+          </caption>
           <thead>
             <tr className="border-b border-slate-200 text-slate-500 font-bold text-[10px] uppercase">
-              <th className="p-1">Pollutant</th>
-              <th className="p-1">Measured</th>
-              <th className="p-1">CPCB 24h Limit</th>
-              <th className="p-1">Ratio</th>
-              <th className="p-1">Status</th>
+              <th scope="col" className="p-1">Pollutant</th>
+              <th scope="col" className="p-1">Measured</th>
+              <th scope="col" className="p-1">CPCB 24h Limit</th>
+              <th scope="col" className="p-1">Ratio</th>
+              <th scope="col" className="p-1">Status</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200/60">
             {availableItems.map((item) => (
               <tr key={item.key}>
-                <td className="p-1 font-bold text-slate-900">{item.formula} ({item.fullName})</td>
+                <th scope="row" className="p-1 font-bold text-slate-900 font-sans">{item.formula} ({item.fullName})</th>
                 <td className="p-1 font-semibold">{item.conc} {item.unit}</td>
                 <td className="p-1 text-slate-600">{item.limit} {item.unit}</td>
                 <td className="p-1 font-bold">{Math.round(item.ratio * 100)}%</td>
@@ -52,18 +61,21 @@ export function AnalyticsDataTable({
         </table>
       ) : (
         <table className="w-full text-left">
+          <caption className="sr-only">
+            7-Day Historical Air Quality Index and PM2.5 Trend Data
+          </caption>
           <thead>
             <tr className="border-b border-slate-200 text-slate-500 font-bold text-[10px] uppercase">
-              <th className="p-1">Date</th>
-              <th className="p-1">Day</th>
-              <th className="p-1">AQI Level</th>
-              <th className="p-1">PM₂.₅</th>
+              <th scope="col" className="p-1">Date</th>
+              <th scope="col" className="p-1">Day</th>
+              <th scope="col" className="p-1">AQI Level</th>
+              <th scope="col" className="p-1">PM₂.₅</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200/60">
             {points.map((p) => (
               <tr key={p.date}>
-                <td className="p-1 font-semibold text-slate-900">{p.date}</td>
+                <th scope="row" className="p-1 font-semibold text-slate-900">{p.date}</th>
                 <td className="p-1">{p.dayLabel}</td>
                 <td className="p-1 font-bold">{p.aqi}</td>
                 <td className="p-1 text-slate-600">{p.pm25} µg/m³</td>
