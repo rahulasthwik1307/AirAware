@@ -4,7 +4,6 @@ import React, { useEffect, useRef, useState, useCallback, useSyncExternalStore }
 import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { GeoLocation } from '@/domain/types';
-import { GLOBE_REFERENCE_CITIES } from './world-landmass';
 import { resolveGlobePlace } from './globe-place-resolver';
 import {
   type GlobeMapStyleKey,
@@ -14,12 +13,18 @@ import {
   getReducedMotionSnapshot,
   getReducedMotionServerSnapshot,
   resolveInspectTelemetry,
-  getReferenceCityEstimate,
 } from './maplibre-styles';
+import {
+  DEFAULT_SKY_CONFIG,
+  updateActiveLocationMarker,
+  updateReferenceCityMarkers,
+} from './maplibre-helpers';
+import { GlobeTelemetryHud } from './GlobeTelemetryHud';
+import { GlobeControlsOverlay } from './GlobeControlsOverlay';
 
 export type { GlobeMapStyleKey, LocationInspectData };
 
-interface MapLibreGlobeProps {
+export interface MapLibreGlobeProps {
   readonly selectedLocation: GeoLocation | null;
   readonly onSelectLocation: (loc: GeoLocation) => void;
   readonly aqiColor?: string;
@@ -28,6 +33,13 @@ interface MapLibreGlobeProps {
   readonly theme?: 'light' | 'dark';
 }
 
+/**
+ * 3D Interactive WebGL Earth Globe powered by MapLibre GL.
+ * Features real-time atmospheric lighting, celestial aura, multi-style layer switching,
+ * auto-rotation, and interactive global air quality telemetry inspection.
+ *
+ * @param props - MapLibreGlobe configuration, location callbacks, and AQI metrics
+ */
 export function MapLibreGlobe({
   selectedLocation,
   onSelectLocation,
@@ -75,9 +87,7 @@ export function MapLibreGlobe({
 
     try {
       map.setPadding({ top: 0, bottom: 0, left: 0, right: 0 });
-    } catch {
-      // In SSR or test mocks where canvas is mocked
-    }
+    } catch {}
 
     mapRef.current = map;
 
@@ -89,40 +99,23 @@ export function MapLibreGlobe({
       }
 
       try {
-        map.setSky({
-          'sky-color': '#0F172A',
-          'horizon-color': '#1E293B',
-          'fog-color': '#0F172A',
-          'fog-ground-blend': 0.8,
-        });
+        map.setSky(DEFAULT_SKY_CONFIG);
       } catch {}
     });
 
-    // Track Zoom & Cursor
-    map.on('zoom', () => {
-      setCurrentZoom(Number(map.getZoom().toFixed(1)));
-    });
-
+    map.on('zoom', () => setCurrentZoom(Number(map.getZoom().toFixed(1))));
     map.on('mousemove', (e) => {
-      setCursorCoords({
-        lat: Number(e.lngLat.lat.toFixed(4)),
-        lng: Number(e.lngLat.lng.toFixed(4)),
-      });
+      setCursorCoords({ lat: Number(e.lngLat.lat.toFixed(4)), lng: Number(e.lngLat.lng.toFixed(4)) });
     });
 
-    // Pause auto-rotation when user interacts with mouse/touch/gesture
-    map.on('mousedown', () => setUserPaused(true));
-    map.on('touchstart', () => setUserPaused(true));
-    map.on('dragstart', () => setUserPaused(true));
-    map.on('rotatestart', () => setUserPaused(true));
-    map.on('wheel', () => setUserPaused(true));
+    ['mousedown', 'touchstart', 'dragstart', 'rotatestart', 'wheel'].forEach((ev) => {
+      map.on(ev as keyof maplibregl.MapEventType, () => setUserPaused(true));
+    });
 
-    // Click anywhere on Earth: Inspect and Pin with Geographic Place Intelligence
     map.on('click', async (e) => {
       const lat = Number(e.lngLat.lat.toFixed(4));
       const lng = Number(e.lngLat.lng.toFixed(4));
 
-      // Query MapLibre rendered features under pointer for place labels
       let renderedFeatures: Array<{ properties?: Record<string, unknown> }> = [];
       try {
         renderedFeatures = map.queryRenderedFeatures(e.point);
@@ -130,9 +123,7 @@ export function MapLibreGlobe({
         renderedFeatures = [];
       }
 
-      // Resolve human-readable place name (never Global Grid Coordinate)
       const place = resolveGlobePlace(lat, lng, renderedFeatures);
-
       setInspectData(resolveInspectTelemetry(lat, lng, place, e.point));
     });
 
@@ -171,16 +162,12 @@ export function MapLibreGlobe({
     if (activeStyleRef.current !== activeStyle) {
       activeStyleRef.current = activeStyle;
       map.setStyle(TILE_STYLES[activeStyle]);
-      map.once('style.load', () => {
-        applyProjection(isGlobe);
-      });
+      map.once('style.load', () => applyProjection(isGlobe));
     }
   }, [activeStyle, isGlobe, applyProjection]);
 
   // Update Projection: 3D Globe vs 2D Mercator
-  useEffect(() => {
-    applyProjection(isGlobe);
-  }, [isGlobe, applyProjection]);
+  useEffect(() => applyProjection(isGlobe), [isGlobe, applyProjection]);
 
   // Continuous Idle Auto-Rotation
   useEffect(() => {
@@ -237,48 +224,14 @@ export function MapLibreGlobe({
     const map = mapRef.current;
     if (!map || !selectedLocation) return;
 
-    if (activeMarkerRef.current) {
-      activeMarkerRef.current.remove();
-    }
-
-    const el = document.createElement('div');
-    el.className = 'group relative flex flex-col items-center cursor-pointer select-none';
-    el.innerHTML = `
-      <div class="relative flex items-center justify-center">
-        <span class="absolute w-8 h-8 rounded-full animate-ping opacity-75" style="background-color: ${aqiColor}"></span>
-        <span class="w-4 h-4 rounded-full border-2 border-white shadow-xl ring-2 ring-slate-900" style="background-color: ${aqiColor}"></span>
-      </div>
-      <div class="mt-1 px-2.5 py-0.5 rounded-full font-mono font-black text-white text-[11px] shadow-xl border border-white/40 flex items-center gap-1.5 whitespace-nowrap" style="background-color: ${aqiColor}">
-        <span>${selectedLocation.name}</span>
-        <span class="opacity-90">[${currentAqi ?? '--'}]</span>
-      </div>
-    `;
-
-    el.addEventListener('click', (ev) => {
-      ev.stopPropagation();
-      setInspectData({
-        name: selectedLocation.name,
-        country: selectedLocation.country,
-        countryCode: selectedLocation.countryCode,
-        latitude: selectedLocation.latitude,
-        longitude: selectedLocation.longitude,
-        aqi: currentAqi ?? 100,
-        tier: currentAqi && currentAqi > 150 ? 'Unhealthy' : currentAqi && currentAqi > 100 ? 'Sensitive' : 'Moderate',
-        tierColor: aqiColor,
-        dominant: 'PM2.5',
-        temperature: 24,
-        humidity: 50,
-        windSpeed: 8,
-        healthAction: 'Active selected location. Modelled atmospheric estimates loaded.',
-        isReferenceSample: false,
-      });
-    });
-
-    const marker = new maplibregl.Marker({ element: el })
-      .setLngLat([selectedLocation.longitude, selectedLocation.latitude])
-      .addTo(map);
-
-    activeMarkerRef.current = marker;
+    activeMarkerRef.current = updateActiveLocationMarker(
+      map,
+      selectedLocation,
+      aqiColor,
+      currentAqi,
+      setInspectData,
+      activeMarkerRef.current
+    );
   }, [selectedLocation, aqiColor, currentAqi]);
 
   // Add World Reference City Markers with Hover / Click Intelligence
@@ -286,66 +239,12 @@ export function MapLibreGlobe({
     const map = mapRef.current;
     if (!map) return;
 
-    referenceMarkersRef.current.forEach((m) => m.remove());
-    referenceMarkersRef.current = [];
-
-    GLOBE_REFERENCE_CITIES.forEach((c) => {
-      if (
-        selectedLocation &&
-        Math.abs(c.latitude - selectedLocation.latitude) < 0.5 &&
-        Math.abs(c.longitude - selectedLocation.longitude) < 0.5
-      ) {
-        return; // Don't duplicate active marker
-      }
-
-      const est = getReferenceCityEstimate(c.name);
-      const cityAqi = est.aqi;
-      const cityColor = est.color;
-      const cityTier = est.tier;
-      const cityTemp = est.temp;
-      const cityHumidity = est.humidity;
-      const cityWind = est.wind;
-      const cityTip = est.smogTip;
-
-      const el = document.createElement('div');
-      el.className = 'group relative flex items-center gap-1 cursor-pointer transition-transform hover:scale-110';
-      el.innerHTML = `
-        <span class="w-2.5 h-2.5 rounded-full border border-white shadow-md" style="background-color: ${cityColor}"></span>
-        <span class="px-1.5 py-0.2 rounded-full font-mono font-bold text-white text-[10px] shadow-md border border-white/30" style="background-color: ${cityColor}EE">
-          ${c.name} [${cityAqi}]
-        </span>
-      `;
-
-      // Hover / Click to trigger Environmental Intelligence Card
-      const triggerInspect = (ev: Event) => {
-        ev.stopPropagation();
-        setInspectData({
-          name: c.name,
-          country: c.country,
-          countryCode: c.countryCode,
-          latitude: c.latitude,
-          longitude: c.longitude,
-          aqi: cityAqi,
-          tier: cityTier,
-          tierColor: cityColor,
-          dominant: 'PM2.5',
-          temperature: cityTemp,
-          humidity: cityHumidity,
-          windSpeed: cityWind,
-          healthAction: cityTip || 'Modelled reference sample for global comparison. Focus & select as active location.',
-          isReferenceSample: true,
-        });
-      };
-
-      el.addEventListener('mouseenter', triggerInspect);
-      el.addEventListener('click', triggerInspect);
-
-      const m = new maplibregl.Marker({ element: el })
-        .setLngLat([c.longitude, c.latitude])
-        .addTo(map);
-
-      referenceMarkersRef.current.push(m);
-    });
+    referenceMarkersRef.current = updateReferenceCityMarkers(
+      map,
+      selectedLocation,
+      setInspectData,
+      referenceMarkersRef.current
+    );
   }, [selectedLocation]);
 
   // Smooth FlyTo Active Location
@@ -363,48 +262,31 @@ export function MapLibreGlobe({
     });
   }, [selectedLocation]);
 
-  // Zoom Handler
-  const handleZoom = (delta: number) => {
-    const map = mapRef.current;
-    if (!map) return;
-    setUserPaused(true);
-    map.zoomTo(map.getZoom() + delta, { duration: 400 });
-  };
-
-  // Reset North (Compass)
-  const handleResetNorth = () => {
-    const map = mapRef.current;
-    if (!map) return;
-    map.resetNorthPitch({ duration: 800 });
-  };
-
   // Focus and select location from inspect card
-  const handleSelectInspectLocation = useCallback((data: LocationInspectData) => {
-    onSelectLocation({
-      id: Math.floor(Math.abs(data.latitude * 1000 + data.longitude * 100)),
-      name: data.name,
-      country: data.country,
-      countryCode: data.countryCode,
-      latitude: data.latitude,
-      longitude: data.longitude,
-      timezone: 'auto',
-    });
-    const map = mapRef.current;
-    if (map) {
-      map.flyTo({
-        center: [data.longitude, data.latitude],
-        zoom: Math.max(map.getZoom(), 4.2),
-        pitch: 0,
-        padding: { top: 0, bottom: 0, left: 0, right: 0 },
-        duration: 1600,
+  const handleSelectInspectLocation = useCallback(
+    (data: LocationInspectData) => {
+      onSelectLocation({
+        id: Math.floor(Math.abs(data.latitude * 1000 + data.longitude * 100)),
+        name: data.name,
+        country: data.country,
+        countryCode: data.countryCode,
+        latitude: data.latitude,
+        longitude: data.longitude,
+        timezone: 'auto',
       });
-    }
-  }, [onSelectLocation]);
-
-  const inspectTitle = inspectData ? inspectData.name : '';
-  const inspectSubtitle = inspectData
-    ? `${inspectData.country && inspectData.country !== inspectData.name && inspectData.country !== 'International Waters' ? `${inspectData.country} • ` : ''}${Math.abs(inspectData.latitude).toFixed(2)}°${inspectData.latitude >= 0 ? 'N' : 'S'}, ${Math.abs(inspectData.longitude).toFixed(2)}°${inspectData.longitude >= 0 ? 'E' : 'W'}`
-    : '';
+      const map = mapRef.current;
+      if (map) {
+        map.flyTo({
+          center: [data.longitude, data.latitude],
+          zoom: Math.max(map.getZoom(), 4.2),
+          pitch: 0,
+          padding: { top: 0, bottom: 0, left: 0, right: 0 },
+          duration: 1600,
+        });
+      }
+    },
+    [onSelectLocation]
+  );
 
   return (
     <div
@@ -417,264 +299,40 @@ export function MapLibreGlobe({
         />
       </div>
 
-      {/* MapLibre WebGL Canvas Container — Natural size (w-full h-full), slight upward centering */}
+      {/* MapLibre WebGL Canvas Container */}
       <div
         ref={mapContainerRef}
         className="w-full h-full -translate-y-0.5 sm:-translate-y-1 cursor-grab"
       />
 
-      {/* Floating Top Controls: Projection, Layer, and Compass */}
-      <div className="absolute top-4 inset-x-4 flex items-center justify-between z-20 pointer-events-none">
-        {/* Left: 3D Globe vs 2D Mercator Toggle */}
-        <div
-          className="inline-flex p-1 rounded-xl shadow-lg text-[11px] font-mono font-bold pointer-events-auto bg-slate-900 border border-slate-700/80 text-slate-300"
-        >
-          <button
-            type="button"
-            onClick={() => setIsGlobe(true)}
-            className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
-              isGlobe
-                ? 'bg-sky-600 text-white shadow-xs font-black'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            🌐 3D Globe
-          </button>
-          <button
-            type="button"
-            onClick={() => setIsGlobe(false)}
-            className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
-              !isGlobe
-                ? 'bg-sky-600 text-white shadow-xs font-black'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            🗺️ 2D Map
-          </button>
-        </div>
+      {/* Floating Glassmorphism Controls */}
+      <GlobeControlsOverlay
+        isGlobe={isGlobe}
+        onToggleGlobe={setIsGlobe}
+        activeStyle={activeStyle}
+        onSelectStyle={setActiveStyle}
+        onResetNorth={() => mapRef.current?.resetNorthPitch({ duration: 800 })}
+        isRotating={isRotating}
+        onToggleRotation={() => setUserPaused((p) => !p)}
+        onFocusActive={handleFocusActive}
+        cursorCoords={cursorCoords}
+        currentZoom={currentZoom}
+        onZoom={(delta) => {
+          if (mapRef.current) {
+            setUserPaused(true);
+            mapRef.current.zoomTo(mapRef.current.getZoom() + delta, { duration: 400 });
+          }
+        }}
+      />
 
-        {/* Right: Map Style & Compass */}
-        <div className="flex items-center gap-2 pointer-events-auto">
-          {/* Style Switcher */}
-          <div
-            className="inline-flex p-1 rounded-xl shadow-lg text-[11px] font-mono font-bold bg-slate-900 border border-slate-700/80"
-          >
-            <button
-              type="button"
-              onClick={() => setActiveStyle('satellite')}
-              className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
-                activeStyle === 'satellite'
-                  ? 'bg-sky-600 text-white shadow-xs font-black'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-              title="Photorealistic Earth satellite imagery with city labels"
-            >
-              🛰️ Real Earth
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveStyle('streets')}
-              className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
-                activeStyle === 'streets'
-                  ? 'bg-sky-600 text-white shadow-xs font-black'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-              title="Detailed topographic and street network"
-            >
-              🗺️ Topo
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveStyle('scientific')}
-              className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
-                activeStyle === 'scientific'
-                  ? 'bg-sky-600 text-white shadow-xs font-black'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-              title="Clean scientific vector grid"
-            >
-              🌐 Vector
-            </button>
-          </div>
-
-          {/* Compass / Reset North */}
-          <button
-            type="button"
-            onClick={handleResetNorth}
-            className="w-8 h-8 rounded-xl shadow-lg flex items-center justify-center transition-all font-mono font-bold text-xs cursor-pointer bg-slate-900 border border-slate-700/80 text-slate-300 hover:text-white hover:bg-slate-800"
-            title="Reset North & Pitch"
-            aria-label="Reset North"
-          >
-            🧭
-          </button>
-        </div>
-      </div>
-
-      {/* Floating Interactive Environmental Intelligence Card — Ultra-Compact & Attractive HUD */}
+      {/* Floating Interactive Environmental Intelligence Card */}
       {inspectData && (
-        <div
-          role="dialog"
-          aria-label="Environmental Intelligence Preview"
-          className="absolute top-14 right-3 sm:right-5 max-w-[230px] w-full p-2.5 rounded-2xl shadow-[0_16px_36px_-6px_rgba(0,0,0,0.85)] z-30 animate-fadeIn pointer-events-auto transition-all bg-slate-900 border border-slate-700/80 text-white select-none"
-        >
-          {/* Header Row: City / Place Name, Coordinates & Close */}
-          <div className="flex items-center justify-between gap-1.5 pb-1 mb-1 border-b border-slate-800/80">
-            <div className="flex items-center gap-1.5 min-w-0">
-              <span className="relative flex h-2 w-2 shrink-0">
-                <span
-                  className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
-                  style={{ backgroundColor: inspectData.tierColor }}
-                />
-                <span
-                  className="relative inline-flex rounded-full h-2 w-2 border border-white/90 shadow-2xs"
-                  style={{ backgroundColor: inspectData.tierColor }}
-                />
-              </span>
-              <div className="min-w-0">
-                <div className="flex items-center gap-1">
-                  <h4 className="font-extrabold text-[12px] font-sans leading-tight truncate text-white">
-                    {inspectTitle}
-                  </h4>
-                  {inspectData.isReferenceSample && (
-                    <span className="shrink-0 px-1 py-0.2 rounded text-[7.5px] font-mono font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
-                      Sample
-                    </span>
-                  )}
-                </div>
-                <span className="text-[8.5px] font-mono leading-tight block truncate text-slate-400">
-                  {inspectSubtitle}
-                </span>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => setInspectData(null)}
-              className="w-4 h-4 rounded-full flex items-center justify-center transition-colors text-xs font-bold leading-none cursor-pointer shrink-0 text-slate-400 hover:text-white hover:bg-white/10"
-              aria-label="Close preview"
-            >
-              ×
-            </button>
-          </div>
-
-          {/* Consolidated Telemetry Cockpit (AQI Centerpiece + Micro-Weather in 1 Row) */}
-          <div className="flex items-center justify-between gap-1.5 p-1.5 rounded-xl border border-slate-700/60 bg-slate-800/60 mb-1.5">
-            {/* Left: Highlighted AQI Centerpiece */}
-            <div className="flex items-center gap-1.5">
-              <span
-                className="text-2xl font-black font-mono tracking-tight tabular-nums leading-none"
-                style={{ color: inspectData.tierColor }}
-              >
-                {inspectData.aqi}
-              </span>
-              <div className="flex flex-col">
-                <span
-                  className="px-1.5 py-0.2 rounded text-[7.5px] font-mono font-extrabold uppercase tracking-wider border leading-tight"
-                  style={{
-                    backgroundColor: `${inspectData.tierColor}20`,
-                    borderColor: `${inspectData.tierColor}60`,
-                    color: inspectData.tierColor,
-                  }}
-                >
-                  {inspectData.tier}
-                </span>
-                <span className="text-[7px] font-mono uppercase tracking-wider text-slate-400 mt-0.5">
-                  US EPA AQI
-                </span>
-              </div>
-            </div>
-
-            {/* Right: Micro Weather Telemetry Strip */}
-            <div className="flex items-center gap-1.5 border-l border-slate-700/60 pl-2 text-[9px] font-mono">
-              <div className="flex flex-col items-center">
-                <span className="text-[6.5px] text-slate-400 uppercase leading-none">TEMP</span>
-                <span className="font-bold text-white tabular-nums">{inspectData.temperature}°C</span>
-              </div>
-              <div className="flex flex-col items-center">
-                <span className="text-[6.5px] text-slate-400 uppercase leading-none">HUM</span>
-                <span className="font-bold text-white tabular-nums">{inspectData.humidity}%</span>
-              </div>
-              <div className="flex flex-col items-center">
-                <span className="text-[6.5px] text-slate-400 uppercase leading-none">WIND</span>
-                <span className="font-bold text-white tabular-nums">{inspectData.windSpeed}k</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Actionable Health Insight (Compact 1-Line) */}
-          <div className="flex items-center gap-1 px-1.5 py-1 rounded-lg text-[8.5px] leading-tight mb-1.5 border bg-sky-950/30 border-sky-500/25 text-sky-200">
-            <span className="text-[9.5px] shrink-0" aria-hidden="true">
-              🛡️
-            </span>
-            <p className="font-medium truncate">{inspectData.healthAction}</p>
-          </div>
-
-          {/* Action Trigger Button */}
-          <button
-            type="button"
-            onClick={() => handleSelectInspectLocation(inspectData)}
-            className="w-full py-1.5 px-2 rounded-lg bg-linear-to-r from-sky-600 to-sky-500 hover:from-sky-500 hover:to-sky-400 active:scale-[0.98] text-white font-mono font-bold text-[10px] tracking-wide transition-all shadow-xs hover:shadow-md cursor-pointer flex items-center justify-center gap-1"
-          >
-            <span>🎯 Focus &amp; Select Location</span>
-            <span className="text-[9px]">↵</span>
-          </button>
-        </div>
+        <GlobeTelemetryHud
+          inspectData={inspectData}
+          onClose={() => setInspectData(null)}
+          onSelectLocation={handleSelectInspectLocation}
+        />
       )}
-
-      {/* Bottom Floating Controls Bar */}
-      <div className="absolute bottom-4 inset-x-4 flex items-center justify-between z-20 pointer-events-none">
-        {/* Left: Action Buttons (Auto-Rotate & Focus Active) */}
-        <div className="flex items-center gap-1.5 p-1 rounded-xl shadow-lg text-[11px] font-mono font-bold pointer-events-auto bg-slate-900 border border-slate-700/80">
-          <button
-            type="button"
-            onClick={() => setUserPaused((p) => !p)}
-            className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
-              isRotating
-                ? 'bg-sky-600 text-white shadow-xs font-black'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800'
-            }`}
-          >
-            {isRotating ? '🔄 ROTATING' : '⏸️ PAUSED'}
-          </button>
-          <button
-            type="button"
-            onClick={handleFocusActive}
-            className="px-3 py-1 rounded-lg transition-colors cursor-pointer text-sky-300 hover:text-white hover:bg-slate-800"
-          >
-            🎯 FOCUS ACTIVE
-          </button>
-        </div>
-
-        {/* Center: Real-Time HUD Coordinates & Zoom Level */}
-        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl shadow-lg text-[10px] font-mono bg-slate-900 border border-slate-700/80 text-slate-300">
-          <span className="font-bold text-sky-300 tabular-nums">
-            {cursorCoords ? `${cursorCoords.lat}°N, ${cursorCoords.lng}°E` : 'Explore Globe'}
-          </span>
-          <span className="text-white/20">|</span>
-          <span className="tabular-nums">
-            Zoom: {currentZoom} ({currentZoom < 4 ? 'Space' : currentZoom < 9 ? 'Region' : 'Street Level'})
-          </span>
-        </div>
-
-        {/* Right: Zoom + / - Controls */}
-        <div className="flex items-center gap-1 p-1 rounded-xl shadow-lg text-[11px] font-mono pointer-events-auto bg-slate-900 border border-slate-700/80">
-          <button
-            type="button"
-            onClick={() => handleZoom(1)}
-            className="w-7 h-7 flex items-center justify-center rounded-lg font-bold transition-colors cursor-pointer bg-slate-800 hover:bg-slate-700 text-white"
-            aria-label="Zoom in"
-          >
-            +
-          </button>
-          <button
-            type="button"
-            onClick={() => handleZoom(-1)}
-            className="w-7 h-7 flex items-center justify-center rounded-lg font-bold transition-colors cursor-pointer bg-slate-800 hover:bg-slate-700 text-white"
-            aria-label="Zoom out"
-          >
-            −
-          </button>
-        </div>
-      </div>
     </div>
   );
 }

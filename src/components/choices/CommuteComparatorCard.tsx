@@ -3,8 +3,16 @@
 import React from 'react';
 import { CleanerTransitMode, CommuteComparisonResult } from '@/domain/choices/types';
 import { TRANSIT_MODES } from '@/domain/choices/constants';
+import {
+  DISTANCE_PRESETS,
+  DAYS_PRESETS,
+  getDistanceTier,
+  calculateCommuteImpactSavings,
+  calculateComparativeBarWidths,
+} from '@/domain/choices/commute-emissions';
+import { CommuteEmissionsChart } from './CommuteEmissionsChart';
 
-interface CommuteComparatorCardProps {
+export interface CommuteComparatorCardProps {
   readonly commute: CommuteComparisonResult;
   readonly onSelectAlternative: (mode: CleanerTransitMode) => void;
   readonly onDistanceChange: (km: number) => void;
@@ -12,47 +20,13 @@ interface CommuteComparatorCardProps {
   readonly onAskCopilot: (prompt: string) => void;
 }
 
-const DISTANCE_PRESETS = [5, 12, 20, 35];
-const DAYS_PRESETS = [
-  { label: '2 days', trips: 4, subtext: 'Partial' },
-  { label: '3 days', trips: 6, subtext: 'Hybrid' },
-  { label: '5 days', trips: 10, subtext: 'Standard' },
-  { label: '7 days', trips: 14, subtext: 'Full' },
-];
-
-function getDistanceTier(km: number) {
-  if (km <= 8) {
-    return {
-      tier: 'Active Mobility Zone',
-      subtext: 'Walking & Cycling Peak Efficiency',
-      badgeClass: 'text-emerald-700 bg-emerald-50 border-emerald-200',
-      dotClass: 'bg-emerald-500',
-    };
-  }
-  if (km <= 18) {
-    return {
-      tier: 'Urban Transit Corridor',
-      subtext: 'Electric Metro & Bus Prime Range',
-      badgeClass: 'text-cyan-700 bg-cyan-50 border-cyan-200',
-      dotClass: 'bg-cyan-500',
-    };
-  }
-  if (km <= 30) {
-    return {
-      tier: 'Suburban Commuter Trunk',
-      subtext: 'Carpool & Rapid Rail Corridor',
-      badgeClass: 'text-indigo-700 bg-indigo-50 border-indigo-200',
-      dotClass: 'bg-indigo-500',
-    };
-  }
-  return {
-    tier: 'Regional Highway Corridor',
-    subtext: 'High Tailpipe Winter Exposure',
-    badgeClass: 'text-amber-800 bg-amber-50 border-amber-200',
-    dotClass: 'bg-amber-500',
-  };
-}
-
+/**
+ * Interactive Commute Mode Shift Comparator Card.
+ * Compares baseline solo car travel against cleaner transit alternatives with tangible
+ * tailpipe emissions, petrol fuel conservation, and direct financial savings.
+ *
+ * @param props - Commute result, alternative selection, distance, trip callbacks, and AI prompt trigger
+ */
 export function CommuteComparatorCard({
   commute,
   onSelectAlternative,
@@ -61,16 +35,18 @@ export function CommuteComparatorCard({
   onAskCopilot,
 }: CommuteComparatorCardProps) {
   const modesList = Object.values(TRANSIT_MODES);
-  const baselineMax = Math.max(commute.baselineKgCo2eWeekly, 1);
-  const baselineBarWidth = 100;
-  const altBarWidth = Math.min(100, Math.round((commute.alternativeKgCo2eWeekly / baselineMax) * 100));
+  const { baselineBarWidth, altBarWidth } = calculateComparativeBarWidths(
+    commute.baselineKgCo2eWeekly,
+    commute.alternativeKgCo2eWeekly
+  );
   const sliderFillPercent = Math.min(100, Math.max(0, ((commute.distanceKm - 1) / (50 - 1)) * 100));
   const tierInfo = getDistanceTier(commute.distanceKm);
 
-  // Concrete tangible savings conversions (DEFRA & Indian Urban Standards)
-  const weeklyKm = commute.distanceKm * commute.tripsPerWeek;
-  const fuelSavedLitresWeekly = Number((commute.avoidedKgCo2eWeekly / 2.31).toFixed(1));
-  const directRupeesSavedMonthly = Math.round(fuelSavedLitresWeekly * 4.33 * 104); // ₹104/L avg
+  const savings = calculateCommuteImpactSavings(
+    commute.distanceKm,
+    commute.tripsPerWeek,
+    commute.avoidedKgCo2eWeekly
+  );
 
   return (
     <article
@@ -140,17 +116,16 @@ export function CommuteComparatorCard({
               >
                 <div className="flex items-center justify-between">
                   <span className="text-lg">{modeMeta.icon}</span>
-                  {!isBaseline && (
-                    modeMeta.factorKgCo2ePerKm === 0 ? (
+                  {!isBaseline &&
+                    (modeMeta.factorKgCo2ePerKm === 0 ? (
                       <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-100/70 px-1.5 py-0.2 rounded">
                         -100%
                       </span>
                     ) : (
                       <span className="text-[10px] font-mono font-bold text-sky-700 bg-sky-100/70 px-1.5 py-0.2 rounded">
-                        -{Math.round(((0.170 - modeMeta.factorKgCo2ePerKm) / 0.170) * 100)}%
+                        -{Math.round(((0.17 - modeMeta.factorKgCo2ePerKm) / 0.17) * 100)}%
                       </span>
-                    )
-                  )}
+                    ))}
                 </div>
                 <div>
                   <p className="text-xs font-bold text-[var(--ink-primary)] truncate">
@@ -187,7 +162,7 @@ export function CommuteComparatorCard({
               </span>
             </div>
             <p className="text-[11px] text-slate-500 mt-0.5">
-              {commute.distanceKm * 2} km daily roundtrip • <span className="font-semibold text-slate-700">{weeklyKm} km weekly travel</span>
+              {commute.distanceKm * 2} km daily roundtrip • <span className="font-semibold text-slate-700">{savings.weeklyKm} km weekly travel</span>
             </p>
           </div>
 
@@ -277,153 +252,13 @@ export function CommuteComparatorCard({
         </div>
       </div>
 
-      {/* Chart 1: High-Contrast Comparative Tailpipe Emissions & Impact */}
-      <div className="space-y-3.5 pt-1">
-        <div className="flex items-center justify-between text-xs">
-          <div className="flex items-center gap-2">
-            <span className="font-bold font-mono uppercase tracking-wider text-slate-800">
-              Weekly Tailpipe Emissions Contrast
-            </span>
-            <span className="text-[10px] font-mono text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-bold">
-              Comparative DEFRA Model
-            </span>
-          </div>
-          <span className="font-mono text-[11px] text-slate-500">
-            Total {weeklyKm} km/week
-          </span>
-        </div>
-
-        {/* High-Contrast Comparative Bars */}
-        <div className="space-y-2.5 p-3.5 rounded-2xl bg-slate-50/80 border border-slate-200">
-          {/* Baseline Bar (Solo Petrol Car) - Vivid Warning Tone */}
-          <div className="space-y-1">
-            <div className="flex justify-between text-xs items-center">
-              <span className="font-bold text-slate-800 flex items-center gap-1.5">
-                <span className="text-sm">🚗</span> Solo Petrol Car
-              </span>
-              <span className="font-mono font-bold text-rose-950">
-                {commute.baselineKgCo2eWeekly} kg CO₂e
-              </span>
-            </div>
-            <div className="w-full h-3.5 bg-slate-200 rounded-full overflow-hidden p-0.5 border border-slate-300">
-              <div
-                className="h-full bg-gradient-to-r from-rose-500 via-rose-400 to-amber-500 rounded-full transition-all duration-500 ease-out shadow-xs"
-                style={{ width: `${baselineBarWidth}%` }}
-              />
-            </div>
-          </div>
-
-          {/* Alternative Bar - Vibrant Green/Teal Tone */}
-          <div className="space-y-1">
-            <div className="flex justify-between text-xs items-center">
-              <span className="font-bold text-emerald-900 flex items-center gap-1.5">
-                <span className="text-sm">{TRANSIT_MODES[commute.alternativeMode].icon}</span>{' '}
-                {TRANSIT_MODES[commute.alternativeMode].label}
-                {commute.percentageCo2eReduction === 100 && (
-                  <span className="text-[10px] font-mono font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.2 rounded border border-emerald-300">
-                    Zero Tailpipe
-                  </span>
-                )}
-              </span>
-              <span className="font-mono font-bold text-emerald-950">
-                {commute.alternativeKgCo2eWeekly} kg CO₂e
-              </span>
-            </div>
-            <div className="w-full h-3.5 bg-slate-200 rounded-full overflow-hidden p-0.5 border border-slate-300">
-              <div
-                className="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400 rounded-full transition-all duration-500 ease-out shadow-xs"
-                style={{ width: `${altBarWidth}%` }}
-              />
-            </div>
-          </div>
-
-          {/* Visual Delta Bridge (Comparison Breakdown) */}
-          {commute.percentageCo2eReduction > 0 && (
-            <div className="pt-2 border-t border-slate-200/80">
-              <div className="flex items-center justify-between text-[11px] mb-1 font-mono">
-                <span className="text-emerald-800 font-bold flex items-center gap-1">
-                  <span>📉</span> Avoided: -{commute.avoidedKgCo2eWeekly} kg ({commute.percentageCo2eReduction}%)
-                </span>
-                <span className="text-slate-500">
-                  Remaining: {commute.alternativeKgCo2eWeekly} kg
-                </span>
-              </div>
-              <div className="w-full h-2 rounded-full overflow-hidden flex bg-slate-200 border border-slate-300">
-                <div
-                  className="bg-emerald-500 h-full transition-all duration-500"
-                  style={{ width: `${commute.percentageCo2eReduction}%` }}
-                  title={`Avoided: ${commute.percentageCo2eReduction}%`}
-                />
-                <div
-                  className="bg-rose-400 h-full transition-all duration-500"
-                  style={{ width: `${100 - commute.percentageCo2eReduction}%` }}
-                  title={`Remaining: ${100 - commute.percentageCo2eReduction}%`}
-                />
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Tangible Impact KPI Micro-Tiles */}
-        {commute.percentageCo2eReduction > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
-            {/* Tile 1: Carbon Offset */}
-            <div className="p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-200 flex flex-col justify-between">
-              <span className="text-[10px] font-mono font-bold text-emerald-800 uppercase tracking-wider">
-                Carbon Offset
-              </span>
-              <div className="mt-1 flex items-baseline gap-1">
-                <span className="text-base font-black font-mono text-emerald-950">
-                  -{commute.avoidedKgCo2eWeekly}
-                </span>
-                <span className="text-[11px] font-bold text-emerald-700">kg CO₂e/wk</span>
-              </div>
-              <span className="text-[10px] text-emerald-700 mt-0.5">
-                ~{commute.avoidedKgCo2eMonthly} kg avoided / mo
-              </span>
-            </div>
-
-            {/* Tile 2: Fuel Saved */}
-            <div className="p-2.5 rounded-xl bg-cyan-50/70 border border-cyan-200 flex flex-col justify-between">
-              <span className="text-[10px] font-mono font-bold text-cyan-800 uppercase tracking-wider">
-                Petrol Conserved
-              </span>
-              <div className="mt-1 flex items-baseline gap-1">
-                <span className="text-base font-black font-mono text-cyan-950">
-                  ~{fuelSavedLitresWeekly}
-                </span>
-                <span className="text-[11px] font-bold text-cyan-700">Litres/wk</span>
-              </div>
-              <span className="text-[10px] text-cyan-700 mt-0.5">
-                Combustion avoided
-              </span>
-            </div>
-
-            {/* Tile 3: Direct Money Saved */}
-            <div className="p-2.5 rounded-xl bg-amber-50/70 border border-amber-200 flex flex-col justify-between">
-              <span className="text-[10px] font-mono font-bold text-amber-800 uppercase tracking-wider">
-                Financial Savings
-              </span>
-              <div className="mt-1 flex items-baseline gap-1">
-                <span className="text-base font-black font-mono text-amber-950">
-                  ₹{directRupeesSavedMonthly.toLocaleString('en-IN')}
-                </span>
-                <span className="text-[11px] font-bold text-amber-700">/ mo</span>
-              </div>
-              <span className="text-[10px] text-amber-700 mt-0.5">
-                Direct fuel cost offset
-              </span>
-            </div>
-          </div>
-        ) : (
-          <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 flex items-center gap-2">
-            <span>ℹ️</span>
-            <span>
-              Solo Petrol Car is the baseline reference. Select Electric Metro, Carpool, Bus, or Cycling to calculate real-world tailpipe reductions and financial savings.
-            </span>
-          </div>
-        )}
-      </div>
+      {/* High-Contrast Comparative Tailpipe Emissions & Impact */}
+      <CommuteEmissionsChart
+        commute={commute}
+        savings={savings}
+        baselineBarWidth={baselineBarWidth}
+        altBarWidth={altBarWidth}
+      />
     </article>
   );
 }

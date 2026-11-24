@@ -1,12 +1,9 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { CopilotResponse, WorkspaceContext, RoomContext, AqiCategory } from './types';
+import { CopilotResponse, WorkspaceContext, RoomContext } from './types';
 import { AirQualityReport, GeoLocation } from '@/domain/types';
-import { getPrimaryAqiFacts } from '@/domain/aqi/primary-aqi';
 import { HouseholdStorageState, HouseholdMember } from '@/domain/household/types';
-import { loadHouseholdState } from '@/domain/household/storage';
-import { loadIndoorState } from '@/domain/indoor/storage';
 import {
   CopilotChatSession,
   loadChatSessions,
@@ -15,6 +12,16 @@ import {
   generateSessionTitle,
   sanitizeChatString,
 } from './chat-storage';
+import {
+  deriveUserContextFromHousehold,
+  buildCopilotApiPayload,
+  createNoReportMessage,
+  createRateLimitMessage,
+  createCatchErrorMessage,
+  createAssistantSuccessMessage,
+} from './copilot-session';
+
+export { deriveUserContextFromHousehold };
 
 export interface CopilotChatMessage {
   readonly id: string;
@@ -27,7 +34,7 @@ export interface CopilotChatMessage {
   readonly source?: 'cloudflare-ai' | 'deterministic';
 }
 
-interface UseAirCopilotOptions {
+export interface UseAirCopilotOptions {
   readonly activeWorkspace: WorkspaceContext;
   readonly report?: AirQualityReport | null;
   readonly location?: GeoLocation | null;
@@ -36,76 +43,12 @@ interface UseAirCopilotOptions {
   readonly activeMember?: HouseholdMember | null;
 }
 
-export function deriveUserContextFromHousehold(
-  householdState?: HouseholdStorageState | null,
-  activeMember?: HouseholdMember | null
-): {
-  isSensitiveGroup: boolean;
-  primaryActivity: 'outdoor_exercise' | 'daily_commute' | 'indoor_resting' | 'general';
-  locale: string;
-  vulnerabilityTiers: string[];
-} {
-  const state = householdState || (typeof window !== 'undefined' ? loadHouseholdState() : null);
-  const members = state?.members || [];
-  const currentMember =
-    activeMember ||
-    (state?.activeMemberId ? members.find((m) => m.id === state.activeMemberId) : null) ||
-    members[0];
-
-  const vulnerabilityTiers: string[] = [];
-  let isSensitiveGroup = false;
-
-  if (currentMember) {
-    if (currentMember.sensitivityTier !== 'NONE') {
-      isSensitiveGroup = true;
-    }
-    if (currentMember.sensitivityTier === 'PEDIATRIC' || currentMember.archetype === 'CHILD_STUDENT') {
-      vulnerabilityTiers.push('pediatric');
-    }
-    if (currentMember.sensitivityTier === 'SENIOR' || currentMember.archetype === 'SENIOR_VULNERABLE') {
-      vulnerabilityTiers.push('senior');
-    }
-    if (currentMember.sensitivityTier === 'RESPIRATORY' || currentMember.sensitivityTier === 'CARDIOVASCULAR') {
-      vulnerabilityTiers.push('respiratory');
-    }
-    if (currentMember.archetype === 'WORKING_COMMUTER') {
-      vulnerabilityTiers.push('commuter');
-    }
-    if (currentMember.archetype === 'OUTDOOR_ENTHUSIAST') {
-      vulnerabilityTiers.push('outdoor_enthusiast');
-    }
-
-    const schedules = currentMember.schedules || [];
-    const hasCommute = schedules.some((s) => s.activityType === 'COMMUTE' || s.activityType === 'SCHOOL_TRAVEL');
-    const hasOutdoor = schedules.some((s) => s.activityType === 'OUTDOOR_EXERCISE');
-    const hasIndoor = schedules.some((s) => s.activityType === 'INDOOR_CHORE' || s.activityType === 'VENTILATION');
-
-    let primaryActivity: 'outdoor_exercise' | 'daily_commute' | 'indoor_resting' | 'general' = 'general';
-    if (hasCommute || currentMember.archetype === 'WORKING_COMMUTER') {
-      primaryActivity = 'daily_commute';
-    } else if (hasOutdoor || currentMember.archetype === 'OUTDOOR_ENTHUSIAST') {
-      primaryActivity = 'outdoor_exercise';
-    } else if (hasIndoor) {
-      primaryActivity = 'indoor_resting';
-    }
-
-    return {
-      isSensitiveGroup,
-      primaryActivity,
-      locale: 'en',
-      vulnerabilityTiers,
-    };
-  }
-
-  const anySensitive = members.some((m) => m.sensitivityTier !== 'NONE');
-  return {
-    isSensitiveGroup: anySensitive,
-    primaryActivity: 'general',
-    locale: 'en',
-    vulnerabilityTiers: [],
-  };
-}
-
+/**
+ * Custom React hook managing conversation session state, burst rate limiting,
+ * and asynchronous querying for the AirAware AI Copilot.
+ *
+ * @param options - Active workspace, telemetry report, location, and household contexts
+ */
 export function useAirCopilot({
   activeWorkspace,
   report,
@@ -249,15 +192,13 @@ export function useAirCopilot({
       }
 
       // 1. Append user message
-      const userMsgId = `user-${Date.now()}`;
       const userMsg: CopilotChatMessage = {
-        id: userMsgId,
+        id: `user-${Date.now()}`,
         sender: 'user',
         text: q.slice(0, 200),
         timestamp: new Date().toISOString(),
       };
 
-      // If this is the first user message in the session, update the session title
       setSessions((prev) =>
         prev.map((s) => {
           if (s.id === activeSessionId) {
@@ -279,114 +220,48 @@ export function useAirCopilot({
 
       // 2. Check if a real report is loaded. Never assume mock or default values.
       if (!report || report.providerAqi === null) {
-        const noReportMsg: CopilotChatMessage = {
-          id: `assistant-${Date.now()}`,
-          sender: 'assistant',
-          text: 'I need a selected location and live environmental telemetry before answering. Please select or detect a location first.',
-          timestamp: new Date().toISOString(),
-          source: 'deterministic',
-        };
-
+        const noReportMsg = createNoReportMessage();
         setSessions((prev) =>
-          prev.map((s) => {
-            if (s.id === activeSessionId) {
-              return {
-                ...s,
-                updatedAt: new Date().toISOString(),
-                messages: [...s.messages, noReportMsg],
-              };
-            }
-            return s;
-          })
+          prev.map((s) =>
+            s.id === activeSessionId
+              ? { ...s, updatedAt: new Date().toISOString(), messages: [...s.messages, noReportMsg] }
+              : s
+          )
         );
         setIsThinking(false);
         return;
       }
 
-      // 3. Build verified privacy-safe payload with authoritative LIVE AQI context (Zero PII)
-      const primaryFacts = getPrimaryAqiFacts(report);
-      const currentAqi = primaryFacts.aqi;
-      const currentCategory = primaryFacts.category as AqiCategory;
-      
-      let dominantKey: 'pm25' | 'pm10' | 'o3' | 'no2' | 'so2' | 'co' = 'pm25';
-      const rawDominant = (report.dominantPollutant || 'pm25').toLowerCase().replace(/[^a-z0-9]/g, '');
-      if (rawDominant.includes('pm10')) dominantKey = 'pm10';
-      else if (rawDominant.includes('pm2') || rawDominant.includes('pm25')) dominantKey = 'pm25';
-      else if (rawDominant.includes('o3') || rawDominant.includes('ozone')) dominantKey = 'o3';
-      else if (rawDominant.includes('no2')) dominantKey = 'no2';
-      else if (rawDominant.includes('so2')) dominantKey = 'so2';
-      else if (rawDominant.includes('co')) dominantKey = 'co';
-
-      const pollutantMeasurementKey = dominantKey === 'pm25' ? 'pm2_5' : dominantKey;
-      const conc =
-        report.pollutants?.[pollutantMeasurementKey as keyof typeof report.pollutants]?.concentration ??
-        report.pollutants?.pm2_5?.concentration ??
-        0;
-
-      const userContext = deriveUserContextFromHousehold(householdState, activeMember);
-      const cityName = location?.name || report.location.name;
-      const observationTime = report.observedAt || report.localTime || report.modelTimestamp;
-      const dataSource = primaryFacts.resolvedDataSource;
-
-      const payload = {
-        question: q.slice(0, 200),
-        workspace: activeWorkspace,
-        roomContext: overrideRoomContext || roomContext || undefined,
-        aqi: Math.min(500, Math.max(0, currentAqi)),
-        category: currentCategory,
-        dominantPollutant: dominantKey,
-        pollutantConcentration: conc,
-        pollutantUnit: 'µg/m³',
-        weather: {
-          temperatureC: 22,
-          humidityPercent: 50,
-          windSpeedKmh: 5,
-        },
-        userContext,
-        cityName,
-        observationTime,
-        dataSource,
-        sourceType: report.sourceType,
-        stationName: report.stationName,
-        distanceKm: report.distanceKm,
-        indoorPm25: typeof window !== 'undefined' ? (loadIndoorState().indoorPm25Reading ?? null) : null,
-        scaleName: primaryFacts.scaleName,
-        modelFallbackReason: primaryFacts.modelFallbackReason,
-      };
+      // 3. Build verified privacy-safe payload
+      const payload = buildCopilotApiPayload({
+        query: q,
+        activeWorkspace,
+        report,
+        location,
+        roomContext: overrideRoomContext || roomContext,
+        householdState,
+        activeMember,
+      });
 
       try {
         const res = await fetch('/api/ai/copilot', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
 
-        // Check quota headers
         if (res.headers.get('X-AirAware-Quota-Exhausted') === 'true') {
           setIsDailyQuotaExhausted(true);
         }
 
-        // Check response source
         const rawSource = res.headers.get('X-AirAware-Response-Source');
-        const source: 'cloudflare-ai' | 'deterministic' =
-          rawSource === 'cloudflare-ai' ? 'cloudflare-ai' : 'deterministic';
 
         if (res.status === 429) {
           const retryAfter = res.headers.get('Retry-After');
           const seconds = retryAfter ? parseInt(retryAfter, 10) : 60;
           setCooldownSeconds(isNaN(seconds) ? 60 : seconds);
 
-          const errMessage: CopilotChatMessage = {
-            id: `err-${Date.now()}`,
-            sender: 'assistant',
-            isError: true,
-            errorMessage: `Rate limit reached. Please wait ${seconds} seconds before asking another question.`,
-            timestamp: new Date().toISOString(),
-            source: 'deterministic',
-          };
-
+          const errMessage = createRateLimitMessage(isNaN(seconds) ? 60 : seconds);
           setSessions((prev) =>
             prev.map((s) =>
               s.id === activeSessionId
@@ -399,19 +274,14 @@ export function useAirCopilot({
 
         if (!res.ok) {
           const errData = await res.json().catch(() => null);
-          const customMsg = errData?.message || (res.status === 400 ? 'Please enter a valid question.' : `Server returned HTTP ${res.status}`);
+          const customMsg =
+            errData?.message ||
+            (res.status === 400 ? 'Please enter a valid question.' : `Server returned HTTP ${res.status}`);
           throw new Error(customMsg);
         }
 
         const data: CopilotResponse = await res.json();
-
-        const assistantMsg: CopilotChatMessage = {
-          id: `assistant-${Date.now()}`,
-          sender: 'assistant',
-          response: data,
-          timestamp: new Date().toISOString(),
-          source: data.isDeterministicFallback ? 'deterministic' : source,
-        };
+        const assistantMsg = createAssistantSuccessMessage(data, rawSource);
 
         setSessions((prev) =>
           prev.map((s) =>
@@ -421,16 +291,7 @@ export function useAirCopilot({
           )
         );
       } catch (err: unknown) {
-        const errMsg = err instanceof Error ? err.message : 'Network connection interrupted. Please try asking your question again.';
-        const errMessage: CopilotChatMessage = {
-          id: `err-${Date.now()}`,
-          sender: 'assistant',
-          isError: true,
-          errorMessage: errMsg,
-          timestamp: new Date().toISOString(),
-          source: 'deterministic',
-        };
-
+        const errMessage = createCatchErrorMessage(err);
         setSessions((prev) =>
           prev.map((s) =>
             s.id === activeSessionId
@@ -442,7 +303,7 @@ export function useAirCopilot({
         setIsThinking(false);
       }
     },
-    [report, activeWorkspace, roomContext, activeSessionId, location?.name, householdState, activeMember]
+    [report, activeWorkspace, roomContext, activeSessionId, location, householdState, activeMember]
   );
 
   return {
