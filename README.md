@@ -99,7 +99,7 @@ All mathematical thresholds, spatial constraints, and conversion factors are ver
 
 ### 1. Low-Emission Daily Routines
 - **Morning / Afternoon / Evening Household Plan** (`src/components/planner/HouseholdTodayPlanCard.tsx`): Chronological daily plan covering routine shifts, indoor purification, and transit alternatives.
-- **Cleanest Daytime Window Finder** (`src/domain/aqi/best-window.ts`, `src/components/charts/BestTimeStrip.tsx`): Identifies the lowest-exposure 2–3 hour daytime window (12:30 PM – 03:30 PM) when solar heating lifts stagnant surface smog.
+- **Cleanest Daytime Window Finder** (`src/domain/aqi/best-window.ts`, `src/components/dashboard/hero/RapidExposureWindow.tsx`): Identifies the lowest-exposure 2–3 hour daytime window (12:30 PM – 03:30 PM) when solar heating lifts stagnant surface smog.
 - **Vulnerability-Specific Health Guidance** (`src/domain/planner/recommendation-engine.ts`, `src/components/dashboard/ActionableHealthGuidance.tsx`): Pediatric playground shifts and senior cardiovascular precautions.
 - **Commuter Exposure Advice** (`src/domain/planner/recommendation-engine.ts`, `src/components/choices/CommuteComparatorCard.tsx`): Roadside N95 respirator recommendations and vehicle AC recirculation guidance.
 

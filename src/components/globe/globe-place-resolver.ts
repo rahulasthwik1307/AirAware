@@ -5,7 +5,7 @@
  * Guarantees zero "Global Grid Coordinate" robot headings.
  */
 
-import { WORLD_COUNTRIES, CountryMeta } from './world-borders';
+import { WORLD_COUNTRIES, CountryMeta } from './world-countries';
 import { WORLD_CONTINENTS } from './world-landmass';
 
 export interface ResolvedGlobePlace {
